@@ -1,0 +1,455 @@
+{
+  "metadata": {
+    "schema_version": "1.1.0",
+    "brand_name": "Optsolv",
+    "language": "pt-BR",
+    "last_reviewed_on": "2026-08-31",
+    "purpose": "Sistema de marca operacional para pessoas, LLMs e agentes de geracao de materiais.",
+    "source_assets": [
+      "02 Logo",
+      "03 Paleta cromatica",
+      "04 Tipografia",
+      "04 Elementos de apoio"
+    ],
+    "companion_files": [
+      "optsolv_brand_system_master.md",
+      "optsolv_brand_assets_manifest.json"
+    ],
+    "authority_levels": {
+      "official_verified": "Informacao extraida diretamente dos ativos fornecidos.",
+      "strategic_context": "Posicionamento e preferencias informados pela lideranca da Optsolv.",
+      "operational_rule": "Regra criada para aplicacao consistente por LLMs e agentes; nao equivale a regra original da agencia."
+    },
+    "conflict_priority": [
+      "official_asset",
+      "official_color_or_typography_value",
+      "explicit_brand_system_rule",
+      "generic_tool_preference"
+    ]
+  },
+  "brand_core": {
+    "current_positioning": {
+      "value": "IA aplicada a negocios com foco em inteligencia operacional",
+      "authority": "strategic_context"
+    },
+    "logo_tagline": {
+      "value": "tecnologia que impulsiona",
+      "authority": "official_verified",
+      "usage": "Usar somente nas variacoes oficiais do logo; nao reescrever dentro da marca."
+    },
+    "central_balance": "negocio_e_tecnologia",
+    "design_principle": "A tecnologia deve servir ao entendimento do negocio, a decisao e ao resultado operacional."
+  },
+  "brand_positioning_signals": {
+    "authority": "strategic_context",
+    "intended_feel": [
+      "premium_executivo",
+      "minimalista",
+      "tecnologia_com_sobriedade",
+      "autoridade",
+      "confianca",
+      "sofisticacao"
+    ],
+    "editorial_tone": [
+      "direto",
+      "executivo",
+      "claro",
+      "maduro",
+      "consultivo",
+      "nao_prolixo"
+    ],
+    "visual_balance": "equilibrio_entre_negocio_e_tecnologia"
+  },
+  "palette": {
+    "authority": "official_verified",
+    "naming_note": "Os nomes e papeis semanticos sao aliases operacionais; os valores cromaticos sao oficiais.",
+    "colors": [
+      {
+        "token": "brand.orange.dark",
+        "operational_name": "Laranja escuro",
+        "hex": "#B22D09",
+        "rgb": [178, 45, 9],
+        "cmyk": [10, 85, 95, 10],
+        "pantone": "2349 C",
+        "roles": ["brand_core", "business_emphasis", "high_emphasis"]
+      },
+      {
+        "token": "brand.purple.dark",
+        "operational_name": "Roxo escuro",
+        "hex": "#271284",
+        "rgb": [39, 18, 132],
+        "cmyk": [100, 100, 10, 0],
+        "pantone": "2371 C",
+        "roles": ["brand_core", "technology", "dark_background"]
+      },
+      {
+        "token": "neutral.graphite",
+        "operational_name": "Grafite",
+        "hex": "#353030",
+        "rgb": [53, 48, 48],
+        "cmyk": [0, 25, 20, 90],
+        "pantone": "Black C",
+        "roles": ["text_dark", "structure", "neutral_anchor"]
+      },
+      {
+        "token": "brand.orange.bright",
+        "operational_name": "Laranja vivo",
+        "hex": "#FF4800",
+        "rgb": [255, 72, 0],
+        "cmyk": [5, 75, 90, 0],
+        "pantone": "7579 C",
+        "roles": ["cta", "highlight", "result"]
+      },
+      {
+        "token": "brand.purple.bright",
+        "operational_name": "Roxo vivo",
+        "hex": "#743DFF",
+        "rgb": [116, 61, 255],
+        "cmyk": [80, 75, 0, 0],
+        "pantone": "6097 C",
+        "roles": ["technology_highlight", "digital_accent"]
+      },
+      {
+        "token": "support.taupe",
+        "operational_name": "Taupe",
+        "hex": "#9E8477",
+        "rgb": [158, 132, 119],
+        "cmyk": [0, 30, 30, 45],
+        "pantone": "2475 C",
+        "roles": ["neutral_support", "warm_support"]
+      },
+      {
+        "token": "support.peach",
+        "operational_name": "Pessego",
+        "hex": "#FF855A",
+        "rgb": [255, 133, 90],
+        "cmyk": [0, 65, 65, 0],
+        "pantone": "2024 C",
+        "roles": ["soft_accent", "secondary_highlight"]
+      },
+      {
+        "token": "support.lavender",
+        "operational_name": "Lavanda",
+        "hex": "#A588FF",
+        "rgb": [165, 136, 255],
+        "cmyk": [55, 50, 0, 0],
+        "pantone": "7446 C",
+        "roles": ["soft_technology", "secondary_highlight"]
+      },
+      {
+        "token": "support.warm_sand",
+        "operational_name": "Areia quente",
+        "hex": "#EFC3AF",
+        "rgb": [239, 195, 175],
+        "cmyk": [0, 20, 20, 0],
+        "pantone": "9200 U",
+        "roles": ["background_soft", "warm_support"]
+      },
+      {
+        "token": "neutral.black",
+        "operational_name": "Preto",
+        "hex": "#000000",
+        "rgb": [0, 0, 0],
+        "cmyk": [0, 60, 0, 100],
+        "pantone": "419 C",
+        "roles": ["text", "monochrome_logo_dark"]
+      },
+      {
+        "token": "neutral.warm_light",
+        "operational_name": "Claro quente",
+        "hex": "#F1F1E3",
+        "rgb": [241, 241, 227],
+        "cmyk": [5, 5, 15, 0],
+        "pantone": "9064 U",
+        "roles": ["background_light", "monochrome_logo_light", "soft_canvas"]
+      }
+    ],
+    "semantic_rules": {
+      "business_action_result": ["brand.orange.dark", "brand.orange.bright"],
+      "technology_ai_data": ["brand.purple.dark", "brand.purple.bright"],
+      "structure_and_text": ["neutral.graphite", "neutral.black"],
+      "soft_support": ["support.taupe", "support.peach", "support.lavender", "support.warm_sand", "neutral.warm_light"],
+      "authority": "operational_rule"
+    },
+    "recommended_distribution": {
+      "neutral_base_percent": "70-85",
+      "primary_accent_percent": "10-20",
+      "secondary_accent_percent_max": 10,
+      "authority": "operational_rule"
+    },
+    "contrast_policy": {
+      "body_text_minimum_ratio": 4.5,
+      "large_text_minimum_ratio": 3.0,
+      "recommended_pairs": [
+        {"background": "brand.purple.dark", "foreground": ["neutral.warm_light", "#FFFFFF"]},
+        {"background": "neutral.graphite", "foreground": ["neutral.warm_light", "#FFFFFF"]},
+        {"background": "neutral.black", "foreground": ["neutral.warm_light", "#FFFFFF"]},
+        {"background": "brand.orange.dark", "foreground": ["neutral.warm_light", "#FFFFFF"]},
+        {"background": "brand.purple.bright", "foreground": ["neutral.warm_light", "#FFFFFF"]},
+        {"background": "brand.orange.bright", "foreground": ["neutral.black"]},
+        {"background": "support.taupe", "foreground": ["neutral.black"]},
+        {"background": "support.peach", "foreground": ["neutral.black"]},
+        {"background": "support.lavender", "foreground": ["neutral.black"]},
+        {"background": "support.warm_sand", "foreground": ["neutral.black"]},
+        {"background": "neutral.warm_light", "foreground": ["neutral.black", "neutral.graphite", "brand.purple.dark", "brand.orange.dark"]}
+      ],
+      "authority": "operational_rule"
+    },
+    "usage_rules": [
+      "Priorizar base limpa e alto contraste.",
+      "Usar laranja e roxo como enfase, nao como preenchimento indiscriminado.",
+      "Nao usar laranja vivo e roxo vivo como CTAs concorrentes na mesma pagina.",
+      "Evitar gradientes genericos, neon e excesso de cores simultaneas."
+    ]
+  },
+  "typography": {
+    "authority": "official_verified",
+    "primary_font_family": "Public Sans",
+    "secondary_font_family": "Roboto Mono",
+    "source_status": {
+      "family_names_verified": true,
+      "font_binaries_present": false,
+      "official_weight_set_verified": false,
+      "source_files": [
+        "04 Tipografia/Public Sans - Google Fonts.html",
+        "04 Tipografia/Roboto Mono - Google Fonts.html"
+      ]
+    },
+    "operational_weights": {
+      "Public Sans": {"body": 400, "subheading": 600, "headline": 700},
+      "Roboto Mono": {"label": 400, "technical_emphasis": 500},
+      "authority": "operational_rule"
+    },
+    "fallbacks": ["Arial", "Helvetica", "sans-serif"],
+    "usage": {
+      "primary_font_roles": ["headlines", "subheadlines", "body_text", "bullets", "numbers", "cta"],
+      "secondary_font_roles": ["labels", "microdata", "technical_markers", "short_callouts"]
+    },
+    "rules": [
+      "Public Sans e a familia principal.",
+      "Roboto Mono deve ser usada com moderacao e nunca como fonte de corpo extenso.",
+      "Instalar as fontes antes de gerar arquivos finais quando houver controle do ambiente.",
+      "Para PowerPoint editavel sem fontes incorporadas, usar Arial como fallback seguro.",
+      "Evitar variacao excessiva de pesos, tamanhos e estilos na mesma pagina."
+    ]
+  },
+  "logo_system": {
+    "authority": "official_verified",
+    "master_source": "02 Logo/Para telas/PDF/Optsolv_Logo_RGB.pdf",
+    "structures": [
+      {
+        "id": "logo_primary",
+        "description": "Wordmark Optsolv com simbolo e sem assinatura.",
+        "recommended_usage": ["default_signature", "cover", "closing", "institutional", "small_width"]
+      },
+      {
+        "id": "logo_horizontal_tagline",
+        "description": "Logo com a assinatura tecnologia que impulsiona a direita.",
+        "recommended_usage": ["wide_layout", "institutional_signature_with_tagline"]
+      },
+      {
+        "id": "logo_composed_tagline",
+        "description": "Logo com a assinatura tecnologia que impulsiona abaixo do wordmark.",
+        "recommended_usage": ["compact_rectangular_layout", "institutional_signature_with_tagline"]
+      },
+      {
+        "id": "symbol",
+        "description": "Simbolo isolado da Optsolv.",
+        "recommended_usage": ["avatar", "favicon", "seal", "subtle_watermark", "graphic_detail"]
+      }
+    ],
+    "color_treatments": ["orange", "warm_light", "black", "white"],
+    "selection_rules": [
+      "Usar logo_primary como assinatura padrao.",
+      "Usar versoes com assinatura somente quando houver legibilidade suficiente.",
+      "Em fundo claro, preferir orange ou black.",
+      "Em fundo escuro, preferir white ou warm_light.",
+      "Usar symbol de forma complementar, sem substituir aleatoriamente o logo completo."
+    ],
+    "operational_safety": {
+      "clear_space": "25% da altura total do logo em todos os lados",
+      "digital_min_width_px": {"logo_primary": 120, "logo_with_tagline": 240, "symbol": 24},
+      "print_review_threshold_mm": {"logo_primary": 25, "logo_with_tagline": 50, "symbol": 8},
+      "authority": "operational_rule"
+    },
+    "prohibited": [
+      "distortion",
+      "rotation",
+      "recoloring",
+      "shadow_or_glow",
+      "outline_or_3d_effect",
+      "low_contrast_background",
+      "rewritten_tagline",
+      "excessive_repetition"
+    ],
+    "motion_logo": {
+      "available": true,
+      "file_reference": "02 Logo/Logo Animado/MOTION LOGO OPTSOLV.mp4",
+      "recommended_usage": ["video_opening", "motion_asset"],
+      "not_recommended": ["static_proposal", "printed_document"]
+    }
+  },
+  "graphic_language": {
+    "authority": "official_verified",
+    "graphics": {
+      "source_pdf": "04 Elementos de apoio/Grafismos/Para telas/TGR_Grafismos_RGB.pdf",
+      "page_count": 14,
+      "source_png_count": 14,
+      "png_transparency": true,
+      "observed_structure": "Sete composicoes-base em duas familias de destaque, laranja e roxo.",
+      "recommended_usage": ["corners", "section_dividers", "subtle_backgrounds", "cover_accents", "diagram_support"],
+      "rules": ["No maximo um grafismo protagonista por pagina.", "O grafismo deve apoiar o conteudo, nao competir com ele."]
+    },
+    "icons": {
+      "source_pdf": "04 Elementos de apoio/Icones/Para telas/TGR_Icones_RGB.pdf",
+      "pdf_page_count": 100,
+      "source_png_count": 100,
+      "observed_structure": "Variacoes cromaticas de aproximadamente dez composicoes-base, incluindo icones quadrados e sequencias horizontais.",
+      "png_transparency": false,
+      "png_background": "white",
+      "recommended_usage": ["capabilities", "process_steps", "connections", "data", "technology", "short_topic_reinforcement"],
+      "warning": "Os PNGs nao devem ser aplicados diretamente sobre fundos escuros ou coloridos sem tratamento."
+    },
+    "illustrations": {
+      "source_pdf": "04 Elementos de apoio/Ilustracoes/Para telas/TGR_Ilustracoes_RGB.pdf",
+      "pdf_page_count": 17,
+      "individual_png_or_svg_available": false,
+      "observed_structure": "Uma composicao ampla e quatro estruturas-base em diferentes tratamentos cromaticos.",
+      "recommended_usage": ["cover", "section_opening", "institutional_page", "visual_pause"],
+      "not_recommended": ["dense_scope_page", "commercial_conditions", "large_table"]
+    },
+    "generated_asset_policy": "Nao inventar elementos e apresenta-los como oficiais. Na ausencia do ativo, usar formas geometricas simples tratadas como composicao editorial."
+  },
+  "editorial_system": {
+    "authority": "strategic_context",
+    "voice": ["direct", "executive", "clear", "mature", "consultative", "confident_not_arrogant"],
+    "principles": [
+      "Comecar pelo problema e pelo impacto de negocio.",
+      "Explicar tecnologia como capacidade aplicada.",
+      "Preferir evidencia, numero e exemplo a adjetivo.",
+      "Usar frases curtas e titulos conclusivos.",
+      "Diferenciar fato, estimativa, hipotese e recomendacao.",
+      "Reduzir jargao e explicar termos indispensaveis."
+    ],
+    "avoid_language": [
+      "revolucionario",
+      "disruptivo_sem_evidencia",
+      "magico",
+      "solucao_para_tudo",
+      "promessa_absoluta",
+      "transformacao_digital_vazia"
+    ],
+    "communication_thesis": "A Optsolv compreende o negocio em profundidade, estrutura a decisao, aplica tecnologia e IA ao contexto real da operacao e sustenta a evolucao do resultado."
+  },
+  "proposal_application_rules": {
+    "default_visual_style": "premium_executivo_minimalista",
+    "default_density": "low_to_medium",
+    "visual_priorities": ["authority", "trust", "sophistication", "clarity", "flow"],
+    "slide_rules": {
+      "aspect_ratio": "16:9",
+      "one_main_thesis": true,
+      "standard_visible_word_range": "35-55",
+      "standard_bullet_range": "3-5",
+      "font_sizes_pt": {"title": "30-36", "subtitle": "18-24", "body": "16-20", "label_or_note": "9-12"},
+      "outer_margin_inches": "0.6-0.8",
+      "exceptions": ["technical_scope", "legal", "commercial_conditions"]
+    },
+    "a4_rules": {
+      "font_sizes_pt": {"main_title": "22-28", "section_title": "15-20", "body": "9.5-11.5", "footnote": "8-9"},
+      "body_line_height": "1.25-1.45"
+    },
+    "co_branding": [
+      "Preservar cores e proporcoes das marcas parceiras.",
+      "Equalizar peso optico, nao necessariamente largura matematica.",
+      "Usar separador neutro e area livre.",
+      "Nao recolorir logo de cliente ou parceiro.",
+      "Em material liderado pelo cliente, usar Optsolv como assinatura sem disputar protagonismo."
+    ],
+    "do_not_do": [
+      "text_heavy_slides",
+      "generic_ai_gradients",
+      "neon_or_glow",
+      "decorative_circuits_or_humanoid_robots",
+      "experimental_startup_aesthetic",
+      "excessive_cards_shadows_or_rounded_corners",
+      "mixed_icon_styles",
+      "decorative_illustration_without_editorial_function",
+      "excessive_logo_repetition",
+      "weak_hierarchy"
+    ],
+    "authority": "operational_rule"
+  },
+  "llm_usage_contract": {
+    "read_order": [
+      "optsolv_brand_system_master.md",
+      "optsolv_brand_system_v1.json",
+      "optsolv_brand_assets_manifest.json",
+      "required_individual_assets"
+    ],
+    "rules": [
+      "Usar o Markdown para criterio e o JSON para valores exatos.",
+      "Usar arquivos individuais para insercao de logos e elementos.",
+      "Usar PDFs agrupados como catalogo ou fonte vetorial, nao como unica fonte de ativos.",
+      "Nao inventar cores, fontes, slogans, logos ou elementos proprietarios.",
+      "Nao tratar regra operacional como regra original da agencia.",
+      "Preservar contraste, legibilidade e sobriedade acima de efeitos visuais.",
+      "Quando um ativo estiver ausente, declarar a limitacao e usar alternativa neutra."
+    ],
+    "brand_system_overrides_generic_preferences": true
+  },
+  "agent_2_ready_rules": {
+    "compatibility_note": "Mantido para compatibilidade com o Agente de Design Comercial da Optsolv.",
+    "brand_usage_priority": [
+      "preservar_legibilidade",
+      "preservar_sobriedade",
+      "usar_paleta_principal_com_parcimonia",
+      "reforcar_autoridade_e_sofisticacao",
+      "equilibrar_negocio_e_tecnologia",
+      "usar_elementos_de_apoio_moderadamente"
+    ],
+    "brand_system_should_override_generic_preferences": true,
+    "notes_for_design_agent": [
+      "A marca deve parecer madura e segura, nao experimental.",
+      "O design deve servir a venda, a decisao e a clareza da proposta.",
+      "Tecnologia deve aparecer como capacidade aplicada ao negocio.",
+      "Usar o manifesto para escolher a variante correta do ativo.",
+      "Nunca inventar um elemento e apresenta-lo como oficial da Optsolv."
+    ]
+  },
+  "source_audit": {
+    "status": "reviewed",
+    "findings": [
+      {
+        "severity": "medium",
+        "area": "typography",
+        "finding": "Nao ha arquivos instalaveis de fonte; somente paginas HTML do Google Fonts."
+      },
+      {
+        "severity": "low",
+        "area": "typography",
+        "finding": "O arquivo Conversor de Imagem para ASCII Art..html nao pertence ao pacote tipografico."
+      },
+      {
+        "severity": "medium",
+        "area": "icons",
+        "finding": "Os 100 PNGs de icones possuem fundo branco e nao possuem transparencia."
+      },
+      {
+        "severity": "medium",
+        "area": "illustrations",
+        "finding": "Nao ha exportacoes individuais em PNG ou SVG."
+      },
+      {
+        "severity": "medium",
+        "area": "palette",
+        "finding": "Existem dois PDFs Pantone. O arquivo Optsovl_Paleta_Pantone.pdf diverge na formula CMYK de #9E8477. Usar Optsolv_Paleta_Pantone.pdf como referencia."
+      },
+      {
+        "severity": "low",
+        "area": "packaging",
+        "finding": "Os pacotes contem metadados __MACOSX e nomes com espacos e acentos, o que reduz portabilidade entre ferramentas."
+      }
+    ],
+    "authoritative_palette_file": "03 Paleta cromatica/Para telas/RGB/PDF/Optsolv_Paleta_RGB.pdf"
+  }
+}

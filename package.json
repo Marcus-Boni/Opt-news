@@ -1,0 +1,37 @@
+{
+  "name": "opt-news",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24.11.0"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d db",
+    "db:migrate": "node --env-file-if-exists=.env apps/api/src/db/migrate.ts up",
+    "db:rollback": "node --env-file-if-exists=.env apps/api/src/db/migrate.ts down",
+    "db:seed": "node --env-file-if-exists=.env apps/api/src/db/seed.ts",
+    "dev:api": "node --watch --env-file-if-exists=.env apps/api/src/main.ts",
+    "dev:worker": "node --watch --env-file-if-exists=.env apps/worker/src/main.ts",
+    "dev:web": "npm run dev -w @optnews/web",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc -p packages/contracts && tsc -p apps/api && tsc -p apps/worker && tsc -p tools && tsc -p apps/web",
+    "test": "node --env-file-if-exists=.env --test --test-concurrency=1 \"apps/*/test/*.test.ts\"",
+    "build": "npm run build -w @optnews/web",
+    "openapi": "node apps/api/src/http/openapi.ts > docs/openapi-v1.json",
+    "smoke": "node tools/smoke.ts",
+    "dev:fake-feeds": "node tools/fake-feeds/server.ts",
+    "ingest:once": "node --env-file-if-exists=.env apps/worker/src/main.ts --once",
+    "model:check": "node --env-file-if-exists=.env tools/model-check.ts",
+    "sources:real": "node --env-file-if-exists=.env tools/real-sources.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "26.6.3",
+    "typescript": "7.0.2"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "files": {
+    "includes": ["**", "!**/node_modules", "!**/dist", "!.agents", "!.claude", "!docs/openapi-v1.json", "!docs/marca"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "error"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "error"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "apps/web/src/components/ui/**",
+        "apps/web/src/components/charts/**",
+        "apps/web/src/components/kokonutui/**",
+        "apps/web/src/components/SplitText.tsx",
+        "apps/web/src/components/CountUp.tsx",
+        "apps/web/src/styles/shadcn-base.css"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off",
+            "useExponentiationOperator": "off"
+          },
+          "a11y": {
+            "useSemanticElements": "off",
+            "useFocusableInteractive": "off",
+            "useKeyWithClickEvents": "off"
+          },
+          "suspicious": {
+            "noArrayIndexKey": "off",
+            "noDocumentCookie": "off",
+            "noAssignInExpressions": "off",
+            "noDoubleEquals": "off"
+          },
+          "correctness": {
+            "useExhaustiveDependencies": "off",
+            "useParseIntRadix": "off"
+          }
+        }
+      }
+    }
+  ]
+}

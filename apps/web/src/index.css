@@ -1,0 +1,260 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./styles/shadcn-base.css";
+/* Official Optsolv families (Brand System Master): Public Sans for everything, Roboto Mono for labels and microdata. */
+@import "@fontsource-variable/public-sans";
+@import "@fontsource-variable/public-sans/wght-italic.css";
+@import "@fontsource-variable/roboto-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Opt News on the Optsolv identity. Two orange roles: #FF4800 (--brand) is the signal and never carries text (the
+ * mark, the active place, focus, selection, data); filled actions use laranja escuro (--primary, #B22D09) with white
+ * text (6.4:1). The shell is warm graphite (#353030 family). Purple marks machine-written text and depth.
+ */
+:root {
+  --radius: 0.625rem;
+
+  --background: #faf8f5;
+  --foreground: #1b1514;
+  --card: #ffffff;
+  --card-foreground: #1b1514;
+  --popover: #ffffff;
+  --popover-foreground: #1b1514;
+  /* Filled actions carry text: laranja escuro with white (6.4:1). #FF4800 stays the brand signal (marks, focus, data). */
+  --primary: #b22d09;
+  --primary-foreground: #ffffff;
+  --secondary: #f2ece6;
+  --secondary-foreground: #1b1514;
+  --muted: #f2ece6;
+  --muted-foreground: #66594f;
+  --accent: #fff0e8;
+  --accent-foreground: #1b1514;
+  --destructive: #c21f3a;
+  --border: #e8e0d8;
+  --input: #d9cec4;
+  --ring: #ff4800;
+
+  --brand: #ff4800;
+  --brand-text: #b22d09;
+  --brand-soft: #ffe8dc;
+  --brand-deep: #c73d1b;
+  --ai: #743dff;
+  --ai-soft: #efe9ff;
+  --success: #12754a;
+  --success-soft: #e2f4ea;
+  --warning: #8f5300;
+  --warning-soft: #fdf1dc;
+
+  --chart-1: #ff4800;
+  --chart-2: #743dff;
+  --chart-3: #9e8477;
+  --chart-4: #ff855a;
+  --chart-5: #271284;
+  /* Roxo escuro: depth and machine-made content (brand semantics: purple = technology, AI, data). */
+  --depth: #271284;
+  --depth-foreground: #f1f1e3;
+  /* Claro quente: the logo color on dark grounds (Brand System Master). */
+  --warm-light: #f1f1e3;
+
+  --sidebar: #353030;
+  --sidebar-foreground: #d8cfc8;
+  --sidebar-primary: #ff4800;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #423b3b;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #443d3d;
+  --sidebar-ring: #ff4800;
+}
+
+.dark {
+  --background: #1d1919;
+  --foreground: #f1ece7;
+  --card: #252020;
+  --card-foreground: #f1ece7;
+  --popover: #2a2424;
+  --popover-foreground: #f1ece7;
+  --primary: #c73d1b;
+  --primary-foreground: #ffffff;
+  --secondary: #2e2828;
+  --secondary-foreground: #f1ece7;
+  --muted: #2e2828;
+  --muted-foreground: #a89b94;
+  --accent: #3a251d;
+  --accent-foreground: #ffd9c8;
+  --destructive: #ff5c76;
+  --border: #3a3232;
+  --input: #4a4040;
+  --ring: #ff4800;
+
+  --brand: #ff4800;
+  --brand-text: #ff855a;
+  --brand-soft: #33190d;
+  --brand-deep: #ff6a2e;
+  --ai: #a588ff;
+  --ai-soft: #231b3d;
+  --success: #5cc98f;
+  --success-soft: #12261c;
+  --warning: #f2b44c;
+  --warning-soft: #2c2210;
+
+  --sidebar: #171414;
+  --sidebar-foreground: #cfc5be;
+  --sidebar-accent: #2a2424;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a2424;
+}
+
+@theme inline {
+  --font-sans: "Public Sans Variable", Arial, Helvetica, sans-serif;
+  --font-mono: "Roboto Mono Variable", ui-monospace, monospace;
+  --font-heading: var(--font-sans);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-text: var(--brand-text);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-deep: var(--brand-deep);
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+  --color-depth: var(--depth);
+  --color-depth-foreground: var(--depth-foreground);
+  --color-warm-light: var(--warm-light);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    caret-color: var(--brand);
+  }
+  /* In-page anchors land below the sticky 56px header. */
+  :where([id]) {
+    scroll-margin-top: 5rem;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--brand) 28%, transparent);
+    color: var(--foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+  /* Tabular figures wherever numbers sit together (scores, votes, counts, dates in tables). */
+  .tabular,
+  table,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Themed scrollbars: the browser's own parts carry the palette too. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--foreground) 22%, transparent) transparent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component transition. */
+      animation-duration: 0.01ms !important;
+      /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component transition. */
+      transition-duration: 0.01ms !important;
+      /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component transition. */
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Plain-text bodies from people or the engine: keep their line breaks, never interpret markup. */
+  .plain {
+    @apply break-words whitespace-pre-line;
+  }
+  /* Inline links in running text: brand text color with an underline that strengthens on hover. */
+  .link {
+    @apply text-brand-text underline decoration-brand-text/35 underline-offset-[0.2em] transition-colors hover:decoration-brand-text;
+  }
+  .skip-link {
+    @apply fixed top-2 left-2 z-50 -translate-y-24 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:translate-y-0;
+  }
+}
+
+/* Lenis smooth scrolling (reading surfaces). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  /* biome-ignore lint/complexity/noImportantStyles: Lenis owns smooth scrolling; native smoothing would fight it. */
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}

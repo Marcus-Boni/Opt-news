@@ -1,0 +1,12 @@
+{
+  "name": "@optnews/worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.ts"
+  },
+  "dependencies": {
+    "@optnews/api": "*",
+    "pg-boss": "12.34.0"
+  }
+}

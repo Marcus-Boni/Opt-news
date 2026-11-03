@@ -1,0 +1,65 @@
+# Ambiente local do Opt News. Sem serviços externos: as fontes são feeds sintéticos servidos por tools/fake-feeds.
+#   docker compose up -d db                 → só o PostgreSQL (desenvolvimento com npm run dev:*)
+#   docker compose --profile app up --build → banco + feeds sintéticos + api (servindo o web compilado) + worker
+name: optnews
+
+x-app: &app
+  build: .
+  image: optnews-app
+  environment: &app-env
+    # Demo local: login simulado só é aceito fora de NODE_ENV=production.
+    NODE_ENV: development
+    DATABASE_URL: postgres://optnews:optnews@db:5432/optnews
+    FAKE_FEEDS_BASE_URL: http://fake-feeds:4020
+    INGEST_PRIVATE_HOSTS: fake-feeds
+    AUTH_MODE: dev
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: optnews
+      POSTGRES_PASSWORD: optnews
+      POSTGRES_DB: optnews
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U optnews -d optnews"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  fake-feeds:
+    <<: *app
+    profiles: ["app"]
+    command: ["node", "tools/fake-feeds/server.ts"]
+    environment:
+      FAKE_FEEDS_HOST: 0.0.0.0
+    depends_on: []
+
+  api:
+    <<: *app
+    profiles: ["app"]
+    command: ["sh", "-c", "node apps/api/src/db/migrate.ts up && node apps/api/src/db/seed.ts && node apps/api/src/main.ts"]
+    environment:
+      <<: *app-env
+      API_HOST: 0.0.0.0
+      SERVE_WEB: "true"
+    ports:
+      - "127.0.0.1:8080:3001"
+
+  worker:
+    <<: *app
+    profiles: ["app"]
+    command: ["node", "apps/worker/src/main.ts"]
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  db:

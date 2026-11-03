@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+*.log
+.DS_Store
+test-results/
+playwright-report/
+
+# Ferramentas locais de agente: skills de terceiros reinstaláveis pelo skills-lock.json, logs do Playwright MCP
+.agents/
+.claude/skills/
+.claude/settings.local.json
+.playwright-mcp/
+
+# Base institucional da Optsolv com seções de visibilidade interna: fica fora do repositório público
+docs/marca/sobre-optsolv.json

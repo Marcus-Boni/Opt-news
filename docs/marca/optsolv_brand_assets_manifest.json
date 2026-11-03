@@ -1,0 +1,263 @@
+{
+  "metadata": {
+    "manifest_version": "1.0.0",
+    "brand_name": "Optsolv",
+    "last_reviewed_on": "2026-08-31",
+    "purpose": "Inventario e roteamento dos ativos oficiais para pessoas, LLMs e ferramentas de geracao.",
+    "path_policy": "source_path reproduz a referencia logica original com Unicode normalizado para leitura; llm_kit_path e o alias portavel e deve ser usado por automacoes."
+  },
+  "source_packages": [
+    {
+      "logical_name": "02 Logo",
+      "scope": ["logos", "symbol", "motion_logo", "screen", "print"]
+    },
+    {
+      "logical_name": "03 Paleta cromatica",
+      "scope": ["rgb", "cmyk", "pantone", "swatches"]
+    },
+    {
+      "logical_name": "04 Tipografia",
+      "scope": ["font_family_references"]
+    },
+    {
+      "logical_name": "04 Elementos de apoio",
+      "scope": ["graphics", "icons", "illustrations", "screen", "print"]
+    }
+  ],
+  "logo_collection": {
+    "official_rgb_pdf": "02 Logo-2/Para telas/PDF/Optsolv_Logo_RGB.pdf",
+    "official_rgb_ai": "02 Logo-2/Para telas/Ai/Optsolv_Logo_RGB.ai",
+    "pdf_page_count": 16,
+    "png_count": 16,
+    "png_transparency": true,
+    "assets": [
+      {
+        "asset_id": "logo.primary.orange",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo colorido/Logo_Principal-1.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-primary-orange.png",
+        "background": "light",
+        "preferred_usage": ["default", "cover", "closing", "institutional"]
+      },
+      {
+        "asset_id": "logo.primary.warm_light",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo colorido/Logo_Principal-2.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-primary-warm-light.png",
+        "background": "dark",
+        "preferred_usage": ["dark_background", "institutional"]
+      },
+      {
+        "asset_id": "logo.primary.black",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo monocromatico/Logo_Principal-preto.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-primary-black.png",
+        "background": "light",
+        "preferred_usage": ["monochrome", "high_contrast"]
+      },
+      {
+        "asset_id": "logo.primary.white",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo monocromatico/Logo_Principal-branca.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-primary-white.png",
+        "background": "dark",
+        "preferred_usage": ["monochrome", "high_contrast"]
+      },
+      {
+        "asset_id": "logo.horizontal_tagline.orange",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo colorido/Logo_Variacao_1-5.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-horizontal-tagline-orange.png",
+        "background": "light",
+        "preferred_usage": ["wide_layout", "tagline_visible"]
+      },
+      {
+        "asset_id": "logo.horizontal_tagline.warm_light",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo colorido/Logo_Variacao_1-6.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-horizontal-tagline-warm-light.png",
+        "background": "dark",
+        "preferred_usage": ["wide_layout", "tagline_visible"]
+      },
+      {
+        "asset_id": "logo.horizontal_tagline.black",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo monocromatico/Logo_Variacao_1-preto.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-horizontal-tagline-black.png",
+        "background": "light",
+        "preferred_usage": ["wide_layout", "monochrome"]
+      },
+      {
+        "asset_id": "logo.horizontal_tagline.white",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo monocromatico/Logo_Variacao_1-branca.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-horizontal-tagline-white.png",
+        "background": "dark",
+        "preferred_usage": ["wide_layout", "monochrome"]
+      },
+      {
+        "asset_id": "logo.composed_tagline.orange",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo colorido/Logo_Variacao_2-9.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-composed-tagline-orange.png",
+        "background": "light",
+        "preferred_usage": ["compact_rectangular_layout", "tagline_visible"]
+      },
+      {
+        "asset_id": "logo.composed_tagline.warm_light",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo colorido/Logo_Variacao_2-10.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-composed-tagline-warm-light.png",
+        "background": "dark",
+        "preferred_usage": ["compact_rectangular_layout", "tagline_visible"]
+      },
+      {
+        "asset_id": "logo.composed_tagline.black",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo monocromatico/Logo_Variacao_2-preto.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-composed-tagline-black.png",
+        "background": "light",
+        "preferred_usage": ["compact_rectangular_layout", "monochrome"]
+      },
+      {
+        "asset_id": "logo.composed_tagline.white",
+        "source_path": "02 Logo-2/Para telas/PNG/Logo monocromatico/Logo_Variacao_2-branca.png",
+        "llm_kit_path": "assets/logos/optsolv-logo-composed-tagline-white.png",
+        "background": "dark",
+        "preferred_usage": ["compact_rectangular_layout", "monochrome"]
+      },
+      {
+        "asset_id": "symbol.orange",
+        "source_path": "02 Logo-2/Para telas/PNG/Simbolo colorido/Simbolo-13.png",
+        "llm_kit_path": "assets/logos/optsolv-symbol-orange.png",
+        "background": "light",
+        "preferred_usage": ["avatar", "seal", "graphic_detail"]
+      },
+      {
+        "asset_id": "symbol.warm_light",
+        "source_path": "02 Logo-2/Para telas/PNG/Simbolo colorido/Simbolo-14.png",
+        "llm_kit_path": "assets/logos/optsolv-symbol-warm-light.png",
+        "background": "dark",
+        "preferred_usage": ["avatar", "seal", "graphic_detail"]
+      },
+      {
+        "asset_id": "symbol.black",
+        "source_path": "02 Logo-2/Para telas/PNG/Simbolo monocromatico/Simbolo-preto.png",
+        "llm_kit_path": "assets/logos/optsolv-symbol-black.png",
+        "background": "light",
+        "preferred_usage": ["monochrome", "watermark"]
+      },
+      {
+        "asset_id": "symbol.white",
+        "source_path": "02 Logo-2/Para telas/PNG/Simbolo monocromatico/Simbolo-branca.png",
+        "llm_kit_path": "assets/logos/optsolv-symbol-white.png",
+        "background": "dark",
+        "preferred_usage": ["monochrome", "watermark"]
+      },
+      {
+        "asset_id": "logo.motion",
+        "source_path": "02 Logo-2/Logo Animado/MOTION LOGO OPTSOLV.mp4",
+        "llm_kit_path": "assets/motion/optsolv-motion-logo.mp4",
+        "preferred_usage": ["video_opening", "motion_content"]
+      }
+    ],
+    "print_sources": {
+      "cmyk_pdf": "02 Logo-2/Para impressos/CMYK/PDF/Optsolv_Logo_CMYK.pdf",
+      "cmyk_ai": "02 Logo-2/Para impressos/CMYK/Ai/Optsolv_Logo_CMYK.ai",
+      "pantone_pdf": "02 Logo-2/Para impressos/Pantone/PDF/Optsolv_Logo_Pantone.pdf",
+      "pantone_ai": "02 Logo-2/Para impressos/Pantone/AI/Optsolv_Logo_Pantone.ai"
+    }
+  },
+  "palette_collection": {
+    "authoritative_rgb_pdf": "03 Paleta cromatica-2/Para telas/RGB/PDF/Optsolv_Paleta_RGB.pdf",
+    "rgb_ai": "03 Paleta cromatica-2/Para telas/RGB/AI/Optsolv_Paleta_RGB.ai",
+    "swatches": [
+      "03 Paleta cromatica-2/Swatches/Optsolv_Paleta_RGB.ase",
+      "03 Paleta cromatica-2/Swatches/Optsolv_Paleta_CMYK.ase",
+      "03 Paleta cromatica-2/Swatches/Optsolv_Paleta_Pantone.ase"
+    ],
+    "print_sources": {
+      "cmyk_pdf": "03 Paleta cromatica-2/Para impressos/CMYK/PDF/Optsolv_Paleta_CMYK.pdf",
+      "cmyk_ai": "03 Paleta cromatica-2/Para impressos/CMYK/Ai/Optsolv_Paleta_CMYK.ai",
+      "pantone_pdf_authoritative": "03 Paleta cromatica-2/Para impressos/PANTONE/PDF/Optsolv_Paleta_Pantone.pdf",
+      "pantone_ai": "03 Paleta cromatica-2/Para impressos/PANTONE/Ai/Optsolv_Paleta_Pantone.ai"
+    },
+    "excluded_or_review_required": [
+      {
+        "path": "03 Paleta cromatica-2/Para impressos/PANTONE/PDF/Optsovl_Paleta_Pantone.pdf",
+        "reason": "Nome com erro e formula CMYK divergente para #9E8477."
+      }
+    ]
+  },
+  "typography_collection": {
+    "primary_family": "Public Sans",
+    "secondary_family": "Roboto Mono",
+    "reference_files": [
+      "04 Tipografia/Public Sans - Google Fonts.html",
+      "04 Tipografia/Roboto Mono - Google Fonts.html"
+    ],
+    "font_binary_count": 0,
+    "status": "family_names_verified_binaries_missing",
+    "excluded_or_review_required": [
+      {
+        "path": "04 Tipografia/Conversor de Imagem para ASCII Art..html",
+        "reason": "Arquivo sem relacao com o sistema tipografico."
+      }
+    ]
+  },
+  "graphics_collection": {
+    "official_rgb_pdf": "04 Elementos de apoio/Grafismos/Para telas/TGR_Grafismos_RGB.pdf",
+    "official_rgb_ai": "04 Elementos de apoio/Grafismos/Para telas/TGR_Grafismos_RGB.ai",
+    "pdf_page_count": 14,
+    "png_count": 14,
+    "png_transparency": true,
+    "observed_groups": [
+      {"family": "orange", "source_numbers": "01-07", "llm_kit_pattern": "assets/graphics/optsolv-graphic-orange-{01..07}.png"},
+      {"family": "purple", "source_numbers": "08-14", "llm_kit_pattern": "assets/graphics/optsolv-graphic-purple-{01..07}.png"}
+    ],
+    "source_png_pattern": "04 Elementos de apoio/Grafismos/Para telas/PNG/TGR_Grafismos_RGB-{01..14}.png"
+  },
+  "icons_collection": {
+    "official_rgb_pdf": "04 Elementos de apoio/Icones/Para telas/TGR_Icones_RGB.pdf",
+    "official_rgb_ai": "04 Elementos de apoio/Icones/Para telas/TGR_Icones_RGB.ai",
+    "pdf_page_count": 100,
+    "png_count": 100,
+    "observed_base_compositions": "approximately_10",
+    "png_transparency": false,
+    "png_background": "white",
+    "source_png_directory": "04 Elementos de apoio/Icones/Para telas/PNGS",
+    "llm_kit_directory": "assets/icons/source-png",
+    "selection_guidance": "Usar o PDF RGB como catalogo visual. Antes de aplicar um PNG, verificar se o fundo branco e compativel com a composicao.",
+    "recommended_remediation": "Exportar cada composicao em SVG e PNG transparente com nome semantico."
+  },
+  "illustrations_collection": {
+    "official_rgb_pdf": "04 Elementos de apoio/Ilustracoes/Para telas/TGR_Ilustracoes_RGB.pdf",
+    "official_rgb_ai": "04 Elementos de apoio/Ilustracoes/Para telas/TGR_Ilustracoes_RGB.ai",
+    "pdf_page_count": 17,
+    "individual_raster_or_svg_count": 0,
+    "llm_kit_reference": "references/optsolv-illustrations-rgb.pdf",
+    "selection_guidance": "Usar o PDF como catalogo e fonte vetorial somente quando a ferramenta puder extrair a pagina escolhida com seguranca.",
+    "recommended_remediation": "Exportar as ilustracoes individualmente em SVG e PNG transparente."
+  },
+  "delivery_profiles": {
+    "llm_context_only": [
+      "docs/optsolv_brand_system_master.md",
+      "spec/optsolv_brand_system_v1.json"
+    ],
+    "design_generation": [
+      "docs/optsolv_brand_system_master.md",
+      "spec/optsolv_brand_system_v1.json",
+      "spec/optsolv_brand_assets_manifest.json",
+      "assets/logos",
+      "assets/graphics",
+      "relevant_individual_icons",
+      "relevant_reference_pdf"
+    ],
+    "print_production": [
+      "original_cmyk_or_pantone_pdf",
+      "original_ai_file",
+      "approved_print_palette"
+    ],
+    "full_archive": [
+      "02 Logo",
+      "03 Paleta cromatica",
+      "04 Tipografia",
+      "04 Elementos de apoio"
+    ]
+  },
+  "packaging_findings": [
+    "Pastas __MACOSX devem ser ignoradas.",
+    "Nomes com espacos e acentos podem falhar em algumas automacoes.",
+    "Arquivos PDF agrupados sao bons catalogos, mas nao substituem ativos individuais.",
+    "Para geracao recorrente, anexar o Markdown e o JSON; adicionar somente os ativos necessarios para a peca."
+  ]
+}
