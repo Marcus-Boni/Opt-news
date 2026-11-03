@@ -8,6 +8,7 @@ import rateLimit from "@fastify/rate-limit";
 import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
 import { ZodError } from "zod";
 import { HttpError } from "./http/problem.ts";
+import { actorFromToken, SESSION_COOKIE } from "./identity/session.ts";
 import { registerRoutes, type RouteDeps } from "./routes.ts";
 
 const WEB_DIST = resolve(fileURLToPath(new URL("../../web/dist/", import.meta.url)));
@@ -70,14 +71,21 @@ export async function buildApp(deps: RouteDeps & { logger?: boolean }): Promise<
       return typeof given === "string" && /^[\w-]{8,64}$/.test(given) ? given : randomUUID();
     },
     bodyLimit: 64 * 1024,
-    trustProxy: deps.config.NODE_ENV === "production",
+    // shortcut: trusts proxies on private addresses (the platform ingress); pin the ingress addresses when hosting is
+    // decided (Q-05). Trusting every hop, or a bare hop count, would let a client pick its own address via X-Forwarded-For.
+    trustProxy: deps.config.NODE_ENV === "production" ? "loopback, linklocal, uniquelocal" : false,
   });
 
   await app.register(cookie);
   await app.register(rateLimit, {
     max: 300,
     timeWindow: "1 minute",
-    keyGenerator: (req) => req.cookies.optnews_session ?? req.ip,
+    // A made-up cookie must not buy a fresh bucket: only a live session counts per member, anything else per address.
+    keyGenerator: async (req) => {
+      const token = req.cookies[SESSION_COOKIE];
+      const actor = token ? await actorFromToken(deps.sql, token).catch(() => null) : null;
+      return actor ? `member:${actor.id}` : `ip:${req.ip}`;
+    },
     errorResponseBuilder: (req, ctx) => ({
       type: "about:blank",
       title: "Muitas requisições",

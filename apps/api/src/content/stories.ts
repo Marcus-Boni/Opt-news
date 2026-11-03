@@ -79,7 +79,8 @@ const COUNTS = (db: Db) => db`
   (SELECT count(*)::int FROM community.comments c WHERE c.target_type = 'story' AND c.target_id = s.id AND c.status = 'visible') AS comments,
   (SELECT count(*)::int FROM meetups.proposals p WHERE p.origin_story_id = s.id) AS proposals,
   (SELECT count(DISTINCT l.from_id)::int FROM knowledge.links l WHERE l.to_type = 'story' AND l.to_id = s.id) AS insights,
-  s.event_id, (SELECT ev.title FROM content.events ev WHERE ev.id = s.event_id) AS event_title,
+  s.event_id, (SELECT t.headline FROM content.stories t WHERE t.event_id = s.event_id AND t.status = 'published'
+    ORDER BY t.sort_at, t.id LIMIT 1) AS event_title,
   (SELECT count(*)::int FROM content.stories e WHERE e.event_id = s.event_id AND e.status = 'published') AS coverage`;
 
 const COLUMNS = (db: Db) => db`
@@ -158,8 +159,8 @@ export async function getStory(db: Db, actor: Actor, id: string): Promise<Card> 
 }
 
 async function eventSummary(db: Db, actor: Actor, eventId: string) {
-  const [ev] = await db<{ id: string; title: string; heatScore: number }[]>`
-    SELECT id, title, heat_score FROM content.events WHERE id = ${eventId}`;
+  const [ev] = await db<{ id: string; heatScore: number }[]>`
+    SELECT id, heat_score FROM content.events WHERE id = ${eventId}`;
   if (!ev) return null;
   const stories = await db<
     {
@@ -172,7 +173,11 @@ async function eventSummary(db: Db, actor: Actor, eventId: string) {
   >`
     SELECT s.id, s.headline, s.source_name, s.original_published_at, s.status FROM content.stories s
     WHERE s.event_id = ${eventId} AND ${listedStories(db, actor)} ORDER BY s.sort_at, s.id`;
-  return { ...ev, stories: stories.map(({ sourceName, ...st }) => ({ ...st, source: { name: sourceName } })) };
+  return {
+    ...ev,
+    title: stories[0]?.headline ?? "",
+    stories: stories.map(({ sourceName, ...st }) => ({ ...st, source: { name: sourceName } })),
+  };
 }
 
 /** Cards for the given ids that the actor may read, in the given order. */
@@ -185,15 +190,16 @@ export async function cardsByIds(db: Db, actor: Actor, ids: string[]) {
 }
 
 export async function getEvent(db: Db, actor: Actor, id: string) {
-  const [ev] = await db<{ id: string; title: string; heatScore: number; lastUpdatedAt: string }[]>`
-    SELECT id, title, heat_score, last_updated_at FROM content.events WHERE id = ${id}`;
+  const [ev] = await db<{ id: string; heatScore: number; lastUpdatedAt: string }[]>`
+    SELECT id, heat_score, last_updated_at FROM content.events WHERE id = ${id}`;
   if (!ev) throw notFound();
   const rows = await db<StoryRow[]>`
     SELECT ${COLUMNS(db)} FROM content.stories s WHERE s.event_id = ${id} AND ${listedStories(db, actor)}
     ORDER BY s.sort_at, s.id`;
   // An event whose coverage the reader cannot see does not exist for them.
   if (rows.length === 0) throw notFound();
-  return { ...ev, stories: rows.map(card) };
+  // Named after the earliest coverage this reader may see: a story in review or retracted never names the event.
+  return { ...ev, title: rows[0]?.headline ?? "", stories: rows.map(card) };
 }
 
 /** N-11/F-006: a member suggests a link; it waits for curation. Same member + same URL is idempotent. */

@@ -440,6 +440,27 @@ describe("events and briefings (N-06/N-07)", () => {
     assert.equal((await ana.get("/api/v1/events/00000000-0000-4000-8000-0000000000ff")).statusCode, 404);
   });
 
+  test("a story in review never names its event for readers", async () => {
+    const first = story["fx-atlas-agents"] ?? "";
+    const coverage = story["fx-atlas-coverage"] ?? "";
+    const headline = async (id: string) =>
+      (await sql<{ headline: string }[]>`SELECT headline FROM content.stories WHERE id = ${id}`)[0]?.headline;
+    await sql`UPDATE content.stories SET status = 'under_review' WHERE id = ${first}`;
+    try {
+      const detail = (await ana.get(`/api/v1/stories/${coverage}`)).json();
+      assert.equal(detail.event.title, await headline(coverage));
+      assert.equal((await ana.get(`/api/v1/events/${detail.event.id}`)).json().title, await headline(coverage));
+      const card = (await ana.get("/api/v1/stories?limit=50"))
+        .json()
+        .items.find((s: { id: string }) => s.id === coverage);
+      assert.equal(card.event.title, await headline(coverage));
+      // Curators see the coverage in review, so it still names the event for them.
+      assert.equal((await diego.get(`/api/v1/events/${detail.event.id}`)).json().title, await headline(first));
+    } finally {
+      await sql`UPDATE content.stories SET status = 'published' WHERE id = ${first}`;
+    }
+  });
+
   test("a briefing loses its overview when one of its stories is retracted", async () => {
     const [lead] = await sql<
       { sortAt: string }[]
@@ -539,6 +560,21 @@ describe("source administration (N-01)", () => {
       })
     ).json();
     assert.deepEqual([moved.feedUrl, moved.tier, moved.threshold], ["https://blog.example.org/novo.xml", "T2", 76]);
+  });
+});
+
+describe("rate limit", () => {
+  test("a made-up session cookie does not buy a fresh bucket", async () => {
+    const forged = (i: number) =>
+      app.inject({
+        method: "GET",
+        url: "/api/v1/stories",
+        remoteAddress: "203.0.113.7",
+        cookies: { optnews_session: `forjado-${i}` },
+      });
+    for (let i = 0; i < 300; i++) await forged(i);
+    assert.equal((await forged(300)).statusCode, 429);
+    assert.notEqual((await ana.get("/api/v1/stories")).statusCode, 429, "a live session keeps its own bucket");
   });
 });
 

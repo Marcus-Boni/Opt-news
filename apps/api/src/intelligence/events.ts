@@ -66,7 +66,8 @@ export async function groupStory(ctx: Omit<CallContext, "promptVersion">, storyI
     if (!target) return null;
     let eventId = target.eventId;
     if (!eventId) {
-      // The event is named after the coverage that came first.
+      // Kept for the audit trail: the coverage that came first may still be in review, so readers get the name from
+      // the coverage they may see (content/stories.ts), never this column.
       const first = Date.parse(target.sortAt) <= Date.parse(story.sortAt) ? target : story;
       const [created] = await tx<
         { id: string }[]
