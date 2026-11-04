@@ -1,6 +1,8 @@
 // Light / dark / follow the system. The choice lives in localStorage (a per-viewer convenience); without it, or when
 // storage is blocked, the system preference wins. index.html applies the class before React to avoid a flash.
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
+import { EASE_OUT, reducedMotion } from "@/motion";
 
 export type ThemeChoice = "system" | "light" | "dark";
 const KEY = "optnews-theme";
@@ -15,8 +17,10 @@ function read(): ThemeChoice {
   }
 }
 
+const resolve = (choice: ThemeChoice) => (choice === "system" ? (media().matches ? "dark" : "light") : choice);
+
 function apply(choice: ThemeChoice): "light" | "dark" {
-  const resolved = choice === "system" ? (media().matches ? "dark" : "light") : choice;
+  const resolved = resolve(choice);
   document.documentElement.classList.toggle("dark", resolved === "dark");
   document.documentElement.style.colorScheme = resolved;
   return resolved;
@@ -48,7 +52,29 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       // Storage blocked: the choice still applies for this visit.
     }
-    setChoiceState(c);
+    const commit = () => {
+      apply(c);
+      setChoiceState(c);
+    };
+    const changes = resolve(c) !== (document.documentElement.classList.contains("dark") ? "dark" : "light");
+    if (!changes || reducedMotion() || !document.startViewTransition) return commit();
+    // The signature impulse: the new theme sweeps in left to right behind a chevron front (the symbol's shape).
+    const sweep = document.startViewTransition(() => flushSync(commit));
+    sweep.ready
+      .then(() =>
+        document.documentElement.animate(
+          {
+            clipPath: [
+              "polygon(0 0, -20% 0, 0 50%, -20% 100%, 0 100%)",
+              "polygon(0 0, 100% 0, 120% 50%, 100% 100%, 0 100%)",
+            ],
+          },
+          { duration: 700, easing: EASE_OUT, pseudoElement: "::view-transition-new(root)" },
+        ),
+      )
+      .catch(() => {
+        // Skipped transition (tab hidden, another one started): the theme is already applied.
+      });
   }, []);
 
   return <Ctx.Provider value={{ choice, resolved, setChoice }}>{children}</Ctx.Provider>;

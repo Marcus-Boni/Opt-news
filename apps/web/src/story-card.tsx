@@ -2,7 +2,6 @@
 // the team did with it. The editorial score is the one orange datum on the row.
 import type { StoryCard as Story } from "@optnews/contracts";
 import { ArrowUpRight, CalendarDays, Layers, Lightbulb, MessageSquare } from "lucide-react";
-import { motion } from "motion/react";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -57,12 +56,9 @@ export function StoryRow({
   ].filter((a) => a.n > 0);
   const Heading = lead ? "h2" : "h3";
   return (
-    // Rows rise in as they scroll into view (once); MotionConfig drops the movement under reduced motion.
-    <motion.article
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "0px 0px -48px 0px" }}
-      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+    // Rows rise as the scroll brings them in (CSS scroll-driven, `data-row-in`); rows already on screen are just there.
+    <article
+      data-row-in
       className={cn(
         "group/row relative rounded-xl transition-colors",
         lead ? "pb-2" : "-mx-3 border-b border-border/70 px-3 py-5 last:border-b-0 hover:bg-muted/50",
@@ -132,6 +128,6 @@ export function StoryRow({
           ))}
         </div>
       )}
-    </motion.article>
+    </article>
   );
 }

@@ -21,7 +21,6 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
-import { animate } from "animejs";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useLocation } from "react-router";
 import { OptsolvSymbol } from "@/components/brand/optsolv";
@@ -32,7 +31,7 @@ import { Empty as EmptyBox, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitl
 import { Skeleton as SkeletonBar } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { reducedMotion, useReveal } from "@/motion";
+import { EASE_OUT, reducedMotion } from "@/motion";
 import type { ApiError } from "./api.ts";
 import { formatDateTime, relativeTime } from "./format.ts";
 
@@ -268,22 +267,20 @@ export function Notice({
 }
 
 /** An empty block keeps its frame and says what to do next. */
-/** The symbol in an empty state gives one small forward push (anime.js) when it appears: "impulsiona", not idle. */
+/** The symbol in an empty state gives one small forward push when it appears: "impulsiona", not idle. */
 function EmptyMark() {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (!ref.current || reducedMotion()) return;
-    const anim = animate(ref.current, {
-      translateX: [
-        { from: -6, to: 3, duration: 380, ease: "outQuad" },
-        { to: 0, duration: 520, ease: "outElastic(1, .6)" },
+    const push = ref.current.animate(
+      [
+        { opacity: 0, translate: "-6px 0" },
+        { opacity: 1, translate: "3px 0", offset: 0.4 },
+        { opacity: 1, translate: "0 0" },
       ],
-      opacity: { from: 0, to: 1, duration: 300 },
-      delay: 150,
-    });
-    return () => {
-      anim.revert();
-    };
+      { duration: 900, delay: 150, easing: EASE_OUT, fill: "backwards" },
+    );
+    return () => push.cancel();
   }, []);
   return (
     <span ref={ref} className="inline-flex">
@@ -365,10 +362,8 @@ export function Page({
   rail?: ReactNode;
   children: ReactNode;
 }) {
-  const scope = useRef<HTMLDivElement>(null);
-  useReveal(scope, [title]);
   return (
-    <div ref={scope} className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
       <title>{`${title} · Opt News`}</title>
       <header data-reveal className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">

@@ -2,7 +2,7 @@
 // which always carries the IA mark; then what the team did with it (the chevron chain) and the full provenance.
 import type { StoryDetail } from "@optnews/contracts";
 import { ArrowUpRight, BookOpen, CalendarPlus, MessageSquare } from "lucide-react";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import {
@@ -22,7 +22,6 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { useReveal } from "@/motion";
 import { api, useAction, useApi } from "../api.ts";
 import { Discussion } from "../discussion.tsx";
 import {
@@ -169,8 +168,6 @@ export function StoryPage() {
   const { label } = useTopics();
   const story = useApi("getStory", { params: { id } });
   const [proposing, setProposing] = useState(false);
-  const scope = useRef<HTMLElement>(null);
-  useReveal(scope, [story.data?.id]);
   useScrollToHash(story.data !== undefined);
 
   if (!story.data) {
@@ -191,7 +188,7 @@ export function StoryPage() {
   const score = s.editorialScore;
 
   return (
-    <article ref={scope} className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
+    <article className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
       <title>{`${s.headline} · Opt News`}</title>
       <Breadcrumb className="mb-5" data-reveal>
         <BreadcrumbList>

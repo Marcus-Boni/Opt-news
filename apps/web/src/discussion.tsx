@@ -2,7 +2,6 @@
 // revision control, curator moderation with a mandatory reason, placeholders that keep the thread readable.
 import type { Comment } from "@optnews/contracts";
 import { toast } from "sonner";
-import { animate } from "animejs";
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -19,7 +18,7 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { reducedMotion } from "@/motion";
+import { EASE_OUT, reducedMotion } from "@/motion";
 import { api, useAction, usePaged } from "./api.ts";
 import { hrefFor } from "./format.ts";
 import { useMe } from "./session.tsx";
@@ -252,10 +251,17 @@ function CommentNode({
 
   useEffect(() => {
     if (!fresh || !ref.current || reducedMotion()) return;
-    const arrival = animate(ref.current, { opacity: [0, 1], y: [12, 0], duration: 700, ease: "outExpo" });
-    return () => {
-      arrival.revert();
-    };
+    const arrival = ref.current.animate(
+      [
+        { opacity: 0, translate: "0 12px" },
+        { opacity: 1, translate: "0 0" },
+      ],
+      {
+        duration: 600,
+        easing: EASE_OUT,
+      },
+    );
+    return () => arrival.cancel();
   }, [fresh]);
 
   return (

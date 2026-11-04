@@ -243,6 +243,45 @@
   }
 }
 
+/*
+ * Motion that CSS owns (see src/motion.ts for the rest). Content is visible by default: the keyframes only describe
+ * where an element comes from, `backwards` holds that start during the delay and nothing is held afterwards. They
+ * move with the independent `translate` property, so a GSAP or motion `transform` on the same element never fights.
+ */
+@keyframes arrive {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Page arrival: runs once when the block mounts, including blocks that mount after their data arrives. */
+  [data-reveal] {
+    animation: arrive 0.5s var(--ease-out-expo) backwards;
+  }
+  /* Siblings arrive in order, 50ms apart, at most 300ms in total. */
+  @supports (animation-delay: calc(sibling-index() * 1ms)) {
+    [data-reveal] {
+      animation-delay: calc(min(sibling-index() - 1, 6) * 50ms);
+    }
+  }
+  /* List rows rise as the scroll brings them in; rows already on screen are simply there. */
+  @supports (animation-timeline: view()) {
+    [data-row-in] {
+      animation: arrive linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+
+/* Theme change: the new theme sweeps in behind a chevron front (src/theme.tsx drives the clip-path). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 /* Lenis smooth scrolling (reading surfaces). */
 html.lenis,
 html.lenis body {

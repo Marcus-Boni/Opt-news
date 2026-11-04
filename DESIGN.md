@@ -87,18 +87,29 @@ aninhados; sem grade de cartões iguais com ícone em círculo colorido; sem gra
 
 ## Movimento
 
-Uma gramática, uma função por biblioteca, tudo desligado sob `prefers-reduced-motion` (`MotionConfig
-reducedMotion="user"` na raiz e `reducedMotion()` em `src/motion.ts`). Só `transform` e `opacity`; nunca
-`transition: all`.
-- **GSAP:** chegada da página (`data-reveal`: expo-out, 16px, 60ms de cascata; em páginas longas `useScrollReveal`
-  faz o mesmo quando o bloco entra na tela), impulso nos chevrons (`Trail`), SplitText do panorama e do herói da
-  apresentação, a marca d'água do símbolo no panorama (entra com impulso, deriva com ScrollTrigger), botões que
-  inclinam para o ponteiro (`useMagnetic`, só na apresentação).
-- **motion:** indicador ativo da navegação que desliza entre itens (`layoutId`), linhas de notícia que sobem ao
-  entrar na tela (`whileInView`, uma vez), `CountUp` (React Bits) em números.
-- **anime.js:** retornos curtos de controle: voto, comentário novo, símbolo do estado vazio, persona escolhida no
-  login, chevron do pilar sob o ponteiro na apresentação.
-- **Lenis:** rolagem suave do documento. `SmoothTab` (Kokonut UI) nas abas, `FunnelChart` (bklit) no funil.
+Uma gramática, uma função por ferramenta, tudo reduzido sob `prefers-reduced-motion` (`MotionConfig
+reducedMotion="user"` na raiz, `reducedMotion()` em `src/motion.ts` e `@media (prefers-reduced-motion: no-preference)`
+no CSS). Conteúdo sempre visível por padrão: animação só descreve de onde o elemento vem. Curva única expo-out
+(`--ease-out-expo` / `EASE_OUT`); nunca `transition: all`, nunca elástico. Regra anticonflito: **um motor por
+elemento**. CSS e Web Animations movem pelas propriedades independentes `translate`/`scale`; GSAP e motion movem por
+`transform`. Quando duas coisas precisam mover o mesmo bloco (chegada e ímã), cada uma ganha seu invólucro.
+- **CSS (`index.css`):** chegada da página (`data-reveal`: 8px, 500ms, cascata de 50ms entre irmãos via
+  `sibling-index()`, teto de 300ms; roda quando o bloco monta, inclusive depois que os dados chegam, e nunca se
+  repete); linhas de notícia que sobem com a rolagem (`data-row-in`, `animation-timeline: view()`; sem suporte, só
+  aparecem); estados declarativos (persona escolhida no login).
+- **Web Animations (`el.animate`):** retornos curtos de controle: voto, comentário novo, símbolo do estado vazio,
+  chevron do pilar sob o ponteiro na apresentação.
+- **motion:** indicador ativo da navegação (`layoutId`), trilho de leitura laranja sob o cabeçalho nas páginas de
+  leitura (notícia, acontecimento, briefing, meetup, insight; `useScroll`, preso à rolagem), `CountUp` (React Bits),
+  `SmoothTab` (Kokonut UI) e `FunnelChart` (bklit).
+- **GSAP:** coreografia de rolagem: impulso nos chevrons (`Trail`), SplitText do panorama e do herói da apresentação,
+  marca d'água do símbolo no panorama, blocos da apresentação que chegam ao entrar na tela (`data-inview`,
+  `useScrollReveal`), botões que inclinam para o ponteiro (`useMagnetic`, só na apresentação).
+- **Lenis:** rolagem suave do documento, movida pelo ticker do GSAP (um só laço de quadros com o ScrollTrigger),
+  parada enquanto um modal trava a rolagem e realinhada à posição do `ScrollRestoration` a cada rota (voltar
+  devolve o ponto de leitura).
+- **Troca de tema (momento-assinatura):** View Transition em que o tema novo entra da esquerda para a direita atrás
+  de uma frente em chevron (`clip-path`, 700ms). Sem suporte ou com movimento reduzido, troca na hora.
 
 ## Superfícies de apresentação
 
@@ -116,11 +127,11 @@ superfície de trabalho. Regras só delas:
   chega em cascata; cada bloco abaixo chega quando entra na tela (`useScrollReveal`, uma vez); ao rolar para fora do
   herói o texto sobe e some e o campo de pontos se desfaz de novo (`scatter`, lido a cada quadro); impulso laranja nos
   conectores dos pilares (ScrollTrigger, uma vez) e, ao passar o ponteiro, o chevron do pilar recebe o mesmo empurrão
-  (anime.js, elástico); faixa do pipeline fixada e percorrida pela rolagem (`pin` + `scrub` só ≥1024px) com trilho e
+  (Web Animations); faixa do pipeline fixada e percorrida pela rolagem (`pin` + `scrub` só ≥1024px) com trilho e
   contador "03 / 06"; réguas dos números desenham da esquerda e os números contam (`CountUp`); os botões principais
   inclinam para o ponteiro fino (`useMagnetic`); uma barra fixa com marca e "Entrar" desce quando o herói sai da
-  tela (inerte enquanto escondida); Lenis sincronizado com o ScrollTrigger. No login, anime.js empurra a persona
-  escolhida para a frente enquanto a sessão abre. Tudo desligado sob movimento reduzido: a página só lê de cima para
+  tela (inerte enquanto escondida); Lenis sincronizado com o ScrollTrigger. No login, a persona escolhida avança e as
+  outras recuam enquanto a sessão abre (transição CSS do estado). Tudo desligado sob movimento reduzido: a página só lê de cima para
   baixo, o pipeline fica em coluna também no desktop e a barra fixa não aparece.
 - **Números:** só propriedades do sistema (2 notas, 72 h, 1 fonte por notícia), nunca resultados ou métricas.
 

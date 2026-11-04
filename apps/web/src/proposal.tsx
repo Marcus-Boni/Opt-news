@@ -1,11 +1,10 @@
 // A meetup proposal with its vote: optimistic toggle, visible rollback when the API refuses it.
 import type { Proposal } from "@optnews/contracts";
 import { toast } from "sonner";
-import { animate } from "animejs";
 import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-import { reducedMotion } from "@/motion";
+import { EASE_OUT, reducedMotion } from "@/motion";
 import { api, useAction } from "./api.ts";
 import { formatDateTime, PROPOSAL_STATUS, plural, relativeTime } from "./format.ts";
 import { useMe } from "./session.tsx";
@@ -30,16 +29,14 @@ function VoteControl({ proposal: p, onChange }: { proposal: Proposal; onChange: 
     setRolledBack(!res.ok);
     // The server took the vote: a short bump on the count confirms it.
     if (res.ok && count.current && !reducedMotion()) {
-      animate(count.current, {
-        scale: [
-          { to: 1.22, duration: 140, ease: "outQuad" },
-          { to: 1, duration: 420, ease: "outExpo" },
+      count.current.animate(
+        [
+          { scale: 1, translate: "0 0", easing: "ease-out" },
+          { scale: 1.22, translate: "0 -3px", offset: 0.25, easing: EASE_OUT },
+          { scale: 1, translate: "0 0" },
         ],
-        translateY: [
-          { to: -3, duration: 140, ease: "outQuad" },
-          { to: 0, duration: 420, ease: "outExpo" },
-        ],
-      });
+        560,
+      );
     }
   };
 

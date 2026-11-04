@@ -1,10 +1,9 @@
 // Dev-only sign-in: pick a synthetic persona. Replaced by Microsoft Entra ID SSO once that decision lands (Q-04).
 // The brand moment of the app: the Optsolv logo on warm graphite with the symbol's point field, then the chooser.
-// Motion: GSAP arrival for the copy and the cards; when a persona is chosen, anime.js nudges it forward (the chevron's
-// "impulsiona") while the others step back; the point field answers the pointer. All of it off under reduced motion.
-import { animate, type JSAnimation } from "animejs";
+// Motion: the copy and the cards arrive (CSS `data-reveal`); when a persona is chosen it steps forward (the chevron's
+// "impulsiona") while the others step back, as a CSS transition on its state; the point field answers the pointer.
 import { ChevronRight } from "lucide-react";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router";
 import { OptsolvSymbol, OptsolvTagline } from "@/components/brand/optsolv";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Item } from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { reducedMotion, useReveal } from "@/motion";
 import { api, useAction, useApi } from "../api.ts";
 import { ROLE_LABEL } from "../format.ts";
 import { useSession } from "../session.tsx";
@@ -37,33 +35,12 @@ export function Login() {
   const personas = useApi("devPersonas");
   const login = useAction();
   const [chosen, setChosen] = useState<string | null>(null);
-  const scope = useRef<HTMLElement>(null);
-  const list = useRef<HTMLUListElement>(null);
-  useReveal(scope, [personas.data]);
   const from = (location.state as { from?: string } | null)?.from ?? "/";
-
-  // The chosen card moves forward and the others step back while the session opens; a failure brings them back.
-  useEffect(() => {
-    const root = list.current;
-    if (!root || reducedMotion()) return;
-    const cards = [...root.querySelectorAll<HTMLElement>("[data-persona]")];
-    const anims: JSAnimation[] = cards.map((card) =>
-      card.dataset.persona === chosen
-        ? animate(card, { translateX: [0, 8], duration: 420, ease: "outExpo" })
-        : animate(card, { opacity: chosen ? 0.4 : 1, translateX: 0, duration: 320, ease: "outQuad" }),
-    );
-    return () => {
-      for (const a of anims) a.revert();
-    };
-  }, [chosen]);
 
   if (me) return <Navigate to={from} replace />;
 
   return (
-    <main
-      ref={scope}
-      className="grid min-h-dvh overflow-x-clip bg-background lg:grid-cols-[minmax(0,6fr)_minmax(0,6fr)]"
-    >
+    <main className="grid min-h-dvh overflow-x-clip bg-background lg:grid-cols-[minmax(0,6fr)_minmax(0,6fr)]">
       <title>Entrar · Opt News</title>
       {/* Always graphite, whatever the theme: the logo's dark ground, with the symbol's point field behind the copy. */}
       <section
@@ -119,9 +96,19 @@ export function Login() {
           ) : (
             <Async q={personas} what="as personas de teste" lines={4}>
               {(items) => (
-                <ul ref={list} className="flex flex-col gap-2" aria-label="Personas de teste">
+                <ul className="flex flex-col gap-2" aria-label="Personas de teste">
                   {items.map((p) => (
-                    <li key={p.id} data-reveal data-persona={p.id}>
+                    // The chosen card steps forward and the others step back while the session opens; a failure
+                    // clears the choice and brings them back.
+                    <li
+                      key={p.id}
+                      data-reveal
+                      className={cn(
+                        "transition-[opacity,translate] duration-300 ease-out-expo",
+                        chosen === p.id && "translate-x-2",
+                        chosen !== null && chosen !== p.id && "opacity-40",
+                      )}
+                    >
                       <Item asChild variant="outline">
                         <Button
                           variant="ghost"

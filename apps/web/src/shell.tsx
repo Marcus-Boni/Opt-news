@@ -2,7 +2,7 @@
 // active place marked in orange. Collapses to icons on desktop, becomes a sheet on phones. The top bar carries the
 // quick search (⌘K). Focus moves to the content after each navigation for screen-reader users.
 import { Check, ChevronsUpDown, LogOut, Monitor, Moon, Sun } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useScroll } from "motion/react";
 import { useEffect, useRef } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 import { CommandMenu, type NavEntry } from "@/components/command-menu";
@@ -171,6 +171,21 @@ function UserMenu() {
   );
 }
 
+/** Reading pages (a story, an event, a briefing, a meetup, an insight) are long: a thin brand rail under the header
+ * says how much is left. Tied to the scroll position only, so it never moves on its own. */
+const READING = /^\/(noticias|acontecimentos|briefings|meetups|conhecimento)\/(?!novo$)[^/]+$/;
+
+function ReadingProgress() {
+  const { scrollYProgress } = useScroll();
+  return (
+    <motion.span
+      aria-hidden="true"
+      className="absolute inset-x-0 -bottom-px h-0.5 origin-left bg-brand"
+      style={{ scaleX: scrollYProgress }}
+    />
+  );
+}
+
 export function Shell() {
   const me = useMe();
   const location = useLocation();
@@ -240,6 +255,7 @@ export function Shell() {
           </Hint>
           <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-5" />
           <CommandMenu entries={groups.flatMap((g) => g.items)} />
+          {READING.test(location.pathname) && <ReadingProgress />}
         </header>
         <div id="conteudo" ref={main} tabIndex={-1} className="flex-1 outline-none">
           <Outlet />
