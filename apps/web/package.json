@@ -12,7 +12,6 @@
     "@fontsource-variable/roboto-mono": "5.3.0",
     "@gsap/react": "2.1.2",
     "@optnews/contracts": "*",
-    "animejs": "4.5.0",
     "class-variance-authority": "0.7.1",
     "cmdk": "1.1.1",
     "cn": "0.5.2",

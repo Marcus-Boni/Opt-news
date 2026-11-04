@@ -1,11 +1,10 @@
 // A meetup proposal with its vote: optimistic toggle, visible rollback when the API refuses it.
 import type { Proposal } from "@optnews/contracts";
 import { toast } from "sonner";
-import { animate } from "animejs";
-import { useRef, useState } from "react";
-import { Link } from "react-router";
+import { useState } from "react";
+import { Link } from "@/link";
 import { Button } from "@/components/ui/button";
-import { reducedMotion } from "@/motion";
+import { RollingNumber } from "@/components/rolling-number";
 import { api, useAction } from "./api.ts";
 import { formatDateTime, PROPOSAL_STATUS, plural, relativeTime } from "./format.ts";
 import { useMe } from "./session.tsx";
@@ -17,7 +16,6 @@ function VoteControl({ proposal: p, onChange }: { proposal: Proposal; onChange: 
   const me = useMe();
   const action = useAction();
   const [rolledBack, setRolledBack] = useState(false);
-  const count = useRef<HTMLSpanElement>(null);
   const canVote = me.can.contribute && votingOpen(p);
 
   const toggle = async () => {
@@ -28,19 +26,6 @@ function VoteControl({ proposal: p, onChange }: { proposal: Proposal; onChange: 
     const res = await action.run(() => api("vote", { params: { id: p.id }, body: { vote } }));
     onChange(res.ok ? { ...before, ...res.value } : before);
     setRolledBack(!res.ok);
-    // The server took the vote: a short bump on the count confirms it.
-    if (res.ok && count.current && !reducedMotion()) {
-      animate(count.current, {
-        scale: [
-          { to: 1.22, duration: 140, ease: "outQuad" },
-          { to: 1, duration: 420, ease: "outExpo" },
-        ],
-        translateY: [
-          { to: -3, duration: 140, ease: "outQuad" },
-          { to: 0, duration: 420, ease: "outExpo" },
-        ],
-      });
-    }
   };
 
   return (
@@ -60,10 +45,7 @@ function VoteControl({ proposal: p, onChange }: { proposal: Proposal; onChange: 
           </Button>
         ) : null}
         <span className="text-sm text-muted-foreground" aria-live="polite">
-          <span ref={count} className="tabular inline-block font-semibold text-brand-text">
-            {p.votes}
-          </span>{" "}
-          {p.votes === 1 ? "voto" : "votos"}
+          <RollingNumber value={p.votes} className="font-semibold text-brand-text" /> {p.votes === 1 ? "voto" : "votos"}
         </span>
       </div>
       {rolledBack && action.error && (

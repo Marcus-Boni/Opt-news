@@ -415,6 +415,11 @@ describe("knowledge and search (K-01/K-02, F05)", () => {
     assert.ok(!member.hits.some((h: { id: string }) => h.id === story["fx-undated"]));
     const curator = (await diego.get(`/api/v1/search?q=${encodeURIComponent("benchmark")}`)).json();
     assert.ok(curator.hits.some((h: { id: string }) => h.id === story["fx-undated"]));
+    // Fact vs machine text survives search: every hit says whether its snippet was written by the model.
+    for (const h of curator.hits as { type: string; aiGenerated: unknown }[]) {
+      assert.equal(typeof h.aiGenerated, "boolean");
+      if (h.type !== "story") assert.equal(h.aiGenerated, false);
+    }
   });
 
   test("422 for short queries", async () => {

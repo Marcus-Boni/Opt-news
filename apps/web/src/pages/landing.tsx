@@ -5,19 +5,18 @@
 // scrolls in, the field scatters again as the hero leaves, the calls to action lean toward the pointer, a slim bar
 // keeps the way in at hand; all of it off under prefers-reduced-motion, where the page simply reads top to bottom.
 import { useGSAP } from "@gsap/react";
-import { animate, type JSAnimation } from "animejs";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { Link } from "react-router";
+import { Link } from "@/link";
 import { OptsolvSymbol, OptsolvTagline } from "@/components/brand/optsolv";
 import { Chevron } from "@/components/chevron-trail";
 import CountUp from "@/components/CountUp";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { reducedMotion, useMagnetic, useScrollReveal, useSmoothScroll } from "@/motion";
+import { EASE_OUT, reducedMotion, useMagnetic, useScrollReveal, useSmoothScroll } from "@/motion";
 import { useSession } from "../session.tsx";
 import { Mark, Wordmark } from "../ui.tsx";
 
@@ -230,23 +229,24 @@ function Pillars() {
     const el = root.current;
     if (!el || reducedMotion() || !window.matchMedia("(hover: hover)").matches) return;
     const offs = [...el.querySelectorAll<HTMLElement>("li")].map((li) => {
-      // The node (an HTML span), not the SVG inside it: on an SVG anime.js would animate the `x` attribute.
-      const node = li.querySelector("[data-node]");
-      let anim: JSAnimation | undefined;
+      // The chevron inside the node, on `translate`: the node itself is scaled in by the GSAP timeline above.
+      const chevron = li.querySelector("[data-node] > svg");
+      let anim: Animation | undefined;
       const push = () => {
-        anim?.revert();
-        if (node)
-          anim = animate(node, {
-            translateX: [
-              { to: 6, duration: 160, ease: "outQuad" },
-              { to: 0, duration: 640, ease: "outElastic(1, .55)" },
-            ],
-          });
+        anim?.cancel();
+        anim = chevron?.animate(
+          [
+            { translate: "0 0", easing: "ease-out" },
+            { translate: "6px 0", offset: 0.2, easing: EASE_OUT },
+            { translate: "0 0" },
+          ],
+          800,
+        );
       };
       li.addEventListener("pointerenter", push);
       return () => {
         li.removeEventListener("pointerenter", push);
-        anim?.revert();
+        anim?.cancel();
       };
     });
     return () => {
@@ -339,12 +339,12 @@ function Pipeline() {
     >
       <div className="mx-auto w-full max-w-6xl px-6">
         <h2
-          data-reveal
+          data-inview
           className="max-w-[20ch] text-[2rem] leading-[1.1] font-bold tracking-[-0.03em] sm:text-[2.5rem]"
         >
           Como uma notícia chega à sua tela
         </h2>
-        <p data-reveal className="mt-4 max-w-[52ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
+        <p data-inview className="mt-4 max-w-[52ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
           Seis etapas, todas registradas. A IA avalia e escreve; pessoas decidem.
         </p>
         {!still && (
@@ -413,7 +413,7 @@ function Facts() {
   return (
     <dl ref={root} className="grid gap-8 sm:grid-cols-3 lg:grid-cols-1">
       {FACTS.map((f) => (
-        <div key={f.unit} data-reveal>
+        <div key={f.unit} data-inview>
           <dt className="sr-only">{f.unit}</dt>
           <dd className="relative flex items-baseline gap-2 pt-5">
             <span data-rule aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-depth-foreground/20" />
@@ -435,13 +435,6 @@ export function Landing() {
   useSmoothScroll();
   useScrollReveal(scope);
   useMagnetic(scope);
-  // Lenis drives the document scroll; ScrollTrigger reads it from the same loop.
-  useEffect(() => {
-    const lenis = window.__lenis;
-    if (!lenis) return;
-    lenis.on("scroll", ScrollTrigger.update);
-    return () => lenis.off("scroll", ScrollTrigger.update);
-  }, []);
   const enter = me ? { to: "/", label: "Abrir o Opt News" } : { to: "/entrar", label: "Entrar" };
 
   return (
@@ -453,12 +446,12 @@ export function Landing() {
       <section id="pilares" className="scroll-mt-10 py-24 sm:py-32">
         <div className="mx-auto w-full max-w-6xl px-6 sm:px-10">
           <h2
-            data-reveal
+            data-inview
             className="max-w-[18ch] text-[2rem] leading-[1.1] font-bold tracking-[-0.03em] sm:text-[2.5rem]"
           >
             Quatro pilares, uma cadeia.
           </h2>
-          <p data-reveal className="mt-4 max-w-[52ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
+          <p data-inview className="mt-4 max-w-[52ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
             Uma notícia só vale o que o time faz com ela. Por isso cada passo aponta para o seguinte, e o caminho de
             volta fica registrado.
           </p>
@@ -477,12 +470,12 @@ export function Landing() {
         <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 sm:px-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-20">
           <div>
             <h2
-              data-reveal
+              data-inview
               className="max-w-[16ch] text-[2rem] leading-[1.1] font-bold tracking-[-0.03em] sm:text-[2.5rem]"
             >
               Fato, estimativa e texto de IA nunca se misturam.
             </h2>
-            <p data-reveal className="mt-4 max-w-[48ch] text-[1.0625rem] leading-relaxed opacity-85">
+            <p data-inview className="mt-4 max-w-[48ch] text-[1.0625rem] leading-relaxed opacity-85">
               Tudo que a IA escreve leva a marca de IA. A pontuação diz prioridade de leitura, não certeza. E a fonte
               está sempre a um clique, para confirmar antes de citar.
             </p>
@@ -494,19 +487,22 @@ export function Landing() {
       {/* The footer is on warm graphite too. */}
       <footer className="dark bg-background px-6 py-16 text-foreground sm:px-10">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 sm:flex-row sm:items-end sm:justify-between">
-          <div data-reveal className="flex flex-col gap-5">
+          <div data-inview className="flex flex-col gap-5">
             <OptsolvTagline className="h-auto w-60 text-warm-light" />
             <p className="max-w-[44ch] text-sm leading-relaxed text-muted-foreground">
               Opt News é a plataforma interna de inteligência tecnológica e conhecimento colaborativo da Optsolv.
             </p>
           </div>
-          <span data-reveal data-magnetic className="inline-block self-start sm:self-auto">
-            <Button asChild size="lg">
-              <Link to={enter.to}>
-                {enter.label}
-                <ArrowRight data-icon="inline-end" />
-              </Link>
-            </Button>
+          {/* Arrival and pointer lean on separate wrappers: both move the element, so one each. */}
+          <span data-inview className="inline-block self-start sm:self-auto">
+            <span data-magnetic className="inline-block">
+              <Button asChild size="lg">
+                <Link to={enter.to}>
+                  {enter.label}
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
+              </Button>
+            </span>
           </span>
         </div>
       </footer>

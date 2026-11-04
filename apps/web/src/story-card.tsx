@@ -2,12 +2,12 @@
 // the team did with it. The editorial score is the one orange datum on the row.
 import type { StoryCard as Story } from "@optnews/contracts";
 import { ArrowUpRight, CalendarDays, Layers, Lightbulb, MessageSquare } from "lucide-react";
-import { motion } from "motion/react";
-import { Link } from "react-router";
+import { Link } from "@/link";
+import { useViewTransitionState } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useApi } from "./api.ts";
-import { plural } from "./format.ts";
+import { formatScore, plural } from "./format.ts";
 import { AiTag, Dot, Hint, Time } from "./ui.tsx";
 
 /** The taxonomy and a slug → label lookup (falls back to the slug while loading). */
@@ -29,7 +29,7 @@ export function ScoreMark({ score }: { score: number | null }) {
   return (
     <Hint label="Pontuação editorial automática (0–100): prioridade de leitura, não certeza dos fatos">
       <span className="relative z-10 inline-flex h-6 min-w-8 shrink-0 items-center justify-center rounded-md bg-brand-soft px-1.5 font-mono text-xs font-medium text-brand-text">
-        {Math.round(score)}
+        {formatScore(score)}
         <span className="sr-only"> de 100 de pontuação editorial</span>
       </span>
     </Hint>
@@ -56,13 +56,12 @@ export function StoryRow({
     { n: counts.insights, icon: Lightbulb, one: "insight", many: "insights" },
   ].filter((a) => a.n > 0);
   const Heading = lead ? "h2" : "h3";
+  // Only the row being opened carries the shared name, so its headline morphs into the story page's title.
+  const opening = useViewTransitionState(`/noticias/${story.id}`);
   return (
-    // Rows rise in as they scroll into view (once); MotionConfig drops the movement under reduced motion.
-    <motion.article
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "0px 0px -48px 0px" }}
-      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+    // Rows rise as the scroll brings them in (CSS scroll-driven, `data-row-in`); rows already on screen are just there.
+    <article
+      data-row-in
       className={cn(
         "group/row relative rounded-xl transition-colors",
         lead ? "pb-2" : "-mx-3 border-b border-border/70 px-3 py-5 last:border-b-0 hover:bg-muted/50",
@@ -82,6 +81,7 @@ export function StoryRow({
       <Heading
         className={cn(
           "mt-2 font-bold tracking-[-0.025em] text-balance text-foreground",
+          opening && "vt-story-title",
           lead ? "text-[1.75rem] leading-[1.15] sm:text-[2.25rem]" : "text-[1.1875rem] leading-snug",
         )}
       >
@@ -132,6 +132,6 @@ export function StoryRow({
           ))}
         </div>
       )}
-    </motion.article>
+    </article>
   );
 }

@@ -136,4 +136,28 @@ export function hrefFor(type: string, id: string): string {
   return `/meetups?aba=propostas#pauta-${id}`;
 }
 
+const PIPELINE_STEP: Record<string, string> = {
+  prefilter: "O pré-filtro",
+  score_a: "O avaliador A",
+  score_b: "O avaliador B",
+  write: "A redação",
+  group: "O agrupamento",
+  briefing: "O panorama",
+};
+const PREFILTER_REASON: Record<string, string> = { fixture: "dados de teste" };
+
+/** Pipeline reasons arrive in the engine's words (step ids, raw codes); curators read them in the team's words. */
+export function humanReason(reason: string): string {
+  const format = /^saída de (\w+) fora do formato esperado$/.exec(reason);
+  if (format?.[1]) return `${PIPELINE_STEP[format[1]] ?? "Uma etapa"} devolveu uma resposta fora do formato esperado.`;
+  const pre = /^pré-filtro: (.+)$/.exec(reason);
+  if (pre?.[1]) return `Barrada no pré-filtro: ${PREFILTER_REASON[pre[1]] ?? pre[1]}.`;
+  const split = /^avaliações divergentes \((\d+) e (\d+)\)$/.exec(reason);
+  if (split) return `Os dois avaliadores discordaram (${split[1]} e ${split[2]}).`;
+  return reason.charAt(0).toUpperCase() + reason.slice(1);
+}
+
+/** The editorial score, the same everywhere: a whole number from 0 to 100. */
+export const formatScore = (score: number) => String(Math.round(score));
+
 export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;

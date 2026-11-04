@@ -1,20 +1,21 @@
-// Início: the day at a glance. The deep-purple field (brand purple = AI and data) holds the day's panorama, written by
-// the curation model from the listed stories only (marked as AI); its one orange element is the action. Then the
-// strongest story, the latest ones, and in the rail what the team is doing with the news.
+// Início: the day at a glance. The strongest story leads (a fact with its source, not machine text). Then the
+// deep-purple field (brand purple = AI and data) with the panorama the curation model wrote from the listed stories
+// (marked as AI): full when it is today's, a compact line that says its age when it is not. Then the latest stories,
+// and in the rail what the team is doing with the news.
 import type { Briefing, StoryCard } from "@optnews/contracts";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useRef } from "react";
-import { Link } from "react-router";
+import { Link } from "@/link";
 import { OptsolvSymbol } from "@/components/brand/optsolv";
 import SplitText from "@/components/SplitText";
 import { Button } from "@/components/ui/button";
 import { reducedMotion } from "@/motion";
 import { useApi } from "../api.ts";
 import { DiscussionLine } from "../discussion.tsx";
-import { formatDay, plural } from "../format.ts";
+import { formatDay, plural, relativeTime, TZ } from "../format.ts";
 import { ProposalLine } from "../proposal.tsx";
 import { StoryRow, useTopics } from "../story-card.tsx";
 import { Async, Page, Section } from "../ui.tsx";
@@ -31,6 +32,35 @@ function splitLead(items: StoryCard[]): [StoryCard | undefined, StoryCard[]] {
 }
 
 gsap.registerPlugin(ScrollTrigger);
+
+/** Today's date in São Paulo, in the briefing's YYYY-MM-DD form. */
+const todayKey = () => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date());
+
+/** An older panorama does not get the hero treatment: one line that says how old it is, and the way to it. */
+function StalePanorama({ briefing }: { briefing: Briefing }) {
+  return (
+    <section
+      aria-labelledby="panorama-titulo"
+      data-reveal
+      className="mb-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-2xl bg-depth px-6 py-5 text-depth-foreground"
+    >
+      <div className="min-w-0">
+        <h2 id="panorama-titulo" className="text-sm font-semibold">
+          Ainda não há panorama de hoje
+        </h2>
+        <p className="mt-1 text-sm text-depth-foreground/85">
+          O último é de {formatDay(`${briefing.date}T12:00:00-03:00`)}, gerado {relativeTime(briefing.generatedAt)}.
+        </p>
+      </div>
+      <Button asChild variant="secondary" size="sm">
+        <Link to={`/briefings/${briefing.date}`}>
+          Ler o último briefing
+          <ArrowRight data-icon="inline-end" />
+        </Link>
+      </Button>
+    </section>
+  );
+}
 
 function Panorama({ briefing }: { briefing: Briefing }) {
   const count = briefing.sections.reduce((n, s) => n + s.stories.length, 0);
@@ -152,6 +182,7 @@ export function Home() {
         <Async
           q={discussions}
           what="os debates"
+          shape="comments"
           empty={(list) => list.length === 0 && "Nenhum debate ainda. Comente uma notícia para abrir o primeiro."}
         >
           {(list) => (
@@ -172,18 +203,18 @@ export function Home() {
       subtitle={`${today.charAt(0).toUpperCase()}${today.slice(1)} · horário de Brasília`}
       rail={rail}
     >
-      {/* No briefing yet (404) is normal on a fresh install: the field simply does not show. */}
-      {briefing.data?.overview && <Panorama briefing={briefing.data} />}
       <Async
         q={stories}
         what="as notícias"
         lines={6}
+        shape="rows"
         empty={(page) =>
           page.items.length === 0 && "Nenhuma notícia curada ainda. Assim que a coleta rodar, o briefing aparece aqui."
         }
       >
         {(page) => {
           const [lead, rest] = splitLead(page.items);
+          const b = briefing.data;
           return (
             <>
               {lead && (
@@ -191,6 +222,8 @@ export function Home() {
                   <StoryRow story={lead} topicLabel={label} lead />
                 </section>
               )}
+              {/* No briefing yet (404) is normal on a fresh install: the field simply does not show. */}
+              {b?.overview && (b.date === todayKey() ? <Panorama briefing={b} /> : <StalePanorama briefing={b} />)}
               <Section title="Mais recentes" action={viewAll("/explorar", "Explorar tudo")}>
                 <div className="flex flex-col">
                   {rest.map((s) => (

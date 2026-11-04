@@ -21,18 +21,25 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
-import { animate } from "animejs";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useLocation } from "react-router";
 import { OptsolvSymbol } from "@/components/brand/optsolv";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Empty as EmptyBox, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton as SkeletonBar } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "@/link";
 import { cn } from "@/lib/utils";
-import { reducedMotion, useReveal } from "@/motion";
+import { EASE_OUT, reducedMotion } from "@/motion";
 import type { ApiError } from "./api.ts";
 import { formatDateTime, relativeTime } from "./format.ts";
 
@@ -57,6 +64,10 @@ const ICONS = {
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
+
+/** Selected state of a toggle or segmented control: neutral and solid, like the active tab (orange is for actions). */
+export const SELECTED =
+  "data-[state=on]:border-foreground data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:hover:bg-foreground/90";
 
 /** Named app icons (lucide). Inside a Button, prefer the lucide component with `data-icon`. */
 export function Icon({ name, className, ...rest }: { name: IconName; className?: string; "data-icon"?: string }) {
@@ -187,11 +198,87 @@ export function Skeleton({ lines = 3, className = "" }: { lines?: number; classN
   );
 }
 
-export function Loading({ lines = 3, label = "Carregando…" }: { lines?: number; label?: string }) {
+/**
+ * What is coming, drawn in its own shape, so the swap to real content does not move the page: story rows, cards,
+ * an article (title, byline, body beside a side panel) or a comment thread. `lines` stays for small blocks.
+ */
+export type SkeletonShape = "lines" | "rows" | "cards" | "article" | "comments";
+
+function ShapeSkeleton({ shape, lines }: { shape: SkeletonShape; lines: number }) {
+  const n = Array.from({ length: Math.min(lines, 4) }, (_, i) => i);
+  if (shape === "rows")
+    return (
+      <div className="flex flex-col divide-y divide-border/70" aria-hidden="true">
+        {n.map((i) => (
+          <div key={i} className="flex flex-col gap-2.5 py-5 first:pt-1">
+            <SkeletonBar className="h-3 w-48" />
+            <SkeletonBar className="h-5 w-11/12" />
+            <SkeletonBar className="h-5 w-2/3" />
+            <SkeletonBar className="mt-1 h-3.5 w-full max-w-[68ch]" />
+          </div>
+        ))}
+      </div>
+    );
+  if (shape === "cards")
+    return (
+      <div className="flex flex-col gap-3" aria-hidden="true">
+        {n.slice(0, 3).map((i) => (
+          <div key={i} className="flex flex-col gap-2.5 rounded-xl border p-5">
+            <SkeletonBar className="h-5 w-24 rounded-full" />
+            <SkeletonBar className="h-5 w-3/4" />
+            <SkeletonBar className="h-3.5 w-full" />
+            <SkeletonBar className="h-3.5 w-1/2" />
+          </div>
+        ))}
+      </div>
+    );
+  if (shape === "comments")
+    return (
+      <div className="flex flex-col gap-5" aria-hidden="true">
+        {n.slice(0, 3).map((i) => (
+          <div key={i} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3">
+            <SkeletonBar className="size-8 rounded-full" />
+            <div className="flex flex-col gap-2 pt-1">
+              <SkeletonBar className="h-3.5 w-40" />
+              <SkeletonBar className="h-3.5 w-full" />
+              <SkeletonBar className="h-3.5 w-3/5" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  if (shape === "article")
+    return (
+      <div className="flex flex-col gap-8" aria-hidden="true">
+        <div className="flex max-w-3xl flex-col gap-3">
+          <SkeletonBar className="h-4 w-44" />
+          <SkeletonBar className="h-10 w-11/12" />
+          <SkeletonBar className="h-10 w-3/5" />
+          <SkeletonBar className="mt-3 h-4 w-80 max-w-full" />
+          <SkeletonBar className="h-9 w-60 max-w-full" />
+        </div>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_19rem]">
+          <Skeleton lines={5} />
+          <SkeletonBar className="h-40 rounded-xl" />
+        </div>
+      </div>
+    );
+  return <Skeleton lines={lines} />;
+}
+
+export function Loading({
+  lines = 3,
+  label = "Carregando…",
+  shape = "lines",
+}: {
+  lines?: number;
+  label?: string;
+  shape?: SkeletonShape;
+}) {
   return (
     <div aria-busy="true">
       <span className="sr-only">{label}</span>
-      <Skeleton lines={lines} />
+      <ShapeSkeleton shape={shape} lines={lines} />
     </div>
   );
 }
@@ -268,22 +355,20 @@ export function Notice({
 }
 
 /** An empty block keeps its frame and says what to do next. */
-/** The symbol in an empty state gives one small forward push (anime.js) when it appears: "impulsiona", not idle. */
+/** The symbol in an empty state gives one small forward push when it appears: "impulsiona", not idle. */
 function EmptyMark() {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (!ref.current || reducedMotion()) return;
-    const anim = animate(ref.current, {
-      translateX: [
-        { from: -6, to: 3, duration: 380, ease: "outQuad" },
-        { to: 0, duration: 520, ease: "outElastic(1, .6)" },
+    const push = ref.current.animate(
+      [
+        { opacity: 0, translate: "-6px 0" },
+        { opacity: 1, translate: "3px 0", offset: 0.4 },
+        { opacity: 1, translate: "0 0" },
       ],
-      opacity: { from: 0, to: 1, duration: 300 },
-      delay: 150,
-    });
-    return () => {
-      anim.revert();
-    };
+      { duration: 900, delay: 150, easing: EASE_OUT, fill: "backwards" },
+    );
+    return () => push.cancel();
   }, []);
   return (
     <span ref={ref} className="inline-flex">
@@ -311,16 +396,18 @@ export function Async<T>({
   what,
   children,
   lines = 3,
+  shape,
   empty,
 }: {
   q: { data: T | undefined; error: ApiError | undefined; reload: () => void };
   what: string;
   children: (data: T) => ReactNode;
   lines?: number;
+  shape?: SkeletonShape;
   empty?: (data: T) => ReactNode | false;
 }) {
   if (q.error) return <ErrorState error={q.error} what={what} onRetry={q.reload} />;
-  if (q.data === undefined) return <Loading lines={lines} label={`Carregando ${what}…`} />;
+  if (q.data === undefined) return <Loading lines={lines} shape={shape} label={`Carregando ${what}…`} />;
   const nothing = empty?.(q.data);
   return nothing ? <Empty>{nothing}</Empty> : children(q.data);
 }
@@ -357,19 +444,36 @@ export function Page({
   subtitle,
   actions,
   rail,
+  crumbs,
   children,
 }: {
   title: string;
   subtitle?: ReactNode;
+  /** The way back on a detail page: where this page lives, from the section down (the page itself is the title). */
+  crumbs?: { to: string; label: string }[];
   actions?: ReactNode;
   rail?: ReactNode;
   children: ReactNode;
 }) {
-  const scope = useRef<HTMLDivElement>(null);
-  useReveal(scope, [title]);
   return (
-    <div ref={scope} className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
       <title>{`${title} · Opt News`}</title>
+      {crumbs && crumbs.length > 0 && (
+        <Breadcrumb className="mb-5" data-reveal>
+          <BreadcrumbList>
+            {crumbs.map((c, i) => (
+              <span key={c.to} className="contents">
+                {i > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to={c.to}>{c.label}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </span>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
       <header data-reveal className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h1 className="text-[1.75rem] leading-[1.15] font-bold tracking-[-0.03em] sm:text-[2rem]">{title}</h1>

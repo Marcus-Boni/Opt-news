@@ -243,6 +243,127 @@
   }
 }
 
+/*
+ * Motion that CSS owns (see src/motion.ts for the rest). Content is visible by default: the keyframes only describe
+ * where an element comes from, `backwards` holds that start during the delay and nothing is held afterwards. They
+ * move with the independent `translate` property, so a GSAP or motion `transform` on the same element never fights.
+ */
+@keyframes arrive {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Page arrival: runs once when the block mounts, including blocks that mount after their data arrives. */
+  [data-reveal] {
+    animation: arrive 0.5s var(--ease-out-expo) backwards;
+  }
+  /* Siblings arrive in order, 50ms apart, at most 300ms in total. */
+  @supports (animation-delay: calc(sibling-index() * 1ms)) {
+    [data-reveal] {
+      animation-delay: calc(min(sibling-index() - 1, 6) * 50ms);
+    }
+  }
+  /* List rows rise as the scroll brings them in; rows already on screen are simply there. */
+  @supports (animation-timeline: view()) {
+    [data-row-in] {
+      animation: arrive linear both;
+      animation-timeline: view();
+      /* A fixed distance, not a share of the row: a tall lead story must not sit half-faded at the fold. */
+      animation-range: entry 0 entry 80px;
+    }
+  }
+}
+
+/* Dead ends (404, render error): the symbol is revealed by the signature chevron front, left to right. */
+@keyframes chevron-wipe {
+  from {
+    clip-path: polygon(0 0, -40% 0, 0 50%, -40% 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 140% 50%, 100% 100%, 0 100%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .symbol-reveal {
+    animation: chevron-wipe 0.9s var(--ease-out-expo) 0.15s backwards;
+  }
+}
+
+/* Reading progress under the header (src/shell.tsx): the document scroll drives it; without support it is not shown. */
+@keyframes read-progress {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+[data-reading-progress] {
+  /* Empty unless the scroll drives it: a page too short to scroll has an inactive timeline and shows no rail. */
+  scale: 0 1;
+  transform-origin: left;
+  animation: read-progress linear both;
+  animation-timeline: scroll(root);
+}
+@supports not (animation-timeline: scroll()) {
+  [data-reading-progress] {
+    display: none;
+  }
+}
+
+/*
+ * View Transitions. Between pages (src/link.tsx): the frame (sidebar, header) stays put as its own layer, the old
+ * page fades out fast over the new one (whose blocks make their own arrival) and an opened story's headline morphs
+ * into the title of its page. Theme change (src/theme.tsx, class `theme-sweep`): one layer, swept by a chevron front.
+ */
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+html:not(.theme-sweep) [data-slot="sidebar-container"] {
+  view-transition-name: app-nav;
+}
+html:not(.theme-sweep) [data-app-header] {
+  view-transition-name: app-header;
+}
+html:not(.theme-sweep) .vt-story-title {
+  view-transition-name: story-title;
+}
+::view-transition-group(*) {
+  animation-duration: 0.38s;
+  animation-timing-function: var(--ease-out-expo);
+}
+::view-transition-old(root) {
+  animation: vt-fade-out 0.14s ease-out both;
+}
+::view-transition-new(root) {
+  animation: none;
+}
+/* Text morphs read better scaled from the top-left than stretched to fit. */
+::view-transition-old(story-title),
+::view-transition-new(story-title) {
+  height: 100%;
+  width: auto;
+  object-fit: none;
+  object-position: left top;
+}
+html.theme-sweep::view-transition-old(root),
+html.theme-sweep::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    /* biome-ignore lint/complexity/noImportantStyles: no page or theme choreography under reduced motion. */
+    animation: none !important;
+  }
+}
+
 /* Lenis smooth scrolling (reading surfaces). */
 html.lenis,
 html.lenis body {

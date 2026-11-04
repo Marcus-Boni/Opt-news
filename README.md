@@ -67,7 +67,7 @@ Os quatro pilares são obrigatórios e se ligam de forma rastreável: notícia �
 
 - SPA React 19 com tema claro e escuro, busca rápida com `Ctrl K` e layout responsivo do celular ao desktop.
 - Identidade Optsolv aplicada a partir do Brand System oficial, documentada em [DESIGN.md](DESIGN.md).
-- Página de apresentação com o símbolo desenhado por pontos em three.js e movimento com GSAP, Lenis e anime.js.
+- Página de apresentação com o símbolo desenhado por pontos em three.js e movimento com GSAP, Lenis, Motion e CSS.
 - Todo movimento é desligado com `prefers-reduced-motion`. A meta de acessibilidade é WCAG 2.2 AA.
 - Interface em pt-BR e datas no fuso `America/Sao_Paulo`.
 
@@ -154,7 +154,7 @@ flowchart LR
 | Jobs | pg-boss com retry exponencial e fila de falhas visível |
 | IA | Provedor simulado por padrão; Microsoft Foundry com autenticação Entra, sem chave ([ADR-0013](docs/12-adrs.md)) |
 | Web | React 19, React Router 8, Vite 8, Tailwind 4, shadcn/ui e Radix |
-| Movimento | GSAP, Lenis, anime.js, Motion e three.js |
+| Movimento | CSS (scroll-driven, View Transitions), Web Animations, GSAP, Lenis, Motion e three.js |
 | Qualidade | Biome, `node:test`, OpenAPI gerado do contrato |
 | Ambiente | Docker Compose para banco, feeds sintéticos, API e worker |
 

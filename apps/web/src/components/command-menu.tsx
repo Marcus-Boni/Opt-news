@@ -1,6 +1,6 @@
-// ⌘K / Ctrl+K: jump to any area, or send what was typed to the unified search. One shortcut for the frequent job.
+// ⌘K / Ctrl+K: jump to any area, start a frequent task, or send what was typed to the unified search.
 import { CornerDownLeft, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,15 @@ export interface NavEntry {
   icon: IconName;
 }
 
-export function CommandMenu({ entries }: { entries: NavEntry[] }) {
+/** A task the palette can start: open a page in a given state, or act in place (the theme). */
+export interface CommandAction {
+  label: string;
+  icon: ReactNode;
+  to?: string;
+  run?: () => void;
+}
+
+export function CommandMenu({ entries, actions = [] }: { entries: NavEntry[]; actions?: CommandAction[] }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
@@ -75,6 +83,26 @@ export function CommandMenu({ entries }: { entries: NavEntry[] }) {
                     <CornerDownLeft className="size-3.5" />
                   </CommandShortcut>
                 </CommandItem>
+              </CommandGroup>
+            )}
+            {actions.length > 0 && (
+              <CommandGroup heading="Ações">
+                {actions.map((a) => (
+                  <CommandItem
+                    key={a.label}
+                    value={a.label}
+                    onSelect={() => {
+                      if (a.to) go(a.to);
+                      else {
+                        setOpen(false);
+                        a.run?.();
+                      }
+                    }}
+                  >
+                    {a.icon}
+                    {a.label}
+                  </CommandItem>
+                ))}
               </CommandGroup>
             )}
             <CommandGroup heading="Ir para">

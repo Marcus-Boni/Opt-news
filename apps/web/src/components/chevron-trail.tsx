@@ -4,7 +4,7 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { type ReactNode, useRef } from "react";
-import { Link } from "react-router";
+import { Link } from "@/link";
 import { cn } from "@/lib/utils";
 import { reducedMotion } from "@/motion";
 
@@ -40,11 +40,10 @@ export function ChevronTrail({ items, label }: { items: TrailItem[]; label: stri
     () => {
       if (reducedMotion() || items.length < 2) return;
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl.from("[data-impulse]", { scaleY: 0, transformOrigin: "top", duration: 0.9, stagger: 0.12 }).from(
-        "[data-node]",
-        { scale: 0.4, autoAlpha: 0, duration: 0.6, stagger: 0.12, clearProps: "all" },
-        0,
-      );
+      // No lit link yet (the first step is the current page): only the nodes arrive.
+      if (root.current?.querySelector("[data-impulse]"))
+        tl.from("[data-impulse]", { scaleY: 0, transformOrigin: "top", duration: 0.9, stagger: 0.12 }, 0);
+      tl.from("[data-node]", { scale: 0.4, autoAlpha: 0, duration: 0.6, stagger: 0.12, clearProps: "all" }, 0);
     },
     { scope: root, dependencies: [items.length] },
   );

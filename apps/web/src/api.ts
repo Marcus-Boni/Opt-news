@@ -1,5 +1,6 @@
 // Typed client over the contract's `endpoints` map: same-origin fetch (session cookie), CSRF header on mutations,
-// RFC 9457 problems surfaced as ApiError. Plain React state; no cache layer.
+// RFC 9457 problems surfaced as ApiError. Plain React state, plus a short-lived prefetch cache that route loaders fill
+// so a page mounts with its data (no skeleton flash, scroll restoration and view transitions see the real page).
 import {
   type BodyIn,
   type Endpoint,
@@ -108,6 +109,43 @@ export async function api<N extends Name>(name: N, call: Call<N> = {}): Promise<
   return (res.status === 204 ? undefined : await res.json()) as Data<N>;
 }
 
+/**
+ * Route loaders prefetch here; `useApi`/`usePaged` take a fresh entry instead of fetching again. Entries hold the
+ * promise too, so a page that mounts before its prefetch lands waits for it instead of asking twice.
+ * shortcut: a 15s in-memory map, not a cache with invalidation; reloads and mutations still go to the server.
+ */
+const FRESH_MS = 15_000;
+const prefetched = new Map<string, { at: number; promise: Promise<unknown>; data?: unknown }>();
+const cacheKey = (name: Name, key: string) => `${name} ${key}`;
+
+function fromCache(name: Name, key: string) {
+  const hit = prefetched.get(cacheKey(name, key));
+  return hit && Date.now() - hit.at < FRESH_MS ? hit : undefined;
+}
+
+/** Start a GET for a page about to render; never throws (the page shows its own error state). */
+export function prime<N extends Name>(name: N, call: Omit<Call<N>, "signal"> = {}): Promise<void> {
+  const k = cacheKey(name, JSON.stringify(call));
+  const entry: { at: number; promise: Promise<unknown>; data?: unknown } = {
+    at: Date.now(),
+    promise: Promise.resolve(),
+  };
+  entry.promise = api(name, call).then(
+    (data) => {
+      entry.data = data;
+    },
+    () => prefetched.delete(k),
+  );
+  prefetched.set(k, entry);
+  return entry.promise.then(() => undefined);
+}
+
+/** A route loader's wait: the prefetches, but never longer than a beat; past that the page shows its skeleton. */
+export async function settle(...prefetches: Promise<void>[]): Promise<null> {
+  await Promise.race([Promise.all(prefetches), new Promise((r) => setTimeout(r, 1200))]);
+  return null;
+}
+
 export interface Query<T> {
   data: T | undefined;
   error: ApiError | undefined;
@@ -120,9 +158,9 @@ export interface Query<T> {
 /** GET on mount and whenever the call changes. A reload keeps the old data on screen until the new one lands. */
 export function useApi<N extends Name>(name: N, call: Omit<Call<N>, "signal"> = {}, enabled = true): Query<Data<N>> {
   const key = JSON.stringify(call);
-  const [state, setState] = useState<{ key: string; data?: Data<N>; error?: ApiError; pending: boolean }>({
-    key: "",
-    pending: enabled,
+  const [state, setState] = useState<{ key: string; data?: Data<N>; error?: ApiError; pending: boolean }>(() => {
+    const data = enabled ? (fromCache(name, key)?.data as Data<N> | undefined) : undefined;
+    return data === undefined ? { key: "", pending: enabled } : { key, data, pending: false };
   });
 
   const run = useCallback(
@@ -140,10 +178,22 @@ export function useApi<N extends Name>(name: N, call: Omit<Call<N>, "signal"> = 
   );
 
   useEffect(() => {
+    const hit = enabled ? fromCache(name, key) : undefined;
+    if (hit) {
+      let live = true;
+      void hit.promise.then(() => {
+        if (!live) return;
+        if (hit.data === undefined) run();
+        else setState({ key, data: hit.data as Data<N>, pending: false });
+      });
+      return () => {
+        live = false;
+      };
+    }
     const ctrl = new AbortController();
     run(ctrl.signal);
     return () => ctrl.abort();
-  }, [run]);
+  }, [run, name, key, enabled]);
 
   const fresh = state.key === key;
   return {
@@ -168,11 +218,11 @@ export function usePaged<N extends PagedName>(name: N, call: Omit<Call<N>, "sign
     cursor: string | null;
     error?: ApiError;
     pending: boolean;
-  }>({
-    key: "",
-    items: [],
-    cursor: null,
-    pending: true,
+  }>(() => {
+    const page = fromCache(name, key)?.data as Paged<Item<N>> | undefined;
+    return page
+      ? { key, items: page.items, cursor: page.nextCursor, pending: false }
+      : { key: "", items: [], cursor: null, pending: true };
   });
 
   const load = useCallback(
@@ -199,10 +249,23 @@ export function usePaged<N extends PagedName>(name: N, call: Omit<Call<N>, "sign
   );
 
   useEffect(() => {
+    const hit = fromCache(name, key);
+    if (hit) {
+      let live = true;
+      void hit.promise.then(() => {
+        if (!live) return;
+        const page = hit.data as Paged<Item<N>> | undefined;
+        if (page) setState({ key, items: page.items, cursor: page.nextCursor, pending: false });
+        else void load(null);
+      });
+      return () => {
+        live = false;
+      };
+    }
     const ctrl = new AbortController();
     void load(null, ctrl.signal);
     return () => ctrl.abort();
-  }, [load]);
+  }, [load, name, key]);
 
   const fresh = state.key === key;
   return {

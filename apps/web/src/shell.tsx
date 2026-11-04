@@ -2,11 +2,13 @@
 // active place marked in orange. Collapses to icons on desktop, becomes a sheet on phones. The top bar carries the
 // quick search (⌘K). Focus moves to the content after each navigation for screen-reader users.
 import { Check, ChevronsUpDown, LogOut, Monitor, Moon, Sun } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
-import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
-import { CommandMenu, type NavEntry } from "@/components/command-menu";
+import { Outlet, ScrollRestoration, useLocation } from "react-router";
+import { Link, NavLink } from "@/link";
+import { type CommandAction, CommandMenu, type NavEntry } from "@/components/command-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -171,10 +173,51 @@ function UserMenu() {
   );
 }
 
+/** Reading pages (a story, an event, a briefing, a meetup, an insight) are long: a thin brand rail under the header
+ * says how much is left. CSS scroll-driven (index.css), so it is right from the first frame and never moves on its own. */
+const READING = /^\/(noticias|acontecimentos|briefings|meetups|conhecimento)\/(?!novo$)[^/]+$/;
+
+/** One click between light and dark from anywhere (the user menu keeps "follow the system"). The icon turns over to
+ * the other one; the page itself changes with the chevron sweep. */
+function ThemeToggle() {
+  const { resolved, setChoice } = useTheme();
+  const next = resolved === "dark" ? "light" : "dark";
+  const label = next === "dark" ? "Usar tema escuro" : "Usar tema claro";
+  return (
+    <Hint label={label} side="bottom">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label={label}
+        onClick={() => setChoice(next)}
+        className="relative ml-auto overflow-hidden"
+      >
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span
+            key={resolved}
+            initial={{ rotate: -90, scale: 0.6, opacity: 0 }}
+            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+            exit={{ rotate: 90, scale: 0.6, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="grid place-items-center"
+          >
+            {resolved === "dark" ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
+          </motion.span>
+        </AnimatePresence>
+      </Button>
+    </Hint>
+  );
+}
+
+function ReadingProgress() {
+  return <span aria-hidden="true" data-reading-progress className="absolute inset-x-0 -bottom-px h-0.5 bg-brand" />;
+}
+
 export function Shell() {
   const me = useMe();
   const location = useLocation();
-  const main = useRef<HTMLDivElement>(null);
+  const main = useRef<HTMLElement>(null);
   const lastPath = useRef(location.pathname);
   useSmoothScroll();
 
@@ -184,7 +227,21 @@ export function Shell() {
     main.current?.focus({ preventScroll: true });
   }, [location.pathname]);
 
-  const groups = me.can.moderate ? [...GROUPS, { label: "Curadoria", items: CURATION }] : GROUPS;
+  const { resolved, setChoice } = useTheme();
+  const actions: CommandAction[] = [
+    ...(me.can.contribute
+      ? [
+          { label: "Nova pauta", icon: <Icon name="plus" />, to: "/meetups?aba=propostas&nova=1" },
+          { label: "Registrar insight", icon: <Icon name="knowledge" />, to: "/conhecimento/novo" },
+        ]
+      : []),
+    {
+      label: resolved === "dark" ? "Usar tema claro" : "Usar tema escuro",
+      icon: resolved === "dark" ? <Sun /> : <Moon />,
+      run: () => setChoice(resolved === "dark" ? "light" : "dark"),
+    },
+  ];
+  const groups = me.can.moderate ? [...GROUPS, { label: "Moderação", items: CURATION }] : GROUPS;
 
   return (
     <SidebarProvider>
@@ -217,9 +274,11 @@ export function Shell() {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          {groups.map((g) => (
-            <NavGroup key={g.label} label={g.label} items={g.items} />
-          ))}
+          <nav aria-label="Principal" className="flex flex-col gap-2">
+            {groups.map((g) => (
+              <NavGroup key={g.label} label={g.label} items={g.items} />
+            ))}
+          </nav>
         </SidebarContent>
         <SidebarFooter>
           <UserMenu />
@@ -227,7 +286,10 @@ export function Shell() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3 sm:px-4">
+        <header
+          data-app-header
+          className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3 sm:px-4"
+        >
           <Hint
             label={
               <>
@@ -238,12 +300,18 @@ export function Shell() {
           >
             <SidebarTrigger className="-ml-1" aria-label="Mostrar ou recolher navegação" />
           </Hint>
+          {/* On a phone the sidebar is hidden: the mark keeps the product in view and leads home. */}
+          <Link to="/" aria-label="Opt News — início" className="grid size-9 shrink-0 place-items-center md:hidden">
+            <Mark className="h-5 w-auto" />
+          </Link>
           <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-5" />
-          <CommandMenu entries={groups.flatMap((g) => g.items)} />
+          <CommandMenu entries={groups.flatMap((g) => g.items)} actions={actions} />
+          <ThemeToggle />
+          {READING.test(location.pathname) && <ReadingProgress />}
         </header>
-        <div id="conteudo" ref={main} tabIndex={-1} className="flex-1 outline-none">
+        <main id="conteudo" ref={main} tabIndex={-1} className="flex-1 outline-none">
           <Outlet />
-        </div>
+        </main>
       </SidebarInset>
       <ScrollRestoration />
     </SidebarProvider>

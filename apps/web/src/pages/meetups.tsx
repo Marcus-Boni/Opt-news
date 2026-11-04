@@ -102,10 +102,11 @@ function ManualProposalForm({ onCreated, onCancel }: { onCreated: () => void; on
   );
 }
 
-function Proposals() {
+function Proposals({ startCreating = false }: { startCreating?: boolean }) {
   const me = useMe();
   const proposals = useApi("listProposals");
-  const [creating, setCreating] = useState(false);
+  // `?nova=1` (the command palette's "Nova pauta") opens the form right away.
+  const [creating, setCreating] = useState(startCreating && me.can.contribute);
   useScrollToHash(proposals.data !== undefined);
   return (
     <>
@@ -129,6 +130,7 @@ function Proposals() {
           q={proposals}
           what="as pautas"
           lines={6}
+          shape="rows"
           empty={(list) =>
             list.length === 0 &&
             "Nenhuma pauta ainda. Proponha um meetup a partir de uma notícia ou crie uma pauta manual."
@@ -366,6 +368,7 @@ function Agenda({ proposalId }: { proposalId: string }) {
           q={meetups}
           what="a agenda"
           lines={5}
+          shape="cards"
           empty={(list) =>
             list.length === 0 && "Nenhuma sessão agendada. Pautas selecionadas na votação viram as próximas sessões."
           }
@@ -391,6 +394,7 @@ function History() {
         q={meetups}
         what="o histórico"
         lines={5}
+        shape="cards"
         empty={(list) =>
           list.length === 0 && "Ainda não houve sessões. O registro de cada meetup realizado aparece aqui."
         }
@@ -423,7 +427,7 @@ export function Meetups() {
   const tab = TABS.find(([key]) => key === params.get("aba"))?.[0] ?? "propostas";
   const panel =
     tab === "propostas" ? (
-      <Proposals />
+      <Proposals startCreating={params.get("nova") === "1"} />
     ) : tab === "agenda" ? (
       <Agenda key={params.get("pauta") ?? ""} proposalId={params.get("pauta") ?? ""} />
     ) : (
@@ -449,6 +453,8 @@ export function Meetups() {
           content:
             key === tab ? (
               <div className="min-w-0 p-1" onPointerDown={(e) => e.stopPropagation()}>
+                {/* The tab is the visual heading; this keeps the outline h1 → h2 → h3 for screen readers. */}
+                <h2 className="sr-only">{title}</h2>
                 {panel}
               </div>
             ) : null,

@@ -1,7 +1,7 @@
 // A meetup session as a calendar line, shared by the Meetups agenda and the Início rail. Kept apart from the Meetups
 // page so the home route does not pull in its forms, date picker and tabs.
 import type { MeetupSession } from "@optnews/contracts";
-import { Link } from "react-router";
+import { Link } from "@/link";
 import { formatTime, SESSION_STATE, TZ } from "./format.ts";
 import { Dot, Pill } from "./ui.tsx";
 
@@ -22,7 +22,10 @@ export function SessionLine({ session: m, compact = false }: { session: MeetupSe
     <li className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 border-t py-4 first:border-t-0 first:pt-0">
       <div className="text-center leading-none" aria-hidden="true">
         <div className="text-xs text-muted-foreground">{weekday.format(start).replace(".", "")}</div>
-        <div className="tabular mt-1 text-[1.75rem] font-bold tracking-[-0.03em] text-brand-text">
+        {/* Orange marks what is still ahead; a past session's date is just a date. */}
+        <div
+          className={`tabular mt-1 text-[1.75rem] font-bold tracking-[-0.03em] ${start.getTime() < Date.now() ? "text-foreground" : "text-brand-text"}`}
+        >
           {dayNum.format(start)}
         </div>
         <div className="mt-0.5 text-xs text-muted-foreground">{monthShort.format(start).replace(".", "")}</div>
