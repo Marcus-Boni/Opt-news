@@ -2,7 +2,8 @@
 // by section, with the machine-written overview marked as such and withdrawn when a story it covered is no longer shown.
 import type { Briefing } from "@optnews/contracts";
 import { TriangleAlert } from "lucide-react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
+import { Link } from "@/link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useApi } from "../api.ts";
@@ -15,10 +16,11 @@ export function EventPage() {
   const { label } = useTopics();
   const event = useApi("getEvent", { params: { id } });
   return (
-    <Async q={event} what="o acontecimento" lines={6}>
+    <Async q={event} what="o acontecimento" lines={6} shape="article">
       {(ev) => (
         <Page
           title={ev.title}
+          crumbs={[{ to: "/explorar", label: "Explorar" }]}
           subtitle={`Acontecimento · ${plural(ev.stories.length, "cobertura", "coberturas")} · atualizado em ${formatDateTime(ev.lastUpdatedAt)}`}
         >
           <p data-reveal className="mb-8 max-w-[68ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
@@ -82,10 +84,11 @@ export function BriefingPage() {
   const briefing = useApi("getBriefing", { params: { date } });
   const history = useApi("listBriefings");
   return (
-    <Async q={briefing} what="o briefing" lines={6}>
+    <Async q={briefing} what="o briefing" lines={6} shape="rows">
       {(b) => (
         <Page
           title={`Briefing de ${formatDay(`${b.date}T12:00:00-03:00`)}`}
+          crumbs={[{ to: "/", label: "Início" }]}
           subtitle={`Gerado em ${formatDateTime(b.generatedAt)} · uma notícia por acontecimento, ordenadas por relevância editorial`}
           rail={
             <Section title="Edições anteriores">

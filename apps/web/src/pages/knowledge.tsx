@@ -3,7 +3,8 @@ import type { Insight } from "@optnews/contracts";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
+import { Link } from "@/link";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ export function Library() {
           q={insights}
           what="a biblioteca"
           lines={6}
+          shape="rows"
           empty={(list) =>
             list.length === 0 &&
             "A biblioteca está vazia. Registre o primeiro insight a partir de uma notícia ou de um meetup."
@@ -160,6 +162,7 @@ export function NewInsight() {
   return (
     <Page
       title="Registrar insight"
+      crumbs={[{ to: "/conhecimento", label: "Conhecimento" }]}
       subtitle="Um aprendizado que o time pode reaproveitar: o que observamos, em que contexto e onde se aplica."
     >
       <form onSubmit={submit} className="max-w-2xl">
@@ -295,17 +298,19 @@ export function NewInsight() {
   );
 }
 
+const CHAIN = ["story", "proposal", "meetup", "insight"];
+
 export function InsightPage() {
   const { id = "" } = useParams();
   const insight = useApi("getInsight", { params: { id } });
 
   if (!insight.data) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
         {insight.error ? (
           <ErrorState error={insight.error} what="este insight" onRetry={insight.reload} />
         ) : (
-          <Loading lines={6} label="Carregando insight…" />
+          <Loading shape="article" label="Carregando insight…" />
         )}
       </div>
     );
@@ -315,6 +320,7 @@ export function InsightPage() {
   return (
     <Page
       title={i.title}
+      crumbs={[{ to: "/conhecimento", label: "Conhecimento" }]}
       subtitle={
         <span className="flex flex-wrap items-center gap-2">
           <StatusPill status={i.status} />
@@ -328,12 +334,15 @@ export function InsightPage() {
           <Trail
             label="De onde este insight veio"
             items={[
-              ...i.references.map((r) => ({
-                key: `${r.type}-${r.id}`,
-                title: r.title,
-                to: hrefFor(r.type, r.id),
-                meta: `${REF_LABEL[r.type] ?? r.type} · ${RELATION_LABEL[r.relation] ?? r.relation}`,
-              })),
+              // Always the canonical direction of the chain: news → agenda item → meetup → insight.
+              ...[...i.references]
+                .sort((a, b) => CHAIN.indexOf(a.type) - CHAIN.indexOf(b.type))
+                .map((r) => ({
+                  key: `${r.type}-${r.id}`,
+                  title: r.title,
+                  to: hrefFor(r.type, r.id),
+                  meta: `${REF_LABEL[r.type] ?? r.type} · ${RELATION_LABEL[r.relation] ?? r.relation}`,
+                })),
               { key: i.id, title: i.title, meta: "Insight · esta página", current: true },
             ]}
           />
@@ -349,12 +358,12 @@ export function InsightPage() {
         </Section>
         {i.context && (
           <Section id="contexto" title="Contexto">
-            <p className="plain max-w-[68ch] leading-relaxed text-muted-foreground">{i.context}</p>
+            <p className="plain max-w-[68ch] leading-relaxed">{i.context}</p>
           </Section>
         )}
         {i.applicability && (
           <Section id="aplica" title="Onde se aplica">
-            <p className="plain max-w-[68ch] leading-relaxed text-muted-foreground">{i.applicability}</p>
+            <p className="plain max-w-[68ch] leading-relaxed">{i.applicability}</p>
           </Section>
         )}
         <Discussion targetType="insight" targetId={i.id} />

@@ -2,7 +2,7 @@
 import type { endpoints, ResponseOf } from "@optnews/contracts";
 import { CircleCheck, Info, Link2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "@/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -146,6 +146,7 @@ export function Community() {
             q={discussions}
             what="os debates"
             lines={6}
+            shape="comments"
             empty={(list) =>
               list.length === 0 &&
               "Nenhum debate ainda. Abra uma notícia em Explorar e comente o que ela muda para o seu projeto."

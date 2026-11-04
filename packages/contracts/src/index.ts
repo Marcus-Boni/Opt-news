@@ -312,6 +312,8 @@ export const SearchHit = z.object({
   title: z.string(),
   snippet: z.string(),
   at: Instant,
+  /** True when the snippet is machine-written (a story's AI summary); the UI marks it as AI. */
+  aiGenerated: z.boolean(),
 });
 export const SearchResult = z.object({ q: z.string(), hits: z.array(SearchHit) });
 

@@ -3,7 +3,7 @@
 import type { Comment } from "@optnews/contracts";
 import { toast } from "sonner";
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "@/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -395,7 +395,7 @@ export function Discussion({
           thread.error ? (
             <ErrorState error={thread.error} what="a discussão" onRetry={thread.reload} />
           ) : (
-            <Loading lines={4} label="Carregando a discussão…" />
+            <Loading shape="comments" label="Carregando a discussão…" />
           )
         ) : items.length === 0 ? (
           <div className="mt-4">

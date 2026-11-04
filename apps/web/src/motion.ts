@@ -10,7 +10,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { type RefObject, useEffect } from "react";
-import { useLocation, useNavigationType } from "react-router";
+import { useLocation } from "react-router";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -51,56 +51,18 @@ export function useSmoothScroll() {
       window.__lenis = undefined;
     };
   }, []);
-  // ScrollRestoration has already placed the page (top for a new page, the saved spot on back/forward): adopt it
-  // instead of finishing a glide that belonged to the previous page.
+  // ScrollRestoration has already placed the page (top for a new page, the saved spot on back/forward; route loaders
+  // make sure the page is full height by then): adopt it instead of finishing a glide that belonged to the previous
+  // page. Measure first: Lenis caches the old page's height and would clamp the spot to it.
   useEffect(() => {
     void pathname;
-    window.__lenis?.scrollTo(window.scrollY, { immediate: true, force: true });
+    const lenis = window.__lenis;
+    if (!lenis) return;
+    const y = window.scrollY;
+    lenis.resize();
+    lenis.scrollTo(y, { immediate: true, force: true });
   }, [pathname]);
 }
-
-/** Where each history entry was scrolled to, keyed by location key; written by `rememberScroll`. */
-const spots = new Map<string, number>();
-let shownKey: string | undefined;
-
-/** Router subscriber (main.tsx): runs before React draws the next page, so `scrollY` still belongs to the old one. */
-export function rememberScroll(state: { location: { key: string } }) {
-  if (state.location.key === shownKey) return;
-  if (shownKey !== undefined) spots.set(shownKey, window.scrollY);
-  shownKey = state.location.key;
-}
-
-/**
- * Back/forward: ScrollRestoration puts the page back while its data is still loading, the page is short and the
- * browser clamps the saved spot to the top. Re-apply it as the page grows, until the reader scrolls or 3s pass.
- * shortcut: re-applies after the fact; route loaders that fetch before render would make this unnecessary.
- */
-export function useSettleRestoredScroll() {
-  const { key } = useLocation();
-  const action = useNavigationType();
-  useEffect(() => {
-    const target = action === "POP" ? spots.get(key) : undefined;
-    if (!target) return;
-    const place = () => {
-      if (window.scrollY >= target || document.documentElement.scrollHeight - window.innerHeight < target) return;
-      window.scrollTo(0, target);
-      // Lenis caches the page size and would clamp to the short page: measure again, then adopt the spot.
-      window.__lenis?.resize();
-      window.__lenis?.scrollTo(target, { immediate: true, force: true });
-    };
-    const grow = new ResizeObserver(place);
-    grow.observe(document.body);
-    const stop = () => {
-      grow.disconnect();
-      clearTimeout(timer);
-      for (const e of USER_SCROLL) window.removeEventListener(e, stop);
-    };
-    const timer = setTimeout(stop, 3000);
-    for (const e of USER_SCROLL) window.addEventListener(e, stop, { passive: true });
-    return stop;
-  }, [key, action]);
-}
-const USER_SCROLL = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
 
 /** Presentation pages: every `[data-inview]` in the scope arrives as it scrolls into view, once; what is on screen
  * arrives now. (App pages use the CSS arrival on `[data-reveal]` instead.) */

@@ -59,7 +59,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const changes = resolve(c) !== (document.documentElement.classList.contains("dark") ? "dark" : "light");
     if (!changes || reducedMotion() || !document.startViewTransition) return commit();
     // The signature impulse: the new theme sweeps in left to right behind a chevron front (the symbol's shape).
+    const root = document.documentElement;
+    root.classList.add("theme-sweep");
     const sweep = document.startViewTransition(() => flushSync(commit));
+    const done = () => root.classList.remove("theme-sweep");
+    sweep.finished.then(done, done);
     sweep.ready
       .then(() =>
         document.documentElement.animate(

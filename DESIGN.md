@@ -52,7 +52,7 @@ até 10% de apoio; laranja vivo e roxo vivo nunca competem na mesma região.
 botão primário por região, item ativo da navegação, foco, seleção e marcas de dado. Nada de barra lateral laranja,
 seção inteira laranja ou texto branco sobre laranja. O panorama do dia é texto de IA, por isso fica no roxo escuro, e
 seu único laranja é a ação "Ler o briefing completo". Em gráficos, as etapas ficam neutras e o laranja marca só o
-resultado (no funil da curadoria, "Publicados"). Abas e seletores ativos são neutros (`bg-foreground`).
+resultado (no funil da curadoria, "Publicados"). Abas, seletores e botões de alternância ativos são neutros e sólidos (`SELECTED` em `ui.tsx`: `bg-foreground`); em filas de cartões as ações de decisão também ficam neutras (um laranja preenchido por região).
 
 ## Tipografia
 
@@ -68,7 +68,8 @@ editorial, versões de política/modelo, atalhos de teclado. Nunca mono em pará
 
 shadcn/ui (Radix, estilo nova). Regras: `Button` com `data-icon` nos ícones; formulários com `FieldGroup` +
 `Field` + `FieldLabel` + `FieldDescription`/`FieldError`; `Select` com `SelectGroup`; opções 2–7 em `ToggleGroup`;
-avisos com `Alert`; vazio com `Empty`; carregamento com `Skeleton`; estados com `Badge`; `gap-*` em vez de
+avisos com `Alert`; vazio com `Empty`; carregamento com o esqueleto no formato do conteúdo (`Loading`/`Async` com `shape`: `rows`, `cards`, `article`,
+`comments`; `lines` só para blocos pequenos); estados com `Badge`; `gap-*` em vez de
 `space-*`; `size-*`; sem `dark:` manual (tokens já trocam de tema); classes condicionais com `cn()`.
 Controles têm a altura do botão (36px: `Input`, `Select`, `InputGroup`, `Toggle`, abas). `CommandDialog` envolve o
 conteúdo em `Command`. Textos de leitor de tela dos componentes estão em pt-BR ("Fechar", "Carregando").
@@ -99,19 +100,26 @@ elemento**. CSS e Web Animations movem pelas propriedades independentes `transla
   aparecem); trilho de leitura laranja sob o cabeçalho nas páginas de leitura (notícia, acontecimento, briefing,
   meetup, insight; `animation-timeline: scroll(root)`, vazio quando a página não rola); estados declarativos (persona
   escolhida no login).
-- **Web Animations (`el.animate`):** retornos curtos de controle: voto, comentário novo, símbolo do estado vazio,
-  chevron do pilar sob o ponteiro na apresentação.
-- **motion:** indicador ativo da navegação (`layoutId`), `CountUp` (React Bits), `SmoothTab` (Kokonut UI) e
-  `FunnelChart` (bklit).
+- **Web Animations (`el.animate`):** retornos curtos de controle: comentário novo, símbolo do estado vazio, chevron do
+  pilar sob o ponteiro na apresentação.
+- **motion:** indicador ativo da navegação (`layoutId`), contador de votos que rola o dígito na direção da mudança
+  (`RollingNumber`), ícone do botão de tema que gira entre sol e lua, `CountUp` (React Bits), `SmoothTab` (Kokonut
+  UI) e `FunnelChart` (bklit).
 - **GSAP:** coreografia de rolagem: impulso nos chevrons (`Trail`), SplitText do panorama e do herói da apresentação,
   marca d'água do símbolo no panorama, blocos da apresentação que chegam ao entrar na tela (`data-inview`,
   `useScrollReveal`), botões que inclinam para o ponteiro (`useMagnetic`, só na apresentação).
 - **Lenis:** rolagem suave do documento, movida pelo ticker do GSAP (um só laço de quadros com o ScrollTrigger),
-  parada enquanto um modal trava a rolagem e realinhada à posição do `ScrollRestoration` a cada rota. Como as
-  páginas buscam dados depois de montar, voltar reaplica a posição salva conforme a página cresce
-  (`useSettleRestoredScroll`, até 3s ou até a pessoa rolar).
+  parada enquanto um modal trava a rolagem e realinhada (medida de novo) à posição do `ScrollRestoration` a cada rota.
+- **Entre páginas (View Transitions, `src/link.tsx`):** todo `Link`/`NavLink` interno navega como transição. A moldura
+  (barra lateral, cabeçalho) fica parada; a página antiga some em 140ms sobre a nova, cujos blocos fazem a própria
+  chegada; a manchete da notícia aberta vira o título da página dela (`vt-story-title`, 380ms). Os `loader`s das
+  rotas (`main.tsx`) pré-buscam os dados da página (`prime`/`settle` em `api.ts`, até 1,2s), então a página monta com
+  conteúdo: a transição tem o que transformar e voltar cai na altura real da página.
 - **Troca de tema (momento-assinatura):** View Transition em que o tema novo entra da esquerda para a direita atrás
-  de uma frente em chevron (`clip-path`, 700ms). Sem suporte ou com movimento reduzido, troca na hora.
+  de uma frente em chevron (`clip-path`, 700ms, classe `theme-sweep`). Disparada pelo botão sol/lua do cabeçalho ou
+  pelo menu do usuário (que mantém "Seguir o sistema"). Sem suporte ou com movimento reduzido, troca na hora.
+- **Becos sem saída (404, erro de exibição):** o símbolo oficial é revelado pela mesma frente em chevron
+  (`symbol-reveal`), ao lado do título e das saídas. É o único grafismo dessas telas.
 
 ## Superfícies de apresentação
 
@@ -147,11 +155,23 @@ superfície de trabalho. Regras só delas:
   informação.
 - **Campos:** todo campo tem rótulo visível e placeholder com exemplo terminando em "…". Data e hora usam
   `DateTimePicker` (Popover + Calendar + Select, pt-BR, horário de Brasília), nunca `input type="datetime-local"`.
+- **Filtros de lista:** uma barra, uma decisão por controle (texto, `Select` de tema, `Select` de período, ordem);
+  o que está ativo aparece como pílulas removíveis com "Limpar filtros". O campo de Explorar filtra só aquele feed;
+  a Busca cobre notícias, meetups e insights.
+- **Paleta (Ctrl K):** "Ações" (Nova pauta, Registrar insight, trocar tema, conforme o papel) e "Ir para".
+- **Números e textos do motor:** nota editorial sempre inteira (`formatScore`); motivos do pipeline na língua do time
+  (`humanReason`), nunca ids de etapa ou códigos crus. Cadeias sempre na ordem notícia → pauta → meetup → insight.
+- **Atualidade:** o que é de outro dia diz a idade (o panorama de ontem vira a faixa "Ainda não há panorama de hoje");
+  no Início a notícia de maior nota abre a página, e o texto de IA vem depois dela.
 
 ## Acessibilidade
 
 WCAG 2.2 AA: contraste verificado por script (todos os pares ≥ 4,5:1), foco visível laranja em tudo, navegação por
-teclado, `aria-live` em resultados assíncronos, landmarks e pular para o conteúdo, alvo de toque ≥ 36px.
+teclado, `aria-live` em resultados assíncronos, alvo de toque ≥ 36px. Landmarks: barra lateral em
+`<nav aria-label="Principal">`, cabeçalho do app como banner (fora do `<main>`), `<main id="conteudo">` só com a
+página, e "Pular para o conteúdo" leva a ele. Páginas de detalhe (acontecimento, briefing, meetup, insight, notícia)
+têm trilha de volta (`crumbs` do `Page`). Títulos sem saltos de nível (h2 visível só a leitores onde a aba é o
+título). Marca IA em todo texto de máquina, inclusive nos resultados da busca (`aiGenerated` no `SearchHit`).
 
 ## Voz da interface
 

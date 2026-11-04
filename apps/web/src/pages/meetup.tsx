@@ -3,7 +3,8 @@
 import type { MeetupDetail } from "@optnews/contracts";
 import { toast } from "sonner";
 import { type FormEvent, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
+import { Link } from "@/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
@@ -22,7 +23,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Textarea } from "@/components/ui/textarea";
 import { api, useAction, useApi } from "../api.ts";
 import { Discussion } from "../discussion.tsx";
-import { ARTIFACT_KIND, formatDateTime, INSIGHT_STATUS, relativeTime } from "../format.ts";
+import { ARTIFACT_KIND, formatDateTime, INSIGHT_STATUS, plural, relativeTime } from "../format.ts";
 import { useMe } from "../session.tsx";
 import {
   Dot,
@@ -299,11 +300,11 @@ export function MeetupPage() {
 
   if (!meetup.data) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
         {meetup.error ? (
           <ErrorState error={meetup.error} what="este meetup" onRetry={meetup.reload} />
         ) : (
-          <Loading lines={6} label="Carregando meetup…" />
+          <Loading shape="article" label="Carregando meetup…" />
         )}
       </div>
     );
@@ -341,6 +342,12 @@ export function MeetupPage() {
   return (
     <Page
       title={m.title}
+      crumbs={[
+        { to: "/meetups", label: "Meetups" },
+        new Date(m.scheduledStart).getTime() < Date.now()
+          ? { to: "/meetups?aba=historico", label: "Histórico" }
+          : { to: "/meetups?aba=agenda", label: "Agenda" },
+      ]}
       subtitle={
         <span className="flex flex-wrap items-center gap-2">
           <SessionStatePill state={m.state} />
@@ -358,20 +365,12 @@ export function MeetupPage() {
             )}
           </Section>
           <Section title="Aprendizados">
-            {m.insights.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum insight registrado a partir desta sessão.</p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {m.insights.map((i) => (
-                  <li key={i.id} className="text-sm">
-                    <Link to={`/conhecimento/${i.id}`} className="link">
-                      {i.title}
-                    </Link>{" "}
-                    <Pill>{INSIGHT_STATUS[i.status] ?? i.status}</Pill>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {/* The insights themselves close the chain above; here only how many, and the way to add one. */}
+            <p className="text-sm text-muted-foreground">
+              {m.insights.length === 0
+                ? "Nenhum insight registrado a partir desta sessão."
+                : `${plural(m.insights.length, "insight registrado", "insights registrados")} a partir desta sessão, no fim da cadeia acima.`}
+            </p>
             {me.can.contribute && (
               <Button asChild variant="secondary" className="mt-4">
                 <Link to={`/conhecimento/novo?meetup=${m.id}`}>
@@ -389,13 +388,16 @@ export function MeetupPage() {
           <Fact term="Quando">{`${formatDateTime(m.scheduledStart)} · ${m.durationMinutes} min`}</Fact>
           <Fact term="Organização">{m.organizer.displayName}</Fact>
           <Fact term="Responsável">{m.responsible.displayName}</Fact>
-          <Fact term="Reunião">
-            {m.teamsUrl ? (
-              <ExternalLink href={m.teamsUrl}>Entrar no Teams</ExternalLink>
-            ) : (
-              <span className="text-muted-foreground">link ainda não informado</span>
-            )}
-          </Fact>
+          {/* A session that already happened needs no "link pending" line. */}
+          {(m.teamsUrl || m.state === "draft" || m.state === "scheduled") && (
+            <Fact term="Reunião">
+              {m.teamsUrl ? (
+                <ExternalLink href={m.teamsUrl}>Entrar no Teams</ExternalLink>
+              ) : (
+                <span className="text-muted-foreground">link ainda não informado</span>
+              )}
+            </Fact>
+          )}
         </Facts>
 
         <section aria-labelledby="sobre">

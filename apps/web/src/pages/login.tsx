@@ -4,7 +4,8 @@
 // "impulsiona") while the others step back, as a CSS transition on its state; the point field answers the pointer.
 import { ChevronRight } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router";
+import { Navigate, useLocation, useNavigate } from "react-router";
+import { Link } from "@/link";
 import { OptsolvSymbol, OptsolvTagline } from "@/components/brand/optsolv";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

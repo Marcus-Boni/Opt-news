@@ -4,7 +4,7 @@
 import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "@/link";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,9 +20,22 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api, type Data, type Query, useAction, useApi } from "../api.ts";
-import { plural, TIER } from "../format.ts";
+import { formatScore, humanReason, plural, TIER } from "../format.ts";
 import { useMe } from "../session.tsx";
-import { Async, Dot, Empty, ExternalLink, Fact, Facts, Page, Pill, ProblemNote, Section, Time } from "../ui.tsx";
+import {
+  Async,
+  Dot,
+  Empty,
+  ExternalLink,
+  Fact,
+  Facts,
+  Page,
+  Pill,
+  ProblemNote,
+  SELECTED,
+  Section,
+  Time,
+} from "../ui.tsx";
 
 type Queue = Data<"curationQueue">;
 type Review = Queue["reviews"][number];
@@ -44,9 +57,6 @@ const VERDICTS: { value: Verdict; label: string; count: (i: Item) => number }[] 
   { value: "should_publish", label: "Deveria publicar", count: (i) => i.verdicts.shouldPublish },
   { value: "should_skip", label: "Deveria ficar de fora", count: (i) => i.verdicts.shouldSkip },
 ];
-/** Selected state of a filter: the brand's soft field, never a solid orange wall (same as Explorar). */
-const ON = "data-[state=on]:border-brand/50 data-[state=on]:bg-brand-soft data-[state=on]:text-brand-text";
-
 function Scores({ scores, threshold }: { scores: [number, number] | null; threshold: number }) {
   const cut = `corte: soma ≥ ${2 * threshold} (2 × ${threshold})`;
   if (!scores) return <span className="tabular">sem notas · {cut}</span>;
@@ -96,7 +106,7 @@ function ReviewRow({ r, onDone, onReload }: { r: Review; onDone: () => void; onR
           {r.editorialScore !== null && (
             <>
               <Dot />
-              <span className="tabular">nota editorial {r.editorialScore}</span>
+              <span className="tabular">nota editorial {formatScore(r.editorialScore)}</span>
             </>
           )}
           {r.publishedAt && (
@@ -108,7 +118,9 @@ function ReviewRow({ r, onDone, onReload }: { r: Review; onDone: () => void; onR
           <Dot />
           <ExternalLink href={r.url}>Original</ExternalLink>
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">Motivo da revisão: {r.reviewReason ?? "não informado"}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Por que está em revisão: {r.reviewReason ? humanReason(r.reviewReason) : "não informado."}
+        </p>
         {!open && (
           <div className="mt-2">
             <ProblemNote error={decide.error} onReload={onReload} />
@@ -116,7 +128,8 @@ function ReviewRow({ r, onDone, onReload }: { r: Review; onDone: () => void; onR
         )}
       </div>
       <div className="flex shrink-0 gap-2">
-        <Button size="sm" disabled={decide.pending} onClick={() => void send("publish")}>
+        {/* One filled orange action per screen region: on a queue of cards the decision buttons stay neutral. */}
+        <Button size="sm" variant="secondary" disabled={decide.pending} onClick={() => void send("publish")}>
           {decide.pending && !open && <Spinner data-icon="inline-start" aria-hidden="true" />}
           Publicar<span className="sr-only"> {r.headline}</span>
         </Button>
@@ -226,13 +239,16 @@ function ItemRow({ item, onChange, onReload }: { item: Item; onChange: (i: Item)
 
   return (
     <li className="flex flex-col gap-3 px-4 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="min-w-0 font-medium text-foreground">
+      {/* The status always sits in the same slot, top right, whatever the title's length. */}
+      <div className="flex items-start justify-between gap-3">
+        <p className="min-w-0 flex-1 font-medium text-foreground">
           <ExternalLink href={item.url} className="hover:text-brand-text hover:underline">
             {item.title}
           </ExternalLink>
         </p>
-        <Pill tone={st.tone}>{st.label}</Pill>
+        <span className="shrink-0">
+          <Pill tone={st.tone}>{st.label}</Pill>
+        </span>
       </div>
       <div className="flex flex-col gap-1 text-xs text-muted-foreground">
         <p className="flex flex-wrap items-baseline gap-x-2">
@@ -261,10 +277,16 @@ function ItemRow({ item, onChange, onReload }: { item: Item; onChange: (i: Item)
         <p>
           <Scores scores={item.scores} threshold={item.threshold} />
         </p>
-        {item.reason && <p>Motivo: {item.reason}</p>}
+        {item.reason && <p>Motivo: {humanReason(item.reason)}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <fieldset aria-label={`Seu rótulo para ${item.title}`} className="flex flex-wrap gap-2">
+        <fieldset
+          aria-label={`Seu rótulo para ${item.title} (calibra o corte)`}
+          className="flex flex-wrap items-center gap-2"
+        >
+          <span className="text-xs text-muted-foreground" aria-hidden="true">
+            Seu rótulo:
+          </span>
           {VERDICTS.map((v) => {
             const on = item.myVerdict === v.value;
             const n = v.count(item);
@@ -273,18 +295,17 @@ function ItemRow({ item, onChange, onReload }: { item: Item; onChange: (i: Item)
                 key={v.value}
                 type="button"
                 size="sm"
-                variant={on ? "secondary" : "outline"}
-                className={on ? "border-brand/50 bg-brand-soft text-brand-text hover:bg-brand-soft" : undefined}
+                variant="outline"
+                className={on ? "border-foreground bg-foreground text-background hover:bg-foreground/90" : undefined}
                 aria-pressed={on}
                 disabled={label.pending || deciding}
                 onClick={() => void setVerdict(v.value)}
               >
                 {on && <Check data-icon="inline-start" aria-hidden="true" />}
                 {v.label}
-                <span className="tabular text-muted-foreground" aria-hidden="true">
-                  {n}
+                <span className={on ? "tabular opacity-80" : "tabular text-muted-foreground"}>
+                  · {plural(n, "rótulo", "rótulos")}
                 </span>
-                <span className="sr-only">({plural(n, "rótulo", "rótulos")})</span>
               </Button>
             );
           })}
@@ -430,16 +451,17 @@ export function Curation() {
       subtitle="Notícias em revisão, indicações com problema e o que o pipeline decidiu com cada item."
       rail={<CalibrationCard q={calibration} />}
     >
-      <Async q={queue} what="a fila de curadoria" lines={5}>
+      <Async q={queue} what="a fila de curadoria" lines={5} shape="cards">
         {(d) => (
           <div className="flex flex-col gap-10">
-            <Section title="Em revisão">
+            <Section id="revisao" title="Em revisão">
               <Reviews q={queue} />
             </Section>
             <Section title="Indicações com problema">
               <Submissions rows={d.submissions} />
             </Section>
             <Section
+              id="decisoes"
               title="Decisões do pipeline"
               action={
                 <ToggleGroup
@@ -450,13 +472,13 @@ export function Curation() {
                   onValueChange={(v) => v && setFilter(v as Filter)}
                   aria-label="Filtrar decisões"
                 >
-                  <ToggleGroupItem value="held" className={`h-8 px-3 ${ON}`}>
+                  <ToggleGroupItem value="held" className={`h-8 px-3 ${SELECTED}`}>
                     Barradas
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="selected" className={`h-8 px-3 ${ON}`}>
+                  <ToggleGroupItem value="selected" className={`h-8 px-3 ${SELECTED}`}>
                     Publicadas
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="all" className={`h-8 px-3 ${ON}`}>
+                  <ToggleGroupItem value="all" className={`h-8 px-3 ${SELECTED}`}>
                     Todas
                   </ToggleGroupItem>
                 </ToggleGroup>

@@ -5,7 +5,8 @@ import type { SourceDetail, SourceStatus } from "@optnews/contracts";
 import { toast } from "sonner";
 import { ArrowLeft, Plus } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
+import { Link } from "@/link";
 import CountUp from "@/components/CountUp";
 import { FunnelChart } from "@/components/charts/funnel-chart";
 import { Badge } from "@/components/ui/badge";
@@ -252,16 +253,29 @@ function Overview({ rows }: { rows: SourceStatus[] }) {
   const figures = [
     { label: "Fontes ativas", value: rows.filter((s) => s.active).length, of: rows.length },
     { label: "Publicadas", value: sum((s) => s.published) },
-    { label: "Em revisão", value: sum((s) => s.underReview) },
-    { label: "Falhas", value: failed, alert: failed > 0 },
-  ];
+    { label: "Em revisão", value: sum((s) => s.underReview), to: "/curadoria#revisao" },
+    { label: "Falhas", value: failed, alert: failed > 0, to: "/curadoria#decisoes" },
+  ] as { label: string; value: number; of?: number; alert?: boolean; to?: string }[];
   const still = reducedMotion();
   return (
     <>
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
         {figures.map((f) => (
-          <div key={f.label} className="flex flex-col gap-1 bg-card px-4 py-4 sm:px-5">
-            <dt className="text-sm text-muted-foreground">{f.label}</dt>
+          <div
+            key={f.label}
+            className="relative flex flex-col gap-1 bg-card px-4 py-4 transition-colors has-[a:hover]:bg-muted/60 sm:px-5"
+          >
+            <dt className="text-sm text-muted-foreground">
+              {f.to ? (
+                // The whole tile opens the queue behind the number.
+                <Link to={f.to} className="after:absolute after:inset-0 hover:text-foreground">
+                  {f.label}
+                  <span className="sr-only"> (abrir na Curadoria)</span>
+                </Link>
+              ) : (
+                f.label
+              )}
+            </dt>
             <dd
               className={cn(
                 "flex items-baseline gap-1.5 text-[1.75rem] leading-tight font-bold tracking-[-0.03em]",

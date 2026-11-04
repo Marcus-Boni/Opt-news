@@ -3,7 +3,8 @@
 import type { StoryDetail } from "@optnews/contracts";
 import { ArrowUpRight, BookOpen, CalendarPlus, MessageSquare } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
+import { Link } from "@/link";
 import { toast } from "sonner";
 import {
   Breadcrumb,
@@ -172,11 +173,11 @@ export function StoryPage() {
 
   if (!story.data) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
         {story.error ? (
           <ErrorState error={story.error} what="esta notícia" onRetry={story.reload} />
         ) : (
-          <Loading lines={6} label="Carregando notícia…" />
+          <Loading shape="article" label="Carregando notícia…" />
         )}
       </div>
     );
@@ -210,12 +211,13 @@ export function StoryPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <header className="max-w-3xl" data-reveal>
-        <h1 className="text-[2rem] leading-[1.1] font-bold tracking-[-0.035em] text-balance sm:text-[2.75rem]">
+      {/* The headline is the shared element of the list → story transition, so it is not part of the arrival. */}
+      <header className="max-w-3xl">
+        <h1 className="vt-story-title text-[2rem] leading-[1.1] font-bold tracking-[-0.035em] text-balance sm:text-[2.75rem]">
           {s.headline}
         </h1>
         {s.status !== "published" && (
-          <div className="mt-4 flex flex-col items-start gap-2">
+          <div data-reveal className="mt-4 flex flex-col items-start gap-2">
             <StatusPill status={s.status} />
             {s.status === "under_review" && (
               <Notice tone="neutral">
@@ -230,7 +232,7 @@ export function StoryPage() {
             )}
           </div>
         )}
-        <div className="mt-6 flex flex-col gap-1.5 text-sm">
+        <div data-reveal className="mt-6 flex flex-col gap-1.5 text-sm">
           <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <span className="font-semibold">{s.source.name}</span>
             <Dot />
@@ -253,7 +255,12 @@ export function StoryPage() {
           </p>
         </div>
         {/* Long source hosts wrap instead of pushing the page sideways on a phone. */}
-        <Button asChild variant="outline" className="mt-5 h-auto min-h-9 max-w-full shrink py-2 whitespace-normal">
+        <Button
+          asChild
+          data-reveal
+          variant="outline"
+          className="mt-5 h-auto min-h-9 max-w-full shrink py-2 whitespace-normal"
+        >
           <a href={s.originalUrl} target="_blank" rel="noopener noreferrer">
             Ler na fonte original ({hostOf(s.originalUrl)})
             <ArrowUpRight data-icon="inline-end" />
@@ -353,7 +360,8 @@ export function StoryPage() {
 
         <aside
           aria-label="Relevância, desdobramentos e proveniência"
-          className="flex min-w-0 flex-col gap-10 xl:col-start-2 xl:row-span-2 xl:row-start-1"
+          // Below xl the rail drops under the discussion: on a phone the conversation comes right after the summary.
+          className="flex min-w-0 flex-col gap-10 max-xl:order-last xl:col-start-2 xl:row-span-2 xl:row-start-1"
         >
           <Section title="Relevância">
             <div className="flex flex-col gap-5 text-sm">

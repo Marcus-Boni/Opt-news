@@ -1,13 +1,14 @@
 // Busca: one query over everything the reader may open, grouped by kind. The query lives in the URL.
 import { Search, X } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
+import { Link } from "@/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { useApi } from "../api.ts";
 import { hrefFor, plural, REF_LABEL } from "../format.ts";
-import { Async, Empty, Page, Section, Time, Hint } from "../ui.tsx";
+import { AiTag, Async, Empty, Hint, Page, Section, Time } from "../ui.tsx";
 
 const GROUPS = [
   ["story", "Notícias"],
@@ -85,6 +86,7 @@ export function SearchPage() {
             q={result}
             what="os resultados"
             lines={6}
+            shape="rows"
             empty={(r) =>
               r.hits.length === 0 &&
               `Nada encontrado para “${r.q}”. Tente um termo mais amplo ou o nome da tecnologia em inglês.`
@@ -112,6 +114,11 @@ export function SearchPage() {
                                 {h.title}
                               </Link>
                             </h3>
+                            {h.aiGenerated && (
+                              <div className="mt-1.5">
+                                <AiTag>Resumo</AiTag>
+                              </div>
+                            )}
                             <p className="plain mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                               {h.snippet}
                             </p>

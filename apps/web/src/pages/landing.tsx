@@ -10,7 +10,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { Link } from "react-router";
+import { Link } from "@/link";
 import { OptsolvSymbol, OptsolvTagline } from "@/components/brand/optsolv";
 import { Chevron } from "@/components/chevron-trail";
 import CountUp from "@/components/CountUp";
