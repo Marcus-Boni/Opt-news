@@ -270,8 +270,31 @@
     [data-row-in] {
       animation: arrive linear both;
       animation-timeline: view();
-      animation-range: entry 0% entry 70%;
+      /* A fixed distance, not a share of the row: a tall lead story must not sit half-faded at the fold. */
+      animation-range: entry 0 entry 80px;
     }
+  }
+}
+
+/* Reading progress under the header (src/shell.tsx): the document scroll drives it; without support it is not shown. */
+@keyframes read-progress {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+[data-reading-progress] {
+  /* Empty unless the scroll drives it: a page too short to scroll has an inactive timeline and shows no rail. */
+  scale: 0 1;
+  transform-origin: left;
+  animation: read-progress linear both;
+  animation-timeline: scroll(root);
+}
+@supports not (animation-timeline: scroll()) {
+  [data-reading-progress] {
+    display: none;
   }
 }
 

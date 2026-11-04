@@ -2,7 +2,7 @@
 // active place marked in orange. Collapses to icons on desktop, becomes a sheet on phones. The top bar carries the
 // quick search (⌘K). Focus moves to the content after each navigation for screen-reader users.
 import { Check, ChevronsUpDown, LogOut, Monitor, Moon, Sun } from "lucide-react";
-import { motion, useScroll } from "motion/react";
+import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 import { CommandMenu, type NavEntry } from "@/components/command-menu";
@@ -35,7 +35,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useSmoothScroll } from "@/motion";
+import { useSettleRestoredScroll, useSmoothScroll } from "@/motion";
 import { type ThemeChoice, useTheme } from "@/theme";
 import { ROLE_LABEL } from "./format.ts";
 import { useMe, useSession } from "./session.tsx";
@@ -172,18 +172,11 @@ function UserMenu() {
 }
 
 /** Reading pages (a story, an event, a briefing, a meetup, an insight) are long: a thin brand rail under the header
- * says how much is left. Tied to the scroll position only, so it never moves on its own. */
+ * says how much is left. CSS scroll-driven (index.css), so it is right from the first frame and never moves on its own. */
 const READING = /^\/(noticias|acontecimentos|briefings|meetups|conhecimento)\/(?!novo$)[^/]+$/;
 
 function ReadingProgress() {
-  const { scrollYProgress } = useScroll();
-  return (
-    <motion.span
-      aria-hidden="true"
-      className="absolute inset-x-0 -bottom-px h-0.5 origin-left bg-brand"
-      style={{ scaleX: scrollYProgress }}
-    />
-  );
+  return <span aria-hidden="true" data-reading-progress className="absolute inset-x-0 -bottom-px h-0.5 bg-brand" />;
 }
 
 export function Shell() {
@@ -192,6 +185,7 @@ export function Shell() {
   const main = useRef<HTMLDivElement>(null);
   const lastPath = useRef(location.pathname);
   useSmoothScroll();
+  useSettleRestoredScroll();
 
   useEffect(() => {
     if (lastPath.current === location.pathname) return;

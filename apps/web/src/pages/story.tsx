@@ -252,7 +252,8 @@ export function StoryPage() {
             <span>{LANGUAGE[s.language] ?? s.language}</span>
           </p>
         </div>
-        <Button asChild variant="outline" className="mt-5">
+        {/* Long source hosts wrap instead of pushing the page sideways on a phone. */}
+        <Button asChild variant="outline" className="mt-5 h-auto min-h-9 max-w-full shrink py-2 whitespace-normal">
           <a href={s.originalUrl} target="_blank" rel="noopener noreferrer">
             Ler na fonte original ({hostOf(s.originalUrl)})
             <ArrowUpRight data-icon="inline-end" />

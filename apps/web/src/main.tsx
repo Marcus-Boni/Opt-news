@@ -7,6 +7,7 @@ import "./index.css";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { rememberScroll } from "@/motion";
 import { ThemeProvider } from "@/theme";
 import { RequireSession, SessionProvider } from "./session.tsx";
 import { Shell } from "./shell.tsx";
@@ -110,6 +111,9 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
+rememberScroll(router.state);
+router.subscribe(rememberScroll);
 
 const root = document.getElementById("root");
 if (root) {

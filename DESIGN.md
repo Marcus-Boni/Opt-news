@@ -96,18 +96,20 @@ elemento**. CSS e Web Animations movem pelas propriedades independentes `transla
 - **CSS (`index.css`):** chegada da página (`data-reveal`: 8px, 500ms, cascata de 50ms entre irmãos via
   `sibling-index()`, teto de 300ms; roda quando o bloco monta, inclusive depois que os dados chegam, e nunca se
   repete); linhas de notícia que sobem com a rolagem (`data-row-in`, `animation-timeline: view()`; sem suporte, só
-  aparecem); estados declarativos (persona escolhida no login).
+  aparecem); trilho de leitura laranja sob o cabeçalho nas páginas de leitura (notícia, acontecimento, briefing,
+  meetup, insight; `animation-timeline: scroll(root)`, vazio quando a página não rola); estados declarativos (persona
+  escolhida no login).
 - **Web Animations (`el.animate`):** retornos curtos de controle: voto, comentário novo, símbolo do estado vazio,
   chevron do pilar sob o ponteiro na apresentação.
-- **motion:** indicador ativo da navegação (`layoutId`), trilho de leitura laranja sob o cabeçalho nas páginas de
-  leitura (notícia, acontecimento, briefing, meetup, insight; `useScroll`, preso à rolagem), `CountUp` (React Bits),
-  `SmoothTab` (Kokonut UI) e `FunnelChart` (bklit).
+- **motion:** indicador ativo da navegação (`layoutId`), `CountUp` (React Bits), `SmoothTab` (Kokonut UI) e
+  `FunnelChart` (bklit).
 - **GSAP:** coreografia de rolagem: impulso nos chevrons (`Trail`), SplitText do panorama e do herói da apresentação,
   marca d'água do símbolo no panorama, blocos da apresentação que chegam ao entrar na tela (`data-inview`,
   `useScrollReveal`), botões que inclinam para o ponteiro (`useMagnetic`, só na apresentação).
 - **Lenis:** rolagem suave do documento, movida pelo ticker do GSAP (um só laço de quadros com o ScrollTrigger),
-  parada enquanto um modal trava a rolagem e realinhada à posição do `ScrollRestoration` a cada rota (voltar
-  devolve o ponto de leitura).
+  parada enquanto um modal trava a rolagem e realinhada à posição do `ScrollRestoration` a cada rota. Como as
+  páginas buscam dados depois de montar, voltar reaplica a posição salva conforme a página cresce
+  (`useSettleRestoredScroll`, até 3s ou até a pessoa rolar).
 - **Troca de tema (momento-assinatura):** View Transition em que o tema novo entra da esquerda para a direita atrás
   de uma frente em chevron (`clip-path`, 700ms). Sem suporte ou com movimento reduzido, troca na hora.
 
