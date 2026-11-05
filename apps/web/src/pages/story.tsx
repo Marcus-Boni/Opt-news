@@ -1,10 +1,12 @@
 // Notícia: source facts (headline, byline, original link) kept apart from machine text (summary, selection reason),
 // which always carries the IA mark; then what the team did with it (the chevron chain) and the full provenance.
 import type { StoryDetail } from "@optnews/contracts";
-import { ArrowUpRight, BookOpen, CalendarPlus, MessageSquare } from "lucide-react";
+import { ArrowUpRight, BookOpen, BookOpenText, CalendarPlus, MessageSquare } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Link } from "@/link";
+import { cn } from "@/lib/utils";
+import { type ChainStep, ValueChain } from "@/components/value-chain";
 import { toast } from "sonner";
 import {
   Breadcrumb,
@@ -162,6 +164,77 @@ function ProposeForm({
   );
 }
 
+/** The story's place on the chain, from what is linked to it. The meetup step is "selected for a meetup": the
+ * story detail does not carry sessions, so the chain never claims one happened. */
+function chainOf(s: StoryDetail): ChainStep[] {
+  const open = s.proposals.filter((p) => p.status === "open");
+  const selected = s.proposals.filter((p) => p.status === "selected");
+  const lead = selected[0] ?? open[0] ?? s.proposals[0];
+  return [
+    {
+      key: "noticia",
+      label: "Notícia",
+      state: "done",
+      detail: s.status === "published" ? "Publicada pela curadoria" : (STORY_STATE[s.status] ?? s.status),
+    },
+    {
+      key: "pauta",
+      label: "Pauta",
+      state: selected.length > 0 ? "done" : open.length > 0 ? "active" : s.proposals.length > 0 ? "done" : "ahead",
+      detail:
+        open.length > 0
+          ? `Em votação · ${plural(
+              open.reduce((n, p) => n + p.votes, 0),
+              "voto",
+              "votos",
+            )}`
+          : s.proposals.length > 0
+            ? plural(s.proposals.length, "pauta proposta", "pautas propostas")
+            : "Nenhuma pauta ainda",
+      to: lead ? `/meetups?aba=propostas#pauta-${lead.id}` : undefined,
+    },
+    {
+      key: "meetup",
+      label: "Meetup",
+      state: selected.length > 0 ? (s.insights.length > 0 ? "done" : "active") : "ahead",
+      detail: selected.length > 0 ? "Pauta selecionada para meetup" : "Depende de uma pauta selecionada",
+      to: selected.length > 0 ? "/meetups?aba=agenda" : undefined,
+    },
+    {
+      key: "insight",
+      label: "Insight",
+      state: s.insights.length > 0 ? "done" : "ahead",
+      detail:
+        s.insights.length > 0
+          ? plural(s.insights.length, "insight registrado", "insights registrados")
+          : "Nenhum ainda",
+      to: s.insights[0] ? `/conhecimento/${s.insights[0].id}` : undefined,
+    },
+  ];
+}
+
+const STORY_STATE: Record<string, string> = { under_review: "Em revisão editorial", retracted: "Retirada" };
+
+/** Reading mode: one centered column at a larger size, the context rail out of the way. Remembered per viewer. */
+function useReadingMode(): [boolean, (on: boolean) => void] {
+  const [on, setOn] = useState(() => {
+    try {
+      return localStorage.getItem("optnews-reading") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const set = (next: boolean) => {
+    setOn(next);
+    try {
+      localStorage.setItem("optnews-reading", next ? "1" : "0");
+    } catch {
+      // Storage blocked: the mode still applies for this visit.
+    }
+  };
+  return [on, set];
+}
+
 export function StoryPage() {
   const { id = "" } = useParams();
   const me = useMe();
@@ -169,6 +242,7 @@ export function StoryPage() {
   const { label } = useTopics();
   const story = useApi("getStory", { params: { id } });
   const [proposing, setProposing] = useState(false);
+  const [reading, setReading] = useReadingMode();
   useScrollToHash(story.data !== undefined);
 
   if (!story.data) {
@@ -267,11 +341,34 @@ export function StoryPage() {
             <span className="sr-only">(abre em nova aba)</span>
           </a>
         </Button>
+        <Button
+          type="button"
+          data-reveal
+          variant="ghost"
+          aria-pressed={reading}
+          onClick={() => setReading(!reading)}
+          className="mt-5 ml-2 aria-pressed:bg-muted"
+        >
+          <BookOpenText data-icon="inline-start" />
+          {reading ? "Sair do modo leitura" : "Modo leitura"}
+        </Button>
       </header>
+
+      <section aria-labelledby="caminho" data-reveal className="surface mt-9 rounded-2xl px-5 py-5 sm:px-6">
+        <h2 id="caminho" className="mb-4 text-sm font-semibold text-muted-foreground">
+          Caminho desta notícia
+        </h2>
+        <ValueChain label="Onde esta notícia está no caminho até o conhecimento" steps={chainOf(s)} />
+      </section>
 
       <Separator className="my-9" />
 
-      <div className="grid gap-x-14 gap-y-12 xl:grid-cols-[minmax(0,1fr)_19rem] xl:grid-rows-[auto_1fr]">
+      <div
+        className={cn(
+          "grid gap-x-14 gap-y-12",
+          reading ? "mx-auto max-w-[42rem]" : "xl:grid-cols-[minmax(0,1fr)_19rem] xl:grid-rows-[auto_1fr]",
+        )}
+      >
         <div className="flex min-w-0 flex-col gap-9">
           {s.summary ? (
             <section aria-labelledby="resumo" className="max-w-[44rem]" data-reveal>
@@ -281,7 +378,14 @@ export function StoryPage() {
                 </h2>
                 {s.aiGenerated ? <AiTag /> : <span className="text-xs text-muted-foreground">Resumo editorial</span>}
               </div>
-              <p className="plain text-[1.125rem] leading-[1.7] text-foreground">{s.summary}</p>
+              <p
+                className={cn(
+                  "plain text-foreground",
+                  reading ? "text-[1.3125rem] leading-[1.75]" : "text-[1.125rem] leading-[1.7]",
+                )}
+              >
+                {s.summary}
+              </p>
               {s.aiGenerated && (
                 <p className="mt-3 text-xs text-muted-foreground">
                   Escrito automaticamente pela curadoria a partir do trecho da fonte; não é texto da fonte nem de um
@@ -298,7 +402,11 @@ export function StoryPage() {
           )}
 
           {s.selectionReason && !retracted && (
-            <section aria-labelledby="por-que" className="max-w-[44rem] rounded-xl bg-muted px-5 py-4" data-reveal>
+            <section
+              aria-labelledby="por-que"
+              className="max-w-[44rem] rounded-2xl bg-ai-soft/60 px-5 py-4 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--ai)_20%,transparent)]"
+              data-reveal
+            >
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                 <h2 id="por-que" className="text-sm font-semibold">
                   Por que foi selecionada
@@ -359,9 +467,11 @@ export function StoryPage() {
         </div>
 
         <aside
+          hidden={reading}
           aria-label="Relevância, desdobramentos e proveniência"
           // Below xl the rail drops under the discussion: on a phone the conversation comes right after the summary.
-          className="flex min-w-0 flex-col gap-10 max-xl:order-last xl:col-start-2 xl:row-span-2 xl:row-start-1"
+          data-rail
+          className="flex min-w-0 flex-col gap-5 max-xl:order-last xl:col-start-2 xl:row-span-2 xl:row-start-1"
         >
           <Section title="Relevância">
             <div className="flex flex-col gap-5 text-sm">

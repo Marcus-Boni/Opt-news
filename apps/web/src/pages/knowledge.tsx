@@ -14,7 +14,7 @@ import { api, useAction, useApi } from "../api.ts";
 import { Discussion } from "../discussion.tsx";
 import { hrefFor, INSIGHT_STATUS, plural, REF_LABEL, RELATION_LABEL } from "../format.ts";
 import { useMe } from "../session.tsx";
-import { Async, Dot, ErrorState, Loading, Page, Pill, ProblemNote, Section, Time, Trail } from "../ui.tsx";
+import { Async, Dot, ErrorState, Loading, NextStep, Page, Pill, ProblemNote, Section, Time, Trail } from "../ui.tsx";
 
 type RefType = Insight["references"][number]["type"];
 type Relation = Insight["references"][number]["relation"];
@@ -52,12 +52,13 @@ export function Library() {
             list.length === 0 &&
             "A biblioteca está vazia. Registre o primeiro insight a partir de uma notícia ou de um meetup."
           }
+          emptyAction={me.can.contribute && <NextStep to="/conhecimento/novo">Registrar insight</NextStep>}
         >
           {(list) => (
             <ul className="divide-y">
               {list.map((i) => (
                 // The title link stretches over the row, so the whole entry is one target with a short name.
-                <li key={i.id} className="relative py-5 first:pt-0">
+                <li key={i.id} data-spotlight="fill" className="-mx-4 rounded-xl px-4 py-5">
                   <h2 className="text-[1.0625rem] leading-snug font-semibold tracking-[-0.015em]">
                     <Link
                       to={`/conhecimento/${i.id}`}
@@ -182,7 +183,7 @@ export function NewInsight() {
                   return (
                     <li
                       key={`${r.type}-${r.id}`}
-                      className="grid gap-3 rounded-lg border bg-card p-3 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end"
+                      className="grid gap-3 surface rounded-xl p-3 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end"
                     >
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground">{REF_LABEL[r.type]}</p>

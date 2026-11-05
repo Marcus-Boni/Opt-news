@@ -1,5 +1,5 @@
 // Light / dark / follow the system. The choice lives in localStorage (a per-viewer convenience); without it, or when
-// storage is blocked, the system preference wins. index.html applies the class before React to avoid a flash.
+// storage is blocked, dark wins (the showcase theme); "system" is stored explicitly. index.html applies the class before React to avoid a flash.
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { EASE_OUT, reducedMotion } from "@/motion";
@@ -11,9 +11,9 @@ const media = () => window.matchMedia("(prefers-color-scheme: dark)");
 function read(): ThemeChoice {
   try {
     const v = localStorage.getItem(KEY);
-    return v === "light" || v === "dark" ? v : "system";
+    return v === "light" || v === "system" ? v : "dark";
   } catch {
-    return "system";
+    return "dark";
   }
 }
 
@@ -23,6 +23,9 @@ function apply(choice: ThemeChoice): "light" | "dark" {
   const resolved = resolve(choice);
   document.documentElement.classList.toggle("dark", resolved === "dark");
   document.documentElement.style.colorScheme = resolved;
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", resolved === "dark" ? "#141010" : "#faf8f5");
   return resolved;
 }
 
@@ -47,8 +50,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setChoice = useCallback((c: ThemeChoice) => {
     try {
-      if (c === "system") localStorage.removeItem(KEY);
-      else localStorage.setItem(KEY, c);
+      localStorage.setItem(KEY, c);
     } catch {
       // Storage blocked: the choice still applies for this visit.
     }

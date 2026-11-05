@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import { Link, NavLink } from "@/link";
+import { cn } from "@/lib/utils";
 import { type CommandAction, CommandMenu, type NavEntry } from "@/components/command-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,7 @@ function NavGroup({ label, items }: { label: string; items: NavEntry[] }) {
                   asChild
                   isActive={active}
                   tooltip={item.label}
-                  className="data-[active=true]:font-semibold [&[data-active=true]>svg]:text-sidebar-primary"
+                  className="transition-[background-color,color] duration-200 data-[active=true]:bg-[linear-gradient(90deg,color-mix(in_oklab,var(--sidebar-primary)_18%,transparent),transparent_90%)] data-[active=true]:font-semibold [&[data-active=true]>svg]:text-sidebar-primary"
                 >
                   <NavLink to={item.to} end={item.to === "/"} onClick={() => setOpenMobile(false)}>
                     <Icon name={item.icon} />
@@ -210,6 +211,51 @@ function ThemeToggle() {
   );
 }
 
+const TABS: NavEntry[] = [
+  { to: "/", label: "Início", icon: "home" },
+  { to: "/explorar", label: "Explorar", icon: "explore" },
+  { to: "/meetups", label: "Meetups", icon: "meetups" },
+  { to: "/comunidade", label: "Comunidade", icon: "community" },
+];
+
+/** Phones: the four daily places under the thumb, and "Mais" for the rest of the navigation (the sidebar sheet). */
+function TabBar() {
+  const { pathname } = useLocation();
+  const { setOpenMobile } = useSidebar();
+  return (
+    <nav
+      aria-label="Navegação rápida"
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border/60 bg-background/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+    >
+      {TABS.map((t) => {
+        const active = t.to === "/" ? pathname === "/" : pathname.startsWith(t.to);
+        return (
+          <NavLink
+            key={t.to}
+            to={t.to}
+            end={t.to === "/"}
+            className={cn(
+              "flex h-14 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium text-muted-foreground transition-colors active:scale-[0.97]",
+              active && "text-foreground [&>svg]:text-brand",
+            )}
+          >
+            <Icon name={t.icon} className="size-5" />
+            {t.label}
+          </NavLink>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => setOpenMobile(true)}
+        className="flex h-14 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium text-muted-foreground active:scale-[0.97]"
+      >
+        <Icon name="menu" className="size-5" />
+        Mais
+      </button>
+    </nav>
+  );
+}
+
 function ReadingProgress() {
   return <span aria-hidden="true" data-reading-progress className="absolute inset-x-0 -bottom-px h-0.5 bg-brand" />;
 }
@@ -254,8 +300,8 @@ export function Shell() {
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild tooltip="Opt News — início">
                 <Link to="/">
-                  <span className="grid size-8 shrink-0 place-items-center">
-                    <Mark className="h-6 w-auto" />
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-sidebar-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.06),inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+                    <Mark className="h-4.5 w-auto" />
                   </span>
                   <span className="grid leading-tight">
                     <span
@@ -288,7 +334,7 @@ export function Shell() {
       <SidebarInset>
         <header
           data-app-header
-          className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3 sm:px-4"
+          className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-4"
         >
           <Hint
             label={
@@ -309,9 +355,15 @@ export function Shell() {
           <ThemeToggle />
           {READING.test(location.pathname) && <ReadingProgress />}
         </header>
-        <main id="conteudo" ref={main} tabIndex={-1} className="flex-1 outline-none">
+        <main
+          id="conteudo"
+          ref={main}
+          tabIndex={-1}
+          className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] outline-none md:pb-0"
+        >
           <Outlet />
         </main>
+        <TabBar />
       </SidebarInset>
       <ScrollRestoration />
     </SidebarProvider>

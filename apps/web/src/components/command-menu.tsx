@@ -1,5 +1,5 @@
 // ⌘K / Ctrl+K: jump to any area, start a frequent task, or send what was typed to the unified search.
-import { CornerDownLeft, Search } from "lucide-react";
+import { BookOpen, CalendarDays, CornerDownLeft, Newspaper, Search, Sparkles } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,22 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { Kbd } from "@/components/ui/kbd";
+import { useApi } from "@/api";
+import { hrefFor } from "@/format";
 import { Icon, type IconName } from "@/ui";
+
+const HIT_ICON = { story: Newspaper, insight: BookOpen, meetup: CalendarDays } as const;
+const HIT_KIND = { story: "Notícia", insight: "Insight", meetup: "Meetup" } as const;
+
+/** The query, once typing pauses for a beat (no request per keystroke). */
+function useSettled(value: string, ms = 250) {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    const t = window.setTimeout(() => setSettled(value), ms);
+    return () => window.clearTimeout(t);
+  }, [value, ms]);
+  return settled;
+}
 
 export interface NavEntry {
   to: string;
@@ -52,6 +67,9 @@ export function CommandMenu({ entries, actions = [] }: { entries: NavEntry[]; ac
     navigate(to);
   };
   const q = query.trim();
+  const settled = useSettled(q);
+  const results = useApi("search", { query: { q: settled } }, open && settled.length >= 2);
+  const hits = settled === q ? (results.data?.hits.slice(0, 6) ?? []) : [];
 
   return (
     <>
@@ -74,6 +92,26 @@ export function CommandMenu({ entries, actions = [] }: { entries: NavEntry[]; ac
           <CommandInput placeholder="Digite um termo ou uma área…" value={query} onValueChange={setQuery} />
           <CommandList>
             <CommandEmpty>Nada encontrado.</CommandEmpty>
+            {hits.length > 0 && (
+              <CommandGroup heading="Conteúdo">
+                {hits.map((h) => {
+                  const Glyph = HIT_ICON[h.type];
+                  return (
+                    // The query is part of the value, so cmdk's own filter keeps the server's results.
+                    <CommandItem
+                      key={`${h.type}-${h.id}`}
+                      value={`${h.title} ${h.id} ${q}`}
+                      onSelect={() => go(hrefFor(h.type, h.id))}
+                    >
+                      <Glyph />
+                      <span className="min-w-0 flex-1 truncate">{h.title}</span>
+                      {h.aiGenerated && <Sparkles aria-label="resumo gerado por IA" className="text-ai" />}
+                      <span className="text-xs text-muted-foreground">{HIT_KIND[h.type]}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
             {q.length >= 2 && (
               <CommandGroup heading="Pesquisar">
                 <CommandItem value={`buscar ${q}`} onSelect={() => go(`/busca?q=${encodeURIComponent(q)}`)}>

@@ -354,8 +354,15 @@ export const SourceStatus = z.object({
   }),
   published: z.int(),
   underReview: z.int(),
+  /** Items collected on each of the last 7 days (São Paulo calendar), oldest first; today is the last entry. */
+  week: z.array(z.int()).length(7),
 });
 export type SourceStatus = z.infer<typeof SourceStatus>;
+
+/** What the team did each day (São Paulo calendar), oldest first; today is the last entry. */
+export const Activity = z.object({
+  days: z.array(z.object({ date: z.iso.date(), stories: z.int(), comments: z.int(), proposals: z.int() })),
+});
 
 export const SOURCE_ITEM_STATUS = ["discovered", "archived", "rejected", "not_selected", "selected", "failed"] as const;
 export const SourceDetail = SourceStatus.extend({
@@ -771,6 +778,12 @@ export const endpoints = {
     params: IdParam,
     body: ItemLabel,
     response: CurationItem,
+  },
+  activity: {
+    method: "GET",
+    path: "/api/v1/admin/activity",
+    summary: "Notícias publicadas, comentários e pautas por dia nas últimas 12 semanas (curador)",
+    response: Activity,
   },
   calibration: {
     method: "GET",

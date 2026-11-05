@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { formatScore, humanReason, isoToSaoPauloInput, relativeTime, saoPauloInputToIso } from "../src/format.ts";
+import {
+  dayHeading,
+  formatScore,
+  humanReason,
+  isoToSaoPauloInput,
+  relativeTime,
+  saoPauloInputToIso,
+} from "../src/format.ts";
 
 test("datetime-local is read as São Paulo wall time and sent as UTC", () => {
   assert.equal(saoPauloInputToIso("2026-11-20T19:30"), "2026-11-20T22:30:00.000Z");
@@ -29,4 +36,11 @@ test("pipeline reasons read in the team's words", () => {
 test("the editorial score is a whole number everywhere", () => {
   assert.equal(formatScore(77.5), "78");
   assert.equal(formatScore(64), "64");
+});
+
+test("feed day headings follow the São Paulo calendar", () => {
+  const now = Date.parse("2026-11-05T13:00:00Z"); // 10:00 in São Paulo
+  assert.equal(dayHeading("2026-11-05T03:30:00Z", now), "Hoje"); // 00:30 local, same day
+  assert.equal(dayHeading("2026-11-05T02:30:00Z", now), "Ontem"); // 23:30 local on the 4th
+  assert.equal(dayHeading("2026-11-02T15:00:00Z", now), "Segunda-feira, 2 de novembro");
 });

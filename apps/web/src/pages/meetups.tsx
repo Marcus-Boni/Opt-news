@@ -1,3 +1,5 @@
+import type { Proposal } from "@optnews/contracts";
+import { LayoutGroup, motion } from "motion/react";
 import { toast } from "sonner";
 import { type FormEvent, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -14,7 +16,7 @@ import { isoToSaoPauloInput, saoPauloInputToIso } from "../format.ts";
 import { ProposalItem } from "../proposal.tsx";
 import { useMe } from "../session.tsx";
 import { SessionLine } from "../session-line.tsx";
-import { Async, Icon, Page, ProblemNote, useScrollToHash } from "../ui.tsx";
+import { Async, Icon, NextStep, Page, ProblemNote, useScrollToHash } from "../ui.tsx";
 
 function ManualProposalForm({ onCreated, onCancel }: { onCreated: () => void; onCancel: () => void }) {
   const create = useAction();
@@ -125,7 +127,7 @@ function Proposals({ startCreating = false }: { startCreating?: boolean }) {
           }}
         />
       )}
-      <div className="max-w-3xl">
+      <div className="flex max-w-3xl flex-col gap-4">
         <Async
           q={proposals}
           what="as pautas"
@@ -135,20 +137,33 @@ function Proposals({ startCreating = false }: { startCreating?: boolean }) {
             list.length === 0 &&
             "Nenhuma pauta ainda. Proponha um meetup a partir de uma notícia ou crie uma pauta manual."
           }
+          emptyAction={<NextStep to="/explorar">Escolher uma notícia</NextStep>}
         >
-          {(list) =>
-            list.map((p) => (
-              <ProposalItem
-                key={p.id}
-                proposal={p}
-                onChange={(next) => proposals.setData((all) => all.map((x) => (x.id === next.id ? next : x)))}
-              />
-            ))
-          }
+          {(list) => (
+            // Open proposals rank by votes (the most voted become sessions); a vote that changes the order moves the
+            // card to its new place instead of making it jump.
+            <LayoutGroup>
+              {byVotes(list).map((p) => (
+                <motion.div key={p.id} layout="position" transition={{ type: "spring", duration: 0.5, bounce: 0.15 }}>
+                  <ProposalItem
+                    proposal={p}
+                    onChange={(next) => proposals.setData((all) => all.map((x) => (x.id === next.id ? next : x)))}
+                  />
+                </motion.div>
+              ))}
+            </LayoutGroup>
+          )}
         </Async>
       </div>
     </>
   );
+}
+
+/** Open proposals first, most voted first (ties: newest); the rest keep the server's order. */
+function byVotes(list: Proposal[]): Proposal[] {
+  const open = list.filter((p) => p.status === "open");
+  const rest = list.filter((p) => p.status !== "open");
+  return [...open.sort((a, b) => b.votes - a.votes || Date.parse(b.createdAt) - Date.parse(a.createdAt)), ...rest];
 }
 
 // Radix Select items cannot carry an empty value, so "no proposal" gets its own key.
@@ -372,6 +387,7 @@ function Agenda({ proposalId }: { proposalId: string }) {
           empty={(list) =>
             list.length === 0 && "Nenhuma sessão agendada. Pautas selecionadas na votação viram as próximas sessões."
           }
+          emptyAction={<NextStep to="/meetups?aba=propostas">Ver pautas em votação</NextStep>}
         >
           {(list) => (
             <ul>

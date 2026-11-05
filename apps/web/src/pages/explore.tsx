@@ -1,6 +1,7 @@
 // Explorar: the full feed. One toolbar, one decision per control (filter text, topic, period, order); what is active
 // shows as removable chips. Every filter lives in the URL so a view can be shared and the back button works. The
 // field filters this feed only; the search page (Busca) covers meetups and insights too.
+import type { StoryCard } from "@optnews/contracts";
 import { ListFilter, X } from "lucide-react";
 import { type FormEvent, useMemo } from "react";
 import { useSearchParams } from "react-router";
@@ -10,7 +11,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Spinner } from "@/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { usePaged } from "../api.ts";
-import { plural } from "../format.ts";
+import { dayHeading, dayKey, plural } from "../format.ts";
 import { StoryRow, useTopics } from "../story-card.tsx";
 import { Empty, ErrorState, Loading, Page, ProblemNote, SELECTED } from "../ui.tsx";
 
@@ -22,6 +23,16 @@ const PERIOD_LABEL: Record<string, string> = {
   "7d": "Últimos 7 dias",
   "30d": "Últimos 30 dias",
 };
+
+/** Stories grouped by their São Paulo day (published, or first seen when the source gave no date), in feed order. */
+function byDay(items: StoryCard[]): [string, StoryCard[]][] {
+  const groups = new Map<string, StoryCard[]>();
+  for (const s of items) {
+    const key = dayKey(s.originalPublishedAt ?? s.firstSeenAt);
+    groups.set(key, [...(groups.get(key) ?? []), s]);
+  }
+  return [...groups];
+}
 
 export function Explore() {
   const [params, setParams] = useSearchParams();
@@ -62,7 +73,11 @@ export function Explore() {
       title="Explorar"
       subtitle="Todas as notícias selecionadas pela curadoria automática, com fonte e data de coleta."
     >
-      <div data-reveal className="flex flex-col gap-3 border-b pb-5">
+      <div
+        data-reveal
+        data-sticky-filters
+        className="sticky top-[4.25rem] z-10 mb-8 flex flex-col gap-3 rounded-2xl bg-card/80 p-3 shadow-elev-1 backdrop-blur-xl backdrop-saturate-150"
+      >
         <div className="flex flex-wrap items-end gap-3">
           <search className="min-w-0 flex-1 basis-64">
             <form onSubmit={submit} className="flex gap-2">
@@ -196,9 +211,19 @@ export function Explore() {
           </Empty>
         ) : (
           <div className="flex flex-col">
-            {feed.items.map((s) => (
-              <StoryRow key={s.id} story={s} topicLabel={label} />
-            ))}
+            {sort === "recent"
+              ? byDay(feed.items).map(([key, items]) => (
+                  // Newest first, so the feed reads by day; the heading stays under the filters while its day scrolls.
+                  <section key={key} className="flex flex-col">
+                    <h3 className="sticky top-[8.75rem] z-[5] -mx-4 mt-4 mb-1 rounded-lg bg-background/80 px-4 py-2 text-xs font-semibold text-muted-foreground backdrop-blur-md first:mt-0">
+                      {dayHeading(`${key}T12:00:00-03:00`)}
+                    </h3>
+                    {items.map((s) => (
+                      <StoryRow key={s.id} story={s} topicLabel={label} />
+                    ))}
+                  </section>
+                ))
+              : feed.items.map((s) => <StoryRow key={s.id} story={s} topicLabel={label} />)}
           </div>
         )}
         {feed.items && feed.error && (

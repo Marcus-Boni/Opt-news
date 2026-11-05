@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { useApi } from "../api.ts";
 import { hrefFor, plural, REF_LABEL } from "../format.ts";
-import { AiTag, Async, Empty, Hint, Page, Section, Time } from "../ui.tsx";
+import { AiTag, Async, Empty, Hint, NextStep, Page, Section, Time } from "../ui.tsx";
 
 const GROUPS = [
   ["story", "Notícias"],
@@ -91,6 +91,7 @@ export function SearchPage() {
               r.hits.length === 0 &&
               `Nada encontrado para “${r.q}”. Tente um termo mais amplo ou o nome da tecnologia em inglês.`
             }
+            emptyAction={<NextStep to="/explorar">Navegar por tema em Explorar</NextStep>}
           >
             {(r) => (
               <div className="flex flex-col gap-9">
@@ -105,7 +106,7 @@ export function SearchPage() {
                       <ul className="divide-y">
                         {hits.map((h) => (
                           // The title link stretches over the row; its accessible name stays the title.
-                          <li key={h.id} className="relative py-4 first:pt-0">
+                          <li key={h.id} data-spotlight="fill" className="-mx-4 rounded-xl px-4 py-4">
                             <h3 className="text-[1.0625rem] leading-snug font-semibold tracking-[-0.015em]">
                               <Link
                                 to={hrefFor(h.type, h.id)}

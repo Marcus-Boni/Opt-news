@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api, useAction, useApi } from "../api.ts";
 import { DiscussionLine } from "../discussion.tsx";
 import { useMe } from "../session.tsx";
-import { Async, Page, ProblemNote, Section } from "../ui.tsx";
+import { Async, NextStep, Page, ProblemNote, Section } from "../ui.tsx";
 
 type Submission = ResponseOf<typeof endpoints.submitStory>;
 
@@ -151,6 +151,7 @@ export function Community() {
               list.length === 0 &&
               "Nenhum debate ainda. Abra uma notícia em Explorar e comente o que ela muda para o seu projeto."
             }
+            emptyAction={<NextStep to="/explorar">Explorar notícias</NextStep>}
           >
             {(list) => (
               <ul>

@@ -2,6 +2,7 @@
 // never as markup. Pages import from here so the app speaks one visual language.
 import {
   ArrowLeft,
+  ArrowRight,
   ArrowUp,
   ArrowUpRight,
   BookOpen,
@@ -34,7 +35,14 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Empty as EmptyBox, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty as EmptyBox,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton as SkeletonBar } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "@/link";
@@ -377,9 +385,21 @@ function EmptyMark() {
   );
 }
 
-export function Empty({ children, title }: { children: ReactNode; title?: string }) {
+/** An empty block's next step: one quiet button that leads somewhere useful. */
+export function NextStep({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <EmptyBox className="border border-dashed py-8">
+    <Button asChild variant="outline" size="sm" className="mt-1">
+      <Link to={to}>
+        {children}
+        <ArrowRight data-icon="inline-end" />
+      </Link>
+    </Button>
+  );
+}
+
+export function Empty({ children, title, action }: { children: ReactNode; title?: string; action?: ReactNode }) {
+  return (
+    <EmptyBox className="border border-dashed bg-[radial-gradient(60%_80%_at_50%_0%,color-mix(in_oklab,var(--brand)_6%,transparent),transparent)] py-8">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <EmptyMark />
@@ -387,6 +407,7 @@ export function Empty({ children, title }: { children: ReactNode; title?: string
         {title && <EmptyTitle>{title}</EmptyTitle>}
         <EmptyDescription>{children}</EmptyDescription>
       </EmptyHeader>
+      {action && <EmptyContent>{action}</EmptyContent>}
     </EmptyBox>
   );
 }
@@ -398,6 +419,7 @@ export function Async<T>({
   lines = 3,
   shape,
   empty,
+  emptyAction,
 }: {
   q: { data: T | undefined; error: ApiError | undefined; reload: () => void };
   what: string;
@@ -405,11 +427,13 @@ export function Async<T>({
   lines?: number;
   shape?: SkeletonShape;
   empty?: (data: T) => ReactNode | false;
+  /** The next step offered when `empty` says the block is empty (NextStep). */
+  emptyAction?: ReactNode;
 }) {
   if (q.error) return <ErrorState error={q.error} what={what} onRetry={q.reload} />;
   if (q.data === undefined) return <Loading lines={lines} shape={shape} label={`Carregando ${what}…`} />;
   const nothing = empty?.(q.data);
-  return nothing ? <Empty>{nothing}</Empty> : children(q.data);
+  return nothing ? <Empty action={emptyAction}>{nothing}</Empty> : children(q.data);
 }
 
 export function Section({
@@ -445,9 +469,12 @@ export function Page({
   actions,
   rail,
   crumbs,
+  hero,
   children,
 }: {
   title: string;
+  /** A full-width opening block above the content and its rail (the Início cover). */
+  hero?: ReactNode;
   subtitle?: ReactNode;
   /** The way back on a detail page: where this page lives, from the section down (the page itself is the title). */
   crumbs?: { to: string; label: string }[];
@@ -474,17 +501,24 @@ export function Page({
           </BreadcrumbList>
         </Breadcrumb>
       )}
-      <header data-reveal className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <header data-reveal className="mb-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
-          <h1 className="text-[1.75rem] leading-[1.15] font-bold tracking-[-0.03em] sm:text-[2rem]">{title}</h1>
-          {subtitle && <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>}
+          <h1
+            data-title
+            className="text-[2rem] leading-[1.05] font-bold tracking-[-0.035em] sm:text-[2.5rem] lg:text-[2.75rem]"
+          >
+            {title}
+          </h1>
+          {subtitle && <p className="mt-2.5 max-w-[68ch] text-[0.9375rem] text-muted-foreground">{subtitle}</p>}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </header>
+      {hero}
       {rail ? (
         <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_19rem]">
           <div className="min-w-0">{children}</div>
-          <aside className="flex min-w-0 flex-col gap-9" aria-label="Contexto">
+          {/* Each block of the rail is its own raised panel (index.css, [data-rail]). */}
+          <aside data-rail className="flex min-w-0 flex-col gap-5" aria-label="Contexto">
             {rail}
           </aside>
         </div>

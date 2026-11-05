@@ -33,11 +33,16 @@ export function EventPage() {
                 <li key={s.id} className="relative grid grid-cols-[1rem_minmax(0,1fr)] gap-x-4">
                   {/* The rail: the first coverage (where the occurrence surfaced) carries the brand dot. */}
                   <span aria-hidden="true" className="relative flex justify-center">
-                    {i < ev.stories.length - 1 && <span className="absolute top-3 -bottom-1 w-px bg-border" />}
+                    {/* An orange thread links the coverages as the scroll reaches them (CSS, `.thread`). */}
+                    {i < ev.stories.length - 1 && (
+                      <span className="absolute top-3 -bottom-1 w-0.5 rounded-full bg-border">
+                        <span className="thread absolute inset-0 rounded-full bg-brand" />
+                      </span>
+                    )}
                     <span
                       className={cn(
                         "relative mt-1 size-2.5 rounded-full ring-4 ring-background",
-                        i === 0 ? "bg-brand" : "bg-muted-foreground/50",
+                        i === 0 ? "bg-brand" : "thread-dot bg-brand",
                       )}
                     />
                   </span>

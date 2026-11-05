@@ -66,44 +66,63 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #443d3d;
   --sidebar-ring: #ff4800;
+
+  /* Elevation: one hairline edge plus a short offset shadow; --elev-2 is the lifted state. */
+  --elev-1: inset 0 0 0 1px rgb(27 21 20 / 0.07), 0 1px 2px rgb(27 21 20 / 0.05);
+  --elev-2:
+    inset 0 0 0 1px rgb(27 21 20 / 0.09), 0 2px 4px rgb(27 21 20 / 0.05), 0 16px 32px -16px rgb(27 21 20 / 0.18);
+  /* The light a pointer casts on interactive surfaces (src/spotlight.ts). Orange: business; data-spotlight="ai": purple. */
+  --spot: #ff4800;
+  --spot-strength: 9%;
+  /* Strength of the brand light washing the top of every page. */
+  --ambient: 0.07;
 }
 
 .dark {
-  --background: #1d1919;
+  /* Warm graphite in three depths (never pure black): page, raised card, overlay. Text pairs stay ≥ 6.5:1. */
+  --background: #141010;
   --foreground: #f1ece7;
-  --card: #252020;
+  --card: #1c1717;
   --card-foreground: #f1ece7;
-  --popover: #2a2424;
+  --popover: #221c1c;
   --popover-foreground: #f1ece7;
   --primary: #c73d1b;
   --primary-foreground: #ffffff;
-  --secondary: #2e2828;
+  --secondary: #262020;
   --secondary-foreground: #f1ece7;
-  --muted: #2e2828;
+  --muted: #262020;
   --muted-foreground: #a89b94;
-  --accent: #3a251d;
+  --accent: #2f1d16;
   --accent-foreground: #ffd9c8;
   --destructive: #ff5c76;
-  --border: #3a3232;
-  --input: #4a4040;
+  --border: #2d2626;
+  --input: #3b3232;
   --ring: #ff4800;
 
   --brand: #ff4800;
   --brand-text: #ff855a;
-  --brand-soft: #33190d;
+  --brand-soft: #2e170c;
   --brand-deep: #ff6a2e;
   --ai: #a588ff;
-  --ai-soft: #231b3d;
+  --ai-soft: #211a3a;
   --success: #5cc98f;
-  --success-soft: #12261c;
+  --success-soft: #11241a;
   --warning: #f2b44c;
-  --warning-soft: #2c2210;
+  --warning-soft: #2a200f;
 
-  --sidebar: #171414;
+  --sidebar: #0f0c0c;
   --sidebar-foreground: #cfc5be;
-  --sidebar-accent: #2a2424;
+  --sidebar-accent: #1f1a1a;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2a2424;
+  --sidebar-border: #211b1b;
+
+  --elev-1: inset 0 0 0 1px rgb(255 236 224 / 0.07), inset 0 1px 0 rgb(255 255 255 / 0.05), 0 1px 2px rgb(0 0 0 / 0.4);
+  --elev-2:
+    inset 0 0 0 1px rgb(255 236 224 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.06), 0 2px 4px rgb(0 0 0 / 0.4),
+    0 18px 40px -18px rgb(0 0 0 / 0.8);
+  --spot: #ff4800;
+  --spot-strength: 13%;
+  --ambient: 0.11;
 }
 
 @theme inline {
@@ -163,6 +182,15 @@
   --radius-2xl: calc(var(--radius) * 1.8);
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+}
+
+/* A raised surface: card ground, hairline edge, short shadow. Never nested inside another surface. */
+@utility surface {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--elev-1);
 }
 
 @layer base {
@@ -170,6 +198,8 @@
     @apply border-border outline-ring/50;
   }
   html {
+    /* Keyboard focus never lands under the sticky header (or the sticky filter bar in Explorar). */
+    scroll-padding-top: 4.5rem;
     -webkit-text-size-adjust: 100%;
     touch-action: manipulation;
     text-rendering: optimizeLegibility;
@@ -178,6 +208,9 @@
   body {
     @apply bg-background font-sans text-foreground antialiased;
     caret-color: var(--brand);
+  }
+  html:has([data-sticky-filters]) {
+    scroll-padding-top: 10rem;
   }
   /* In-page anchors land below the sticky 56px header. */
   :where([id]) {
@@ -238,6 +271,28 @@
   .link {
     @apply text-brand-text underline decoration-brand-text/35 underline-offset-[0.2em] transition-colors hover:decoration-brand-text;
   }
+  /* Context rail beside a page (ui.tsx Page): each top-level block is a raised panel. */
+  [data-rail] > section {
+    @apply surface rounded-2xl p-5;
+  }
+  /* Loading bars: a soft light passes over the muted bar. */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    translate: -100% 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--foreground) 7%, transparent),
+      transparent
+    );
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
   .skip-link {
     @apply fixed top-2 left-2 z-50 -translate-y-24 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:translate-y-0;
   }
@@ -254,10 +309,20 @@
     translate: 0 8px;
   }
 }
+@keyframes focus-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
   /* Page arrival: runs once when the block mounts, including blocks that mount after their data arrives. */
   [data-reveal] {
     animation: arrive 0.5s var(--ease-out-expo) backwards;
+  }
+  /* The page title focuses in as it arrives (one element per page, so the filter stays cheap). */
+  [data-title] {
+    animation: focus-in 0.7s var(--ease-out-expo) backwards;
   }
   /* Siblings arrive in order, 50ms apart, at most 300ms in total. */
   @supports (animation-delay: calc(sibling-index() * 1ms)) {
@@ -272,6 +337,173 @@
       animation-timeline: view();
       /* A fixed distance, not a share of the row: a tall lead story must not sit half-faded at the fold. */
       animation-range: entry 0 entry 80px;
+    }
+  }
+}
+
+@keyframes shimmer {
+  to {
+    translate: 100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after {
+    display: none;
+  }
+}
+
+/*
+ * Light. The page is lit from its top edge by the two brand colors (orange left: action; purple right: technology),
+ * and interactive surfaces catch a spot of light under a fine pointer (src/spotlight.ts sets --mx/--my). Light never
+ * sits under text at a strength that moves a contrast pair: the wash stays under 12% and fades out by 420px.
+ */
+#conteudo {
+  position: relative;
+  isolation: isolate;
+}
+#conteudo::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 460px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--ambient);
+  background:
+    radial-gradient(60% 100% at 12% 0%, var(--brand), transparent 70%),
+    radial-gradient(45% 80% at 92% 0%, var(--ai), transparent 70%);
+  mask: linear-gradient(to bottom, #000, transparent);
+}
+[data-spotlight] {
+  position: relative;
+  isolation: isolate;
+}
+[data-spotlight="ai"] {
+  --spot: var(--ai);
+}
+[data-spotlight]::before,
+[data-spotlight]:not([data-spotlight="fill"])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+/* The fill: a soft pool of light under the pointer. */
+[data-spotlight]::before {
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 0%),
+    color-mix(in oklab, var(--spot) var(--spot-strength), transparent),
+    transparent 65%
+  );
+}
+/* The edge: the hairline lights up where the pointer is near (the ring is masked to the 1px border). */
+[data-spotlight]:not([data-spotlight="fill"])::after {
+  z-index: 1;
+  padding: 1px;
+  background: radial-gradient(
+    220px circle at var(--mx, 50%) var(--my, 0%),
+    color-mix(in oklab, var(--spot) 75%, transparent),
+    transparent 70%
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-spotlight]:hover::before,
+  [data-spotlight]:hover::after {
+    opacity: 1;
+  }
+}
+
+/* Ambient light inside an AI field (Início panorama): two slow purple pools drifting behind the text. */
+@keyframes drift {
+  from {
+    translate: -8% -6%;
+  }
+  to {
+    translate: 10% 8%;
+  }
+}
+.aurora {
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(35% 45% at 20% 25%, color-mix(in oklab, #743dff 70%, transparent), transparent 70%),
+    radial-gradient(30% 40% at 85% 80%, color-mix(in oklab, #a588ff 45%, transparent), transparent 70%);
+  filter: blur(30px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .aurora {
+    animation: drift 16s ease-in-out infinite alternate;
+  }
+}
+
+/* The living chain (components/value-chain.tsx): the impulse runs along each reached connector, the step in motion
+ * pulses once. Both settle into their final state; without motion they simply are. */
+@keyframes chain-impulse {
+  from {
+    scale: 0 1;
+  }
+}
+@keyframes chain-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--brand) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+.chain-impulse {
+  transform-origin: left;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chain-impulse {
+    animation: chain-impulse 0.8s var(--ease-out-expo) 0.2s backwards;
+  }
+  .chain-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    animation: chain-pulse 1.1s var(--ease-out-expo) 0.7s 2 backwards;
+  }
+}
+
+/* Event timeline (pages/event.tsx): the thread between coverages draws itself as the scroll brings each one in, and
+ * each later dot lights when its coverage arrives. Without scroll-driven support (or motion) the thread is simply
+ * drawn. */
+@keyframes thread-draw {
+  from {
+    scale: 1 0;
+  }
+}
+@keyframes thread-dot {
+  from {
+    background-color: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+    scale: 0.7;
+  }
+}
+.thread {
+  transform-origin: top;
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .thread {
+      animation: thread-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 40% cover 55%;
+    }
+    .thread-dot {
+      animation: thread-dot linear both;
+      animation-timeline: view();
+      animation-range: entry 60% cover 40%;
     }
   }
 }

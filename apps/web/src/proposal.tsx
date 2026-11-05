@@ -1,13 +1,15 @@
 // A meetup proposal with its vote: optimistic toggle, visible rollback when the API refuses it.
 import type { Proposal } from "@optnews/contracts";
-import { toast } from "sonner";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "@/link";
 import { Button } from "@/components/ui/button";
 import { RollingNumber } from "@/components/rolling-number";
 import { api, useAction } from "./api.ts";
+import { EASE_OUT, reducedMotion } from "@/motion";
 import { formatDateTime, PROPOSAL_STATUS, plural, relativeTime } from "./format.ts";
 import { useMe } from "./session.tsx";
+import { withUndo } from "./undo.ts";
+import { StoryPreview } from "./story-preview.tsx";
 import { Dot, Icon, Pill, ProblemNote, Time } from "./ui.tsx";
 
 const votingOpen = (p: Proposal) => p.status === "open" && Date.parse(p.votingClosesAt) > Date.now();
@@ -18,9 +20,16 @@ function VoteControl({ proposal: p, onChange }: { proposal: Proposal; onChange: 
   const [rolledBack, setRolledBack] = useState(false);
   const canVote = me.can.contribute && votingOpen(p);
 
+  const arrow = useRef<HTMLSpanElement>(null);
   const toggle = async () => {
     const before = p;
     const vote = !p.myVote;
+    // A vote is an impulse: the arrow pushes up and settles (removing a vote has no flourish).
+    if (vote && arrow.current && !reducedMotion())
+      arrow.current.animate([{ translate: "0 0" }, { translate: "0 -5px", offset: 0.35 }, { translate: "0 0" }], {
+        duration: 420,
+        easing: EASE_OUT,
+      });
     setRolledBack(false);
     onChange({ ...p, myVote: vote, votes: p.votes + (vote ? 1 : -1) });
     const res = await action.run(() => api("vote", { params: { id: p.id }, body: { vote } }));
@@ -40,7 +49,9 @@ function VoteControl({ proposal: p, onChange }: { proposal: Proposal; onChange: 
             disabled={action.pending}
             onClick={toggle}
           >
-            <Icon name="up" data-icon="inline-start" />
+            <span ref={arrow} data-icon="inline-start" className="inline-flex">
+              <Icon name="up" className="size-3.5" />
+            </span>
             {p.myVote ? "Você votou" : "Votar"}
           </Button>
         ) : null}
@@ -63,12 +74,27 @@ function VoteControl({ proposal: p, onChange }: { proposal: Proposal; onChange: 
 export function ProposalItem({ proposal: p, onChange }: { proposal: Proposal; onChange: (p: Proposal) => void }) {
   const me = useMe();
   const decide = useAction();
-  const [confirm, setConfirm] = useState<"selected" | "rejected" | null>(null);
+  // The decision shows at once and is sent when the undo window closes (undo.ts).
+  const decideNow = (status: "selected" | "rejected") => {
+    const before = p;
+    decide.clear();
+    onChange({ ...p, status });
+    withUndo({
+      message: status === "selected" ? "Pauta selecionada para virar sessão" : "Pauta rejeitada",
+      description: p.title,
+      commit: async () => {
+        const res = await decide.run(() => api("decideProposal", { params: { id: p.id }, body: { status } }));
+        if (res.ok) onChange(res.value);
+        return res.ok;
+      },
+      revert: () => onChange(before),
+    });
+  };
   const open = votingOpen(p);
   const tone = p.status === "selected" ? "success" : p.status === "open" ? (open ? "accent" : "neutral") : "neutral";
 
   return (
-    <article id={`pauta-${p.id}`} className="scroll-mt-20 border-t py-6 first:border-t-0 first:pt-0">
+    <article id={`pauta-${p.id}`} data-spotlight className="surface scroll-mt-20 rounded-2xl p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <Pill tone={tone}>
           {p.status === "open" && !open ? "Votação encerrada" : (PROPOSAL_STATUS[p.status] ?? p.status)}
@@ -83,9 +109,11 @@ export function ProposalItem({ proposal: p, onChange }: { proposal: Proposal; on
       {p.origin.type === "story" && (
         <p className="mt-2 text-sm">
           <span className="text-muted-foreground">Notícia de origem: </span>
-          <Link to={`/noticias/${p.origin.story.id}`} className="link">
-            {p.origin.story.headline}
-          </Link>
+          <StoryPreview id={p.origin.story.id}>
+            <Link to={`/noticias/${p.origin.story.id}`} className="link">
+              {p.origin.story.headline}
+            </Link>
+          </StoryPreview>
         </p>
       )}
       <p className="mt-2 text-xs text-muted-foreground">
@@ -115,44 +143,25 @@ export function ProposalItem({ proposal: p, onChange }: { proposal: Proposal; on
         )}
         {me.can.organize && p.status === "open" && (
           <div className="flex flex-wrap items-center gap-2">
-            {confirm ? (
-              <>
-                <span className="text-sm">
-                  {confirm === "selected" ? "Selecionar esta pauta para a agenda?" : "Rejeitar esta pauta?"}
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={confirm === "selected" ? "default" : "destructive"}
-                  disabled={decide.pending}
-                  onClick={async () => {
-                    const res = await decide.run(() =>
-                      api("decideProposal", { params: { id: p.id }, body: { status: confirm } }),
-                    );
-                    if (res.ok) {
-                      onChange(res.value);
-                      toast.success(confirm === "selected" ? "Pauta selecionada para virar sessão" : "Pauta rejeitada");
-                    }
-                    setConfirm(null);
-                  }}
-                >
-                  Confirmar
-                </Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setConfirm(null)}>
-                  Voltar
-                </Button>
-              </>
-            ) : (
-              <>
-                <span className="text-xs text-muted-foreground">Organização:</span>
-                <Button type="button" size="sm" variant="secondary" onClick={() => setConfirm("selected")}>
-                  Selecionar
-                </Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setConfirm("rejected")}>
-                  Rejeitar
-                </Button>
-              </>
-            )}
+            <span className="text-xs text-muted-foreground">Organização:</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={decide.pending}
+              onClick={() => decideNow("selected")}
+            >
+              Selecionar
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={decide.pending}
+              onClick={() => decideNow("rejected")}
+            >
+              Rejeitar
+            </Button>
           </div>
         )}
       </div>

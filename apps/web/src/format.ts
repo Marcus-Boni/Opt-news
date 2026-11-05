@@ -24,6 +24,19 @@ const partsFmt = new Intl.DateTimeFormat("en-US", {
 export const formatDateTime = (iso: string) => fullFmt.format(new Date(iso));
 export const formatDay = (iso: string | number) => dayFmt.format(new Date(iso));
 export const formatShortDay = (iso: string) => shortDayFmt.format(new Date(iso));
+
+const keyFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ });
+/** The São Paulo calendar day of an instant, as YYYY-MM-DD (groups a feed by day). */
+export const dayKey = (iso: string | number) => keyFmt.format(new Date(iso));
+
+/** A feed's day heading: "Hoje", "Ontem", otherwise the weekday and date ("Segunda-feira, 2 de novembro"). */
+export function dayHeading(iso: string, now = Date.now()): string {
+  const key = dayKey(iso);
+  if (key === dayKey(now)) return "Hoje";
+  if (key === dayKey(now - 86_400_000)) return "Ontem";
+  const day = formatDay(iso);
+  return day.charAt(0).toUpperCase() + day.slice(1);
+}
 export const formatTime = (iso: string) => timeFmt.format(new Date(iso));
 
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [

@@ -22,6 +22,7 @@ import { reducedMotion } from "@/motion";
 import { api, useAction, useApi } from "../api.ts";
 import { formatDateTime, plural, TIER } from "../format.ts";
 import { useMe } from "../session.tsx";
+import { ActivityMap, WeekStrip } from "@/components/activity";
 import { Async, ExternalLink, Fact, Facts, Page, Pill, ProblemNote, Section, Time } from "../ui.tsx";
 
 const ITEM_STATUS: Record<string, { label: string; tone: "neutral" | "success" | "warning" | "error" | "accent" }> = {
@@ -259,11 +260,12 @@ function Overview({ rows }: { rows: SourceStatus[] }) {
   const still = reducedMotion();
   return (
     <>
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {figures.map((f) => (
           <div
             key={f.label}
-            className="relative flex flex-col gap-1 bg-card px-4 py-4 transition-colors has-[a:hover]:bg-muted/60 sm:px-5"
+            data-spotlight
+            className="surface relative flex flex-col gap-2 rounded-2xl px-4 py-4 sm:px-5 sm:py-5"
           >
             <dt className="text-sm text-muted-foreground">
               {f.to ? (
@@ -278,7 +280,7 @@ function Overview({ rows }: { rows: SourceStatus[] }) {
             </dt>
             <dd
               className={cn(
-                "flex items-baseline gap-1.5 text-[1.75rem] leading-tight font-bold tracking-[-0.03em]",
+                "flex items-baseline gap-1.5 text-[2.25rem] leading-none font-bold tracking-[-0.035em]",
                 f.alert && "text-destructive",
               )}
             >
@@ -291,7 +293,7 @@ function Overview({ rows }: { rows: SourceStatus[] }) {
         ))}
       </dl>
       <Section title="Funil da curadoria">
-        <figure className="flex flex-col gap-4 rounded-xl border bg-card p-4 sm:p-6">
+        <figure className="flex flex-col gap-4 surface rounded-2xl p-4 sm:p-6">
           {collected > 0 ? (
             <div aria-hidden="true">
               <FunnelChart
@@ -325,6 +327,7 @@ function SourcesTable({ rows, onSaved }: { rows: SourceStatus[]; onSaved: () => 
         <TableRow className="hover:bg-transparent">
           <TableHead>Fonte</TableHead>
           <TableHead className="hidden sm:table-cell">Estado</TableHead>
+          <TableHead className="hidden lg:table-cell">7 dias</TableHead>
           <TableHead className="hidden text-right md:table-cell">Publicadas</TableHead>
           <TableHead className="hidden text-right md:table-cell">Em revisão</TableHead>
           <TableHead className="hidden text-right md:table-cell">Falhas</TableHead>
@@ -375,6 +378,9 @@ function SourcesTable({ rows, onSaved }: { rows: SourceStatus[]; onSaved: () => 
             <TableCell className="hidden py-3.5 align-top sm:table-cell">
               <Health s={s} />
             </TableCell>
+            <TableCell className="hidden py-3.5 align-top lg:table-cell">
+              <WeekStrip week={s.week} />
+            </TableCell>
             <TableCell className="tabular hidden py-3.5 text-right align-top md:table-cell">{s.published}</TableCell>
             <TableCell className="tabular hidden py-3.5 text-right align-top md:table-cell">{s.underReview}</TableCell>
             <TableCell
@@ -398,6 +404,7 @@ function SourcesTable({ rows, onSaved }: { rows: SourceStatus[]; onSaved: () => 
 export function Admin() {
   const me = useMe();
   const sources = useApi("sourceStatus", {}, me.can.moderate);
+  const activity = useApi("activity", {}, me.can.moderate);
   const [creating, setCreating] = useState(false);
   if (!me.can.moderate) return <NoAccess />;
   return (
@@ -431,6 +438,11 @@ export function Admin() {
         {(rows) => (
           <div className="flex flex-col gap-10">
             <Overview rows={rows} />
+            <Section title="Atividade do time">
+              <Async q={activity} what="a atividade" lines={3}>
+                {(a) => <ActivityMap days={a.days} />}
+              </Async>
+            </Section>
             <Section title="Fontes">
               <SourcesTable rows={rows} onSaved={() => sources.reload()} />
             </Section>

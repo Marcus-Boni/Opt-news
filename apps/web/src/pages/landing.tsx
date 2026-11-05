@@ -373,7 +373,8 @@ function Pipeline() {
           <li
             key={s.n}
             data-step
-            className={cn("flex flex-col gap-5 rounded-xl border bg-card p-6", !still && "lg:w-80 lg:shrink-0 lg:p-7")}
+            data-spotlight
+            className={cn("flex flex-col gap-5 surface rounded-2xl p-6", !still && "lg:w-80 lg:shrink-0 lg:p-7")}
           >
             <span className="font-mono text-sm text-brand-text">{s.n}</span>
             <div>

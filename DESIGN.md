@@ -24,7 +24,14 @@ escuro) são de interface e ficam marcados como tal.
 - **Produto:** "Opt News" em Public Sans Bold, ao lado do símbolo (laranja, igual em toda a interface).
 - **Movimento-assinatura:** o chevron do símbolo. A cadeia notícia → pauta → meetup → insight é desenhada com
   chevrons (`ChevronTrail`, exportado como `Trail` em `ui.tsx`); ao chegar, um impulso laranja percorre a cadeia.
-- **Grafismos oficiais:** no máximo um por tela, discreto (hoje só no painel do login, `public/brand/`). Ícones de
+- **Cadeia viva:** na notícia, "Caminho desta notícia" (`ValueChain`, `components/value-chain.tsx`) mostra as quatro
+  etapas com o estado real: concluída (chevron laranja), em andamento (pulsa duas vezes ao chegar), ainda não
+  (tracejada). O impulso laranja percorre os conectores das etapas alcançadas. "Meetup" só diz "pauta selecionada":
+  o detalhe da notícia não traz sessões, então a cadeia nunca afirma que um encontro aconteceu.
+- **Grafismos oficiais:** no máximo um por tela, discreto (hoje só no painel do login, `public/brand/`).
+- **Capa do Início:** a notícia de maior nota em tamanho de manchete (até 44px) numa superfície larga, com o campo de
+  pontos do símbolo (`ChevronField`, carregado só aqui, no login e na apresentação) numa coluna ao lado, nunca sob o
+  texto; some abaixo de 1024px. Ícones de
   interface são lucide; os ícones oficiais (PNG com fundo branco) não entram no app nem se misturam com lucide.
 
 ## Cor
@@ -40,10 +47,10 @@ até 10% de apoio; laranja vivo e roxo vivo nunca competem na mesma região.
 | Texto laranja | `text-brand-text` | #B22D09 | #FF855A | oficial (laranja escuro / pêssego) | links e texto laranja (≥5,6:1) |
 | Profundidade | `bg-depth` / `text-depth-foreground` | #271284 / #F1F1E3 | idem | oficial (roxo escuro / claro quente) | campo de conteúdo feito por IA (panorama do dia), 12:1 |
 | IA | `text-ai` / `bg-ai-soft` | #743DFF / #EFE9FF | #A588FF / #231B3D | oficial (roxo vivo / lavanda) + fundo de interface | **só** para marcar texto gerado por máquina |
-| Navegação | `bg-sidebar` | #353030 | #171414 | oficial (grafite) / interface | barra lateral |
+| Navegação | `bg-sidebar` | #353030 | #0F0C0C | oficial (grafite) / interface | barra lateral |
 | Logo em fundo escuro | `text-warm-light` | #F1F1E3 | #F1F1E3 | oficial (claro quente) | logo completo com assinatura no login |
 | Realce suave | `bg-brand-soft` | #FFE8DC | #33190D | interface | seleção, hover de destaque, badge `brand` |
-| Fundo / superfície | `bg-background` / `bg-card` | #FAF8F5 / #FFFFFF | #1D1919 / #252020 (grafite quente, nunca preto puro) | interface | tela, cartões |
+| Fundo / superfície | `bg-background` / `bg-card` / `bg-popover` | #FAF8F5 / #FFFFFF / #FFFFFF | #141010 / #1C1717 / #221C1C (grafite quente em três profundidades, nunca preto puro) | interface | tela, superfícies elevadas, sobreposições |
 | Texto | `text-foreground` / `text-muted-foreground` | #1B1514 / #66594F | #F1ECE7 / #A89B94 | interface | corpo, metadados (≥5,7:1) |
 | Gráficos | `chart-1..5` | #FF4800 #743DFF #9E8477 #FF855A #271284 | idem | oficial | séries |
 | Estados | `success`, `warning`, `destructive` | | | interface | só onde carregam significado |
@@ -59,7 +66,7 @@ resultado (no funil da curadoria, "Publicados"). Abas, seletores e botões de al
 Famílias oficiais, auto-hospedadas via Fontsource: **Public Sans** para tudo (400 corpo, 600 subtítulo e ênfase,
 700 títulos e números-chave) e **Roboto Mono** com moderação, só para rótulos curtos e microdados: pontuação
 editorial, versões de política/modelo, atalhos de teclado. Nunca mono em parágrafo. Fallback: Arial, Helvetica.
-- Título de página: 28–32px, bold, tracking −0.03em. Manchete de notícia (detalhe): 36–44px, bold, −0.03em.
+- Título de página: 32–44px, bold, tracking −0.035em, entra focando (desfoque de 8px a nítido, `data-title`). Manchete de notícia (detalhe): 36–44px, bold, −0.03em.
 - Títulos de seção: 16px semibold. Corpo: 15–16px, leading 1.55, medida ≤ 70ch. Metadados: 12–13px.
 - Sem rótulos minúsculos em caixa alta espaçada, sem eyebrow acima de título.
 - Números: `tabular` (`font-variant-numeric: tabular-nums`) em contagens, notas e datas lado a lado.
@@ -83,8 +90,30 @@ Blocos do app (`src/ui.tsx`): `Page` (título, subtítulo, ações, trilho later
 (erro/carregando/vazio), `Pill` (Badge semântico), `AiTag`, `ProblemNote` (erro de ação, 409 com recarregar),
 `Notice`, `Empty`, `Trail` (assinatura), `Facts`/`Fact`, `Time`, `ExternalLink`, `Icon` (lucide).
 
-Superfícies: cartão = `bg-card` + borda 1px (`border`) **ou** sombra, nunca os dois; raio 10–12px; sem cartões
-aninhados; sem grade de cartões iguais com ícone em círculo colorido; sem gradiente, brilho, vidro ou emoji.
+Superfícies: uma elevação só, a utilidade `surface` (`bg-card` + aresta de 1px + sombra curta com deslocamento,
+tokens `--elev-1`; `--elev-2` é o estado erguido; no escuro a aresta ganha um fio de luz no topo). `Card` do shadcn já
+usa essa elevação. Raio 16px (`rounded-2xl`) em painéis e cartões, 24px (`rounded-3xl`) só na capa do Início e no
+panorama. Blocos do trilho lateral (`Page` com `rail`, `[data-rail]`) viram painéis sozinhos. Nunca superfície dentro
+de superfície; sem grade de cartões iguais com ícone em círculo colorido; sem texto em gradiente, sem emoji.
+
+## Luz
+
+O app é "rico com função": a profundidade vem de luz, não de enfeite. Três usos, todos nas cores da marca e com sua
+semântica (laranja = ação, roxo = IA):
+- **Luz ambiente:** o topo de cada página é banhado por laranja à esquerda e roxo à direita (`#conteudo::before`,
+  força `--ambient`: 7% no claro, 11% no escuro, some em 460px). Nunca move um par de contraste.
+- **Luz do ponteiro (spotlight):** `data-spotlight` em superfícies interativas faz uma poça de luz seguir o ponteiro
+  fino e acende a aresta perto dele (`src/spotlight.ts`, um ouvinte só, variáveis no elemento sob o ponteiro).
+  `data-spotlight="fill"` só a poça (linhas de lista: notícias, insights, busca); `data-spotlight="ai"` em roxo.
+  Só em `(hover: hover) and (pointer: fine)`; nunca em bloco que não seja clicável.
+- **Campo de IA:** o panorama (roxo profundo) tem a `aurora`, duas poças roxas que derivam devagar atrás do texto;
+  parada sob movimento reduzido. A caixa "Por que foi selecionada" é roxa clara com aresta roxa (texto de máquina).
+- **Vidro só com função:** o cabeçalho do app e a barra de filtros fixa de Explorar ficam translúcidos com desfoque,
+  porque o conteúdo rola por baixo deles. Em nenhum outro lugar.
+- **Botão principal:** gradiente vertical curto do laranja escuro para ele mesmo 10% mais escuro (o topo nunca fica
+  mais claro que `--primary`, para manter 5,1:1 com o branco), fio de luz interno e sombra laranja com deslocamento.
+  Pressionar encolhe para 0,97 (todos os botões).
+- **Carregamento:** os esqueletos têm um brilho que passa (`.shimmer`), desligado sob movimento reduzido.
 
 ## Movimento
 
@@ -115,6 +144,8 @@ elemento**. CSS e Web Animations movem pelas propriedades independentes `transla
   chegada; a manchete da notícia aberta vira o título da página dela (`vt-story-title`, 380ms). Os `loader`s das
   rotas (`main.tsx`) pré-buscam os dados da página (`prime`/`settle` em `api.ts`, até 1,2s), então a página monta com
   conteúdo: a transição tem o que transformar e voltar cai na altura real da página.
+- **Tema padrão:** escuro na primeira visita (vitrine da luz); "Seguir o sistema" fica salvo explicitamente. A
+  `theme-color` acompanha o tema aplicado.
 - **Troca de tema (momento-assinatura):** View Transition em que o tema novo entra da esquerda para a direita atrás
   de uma frente em chevron (`clip-path`, 700ms, classe `theme-sweep`). Disparada pelo botão sol/lua do cabeçalho ou
   pelo menu do usuário (que mantém "Seguir o sistema"). Sem suporte ou com movimento reduzido, troca na hora.
@@ -132,7 +163,7 @@ superfície de trabalho. Regras só delas:
 - **Fundo escuro forçado** (classe `dark` na seção) no herói, no painel do login e no rodapé, porque é o chão do
   logo em claro quente. As seções de leitura seguem o tema do app.
 - **Tipografia maior:** título do herói 40–68px, títulos de seção 32–40px, mesmo tracking −0.03em. Sem eyebrow,
-  sem caixa alta, sem gradiente, brilho ou vidro.
+  sem caixa alta, sem texto em gradiente; os cartões do pipeline recebem a luz do ponteiro como o app.
 - **Movimento:** o título do herói sobe linha a linha por trás de uma máscara (SplitText com `autoSplit`) e o resto
   chega em cascata; cada bloco abaixo chega quando entra na tela (`useScrollReveal`, uma vez); ao rolar para fora do
   herói o texto sobe e some e o campo de pontos se desfaz de novo (`scatter`, lido a cada quadro); impulso laranja nos
@@ -145,8 +176,30 @@ superfície de trabalho. Regras só delas:
   baixo, o pipeline fica em coluna também no desktop e a barra fixa não aparece.
 - **Números:** só propriedades do sistema (2 notas, 72 h, 1 fonte por notícia), nunca resultados ou métricas.
 
+## Ritmo de trabalho
+
+- **Votar é um impulso:** a seta do botão sobe e assenta (Web Animations); pautas abertas ficam ordenadas por votos
+  e a que muda de posição desliza até o novo lugar (motion `layout`, mola curta).
+- **Linha do tempo do acontecimento:** o fio laranja entre as coberturas se desenha com a rolagem e cada ponto acende
+  quando sua cobertura chega (`.thread`, `animation-timeline: view()`).
+- **Prévia de notícia:** links de notícia em debates e pautas abrem um cartão com fonte, nota e resumo ao repousar o
+  ponteiro (`StoryPreview`, 350ms, busca só ao abrir). Toque não tem prévia: o link abre a notícia.
+- **Modo leitura:** na notícia, uma coluna central de 42rem, resumo em 21px, trilho oculto; lembrado por pessoa.
+- **Explorar por dia:** em "Recentes" o feed é agrupado pelo dia de São Paulo ("Hoje", "Ontem", "Segunda-feira, 2 de
+  novembro"), com o cabeçalho do dia fixo sob a barra de filtros. Em "Relevância" não há grupos.
+- **Dados de operação no tamanho do dado:** a coluna "7 dias" das fontes (itens coletados por dia, hoje em laranja) e
+  o mapa "Atividade do time" (12 semanas, um quadrado por dia, cinco tons de laranja, totais ao lado). Números
+  sempre nas dicas e no resumo para leitores de tela. Dados de `GET /api/v1/admin/activity` e `SourceStatus.week`.
+- **Curadoria pelo teclado:** na fila "Em revisão", J/K movem, P publica, R abre a retirada (que confirma), O abre a
+  notícia. Teclas não agem com campo, diálogo ou menu aberto, nem com modificadores. A linha ativa ganha aresta laranja.
+
 ## Feedback e ajuda
 
+- **Desfazer em vez de "tem certeza?":** decisões reversíveis na tela (selecionar ou rejeitar pauta) aparecem na hora
+  e só vão ao servidor quando o toast de 6s fecha sem "Desfazer" (`withUndo`, `src/undo.ts`). Sair da página com uma
+  decisão pendente pede confirmação ao navegador. Ações destrutivas sem volta seguem com diálogo.
+- **Vazio com próximo passo:** todo bloco vazio diz o que fazer e, quando há para onde ir, oferece um botão discreto
+  (`NextStep`, via `emptyAction` do `Async`).
 - **Toasts (Sonner):** só para o resultado de uma ação ("Pauta aberta para votação", "Alterações salvas"), com
   ação quando há próximo passo ("Ver em Meetups"). Superfície de cartão, ícone na cor semântica, ação no laranja de
   ação. Erros que pedem correção ficam **inline** junto do campo (`ProblemNote`), não em toast.
@@ -158,7 +211,12 @@ superfície de trabalho. Regras só delas:
 - **Filtros de lista:** uma barra, uma decisão por controle (texto, `Select` de tema, `Select` de período, ordem);
   o que está ativo aparece como pílulas removíveis com "Limpar filtros". O campo de Explorar filtra só aquele feed;
   a Busca cobre notícias, meetups e insights.
-- **Paleta (Ctrl K):** "Ações" (Nova pauta, Registrar insight, trocar tema, conforme o papel) e "Ir para".
+- **Paleta (Ctrl K):** "Conteúdo" (até 6 notícias, insights e meetups da busca unificada, depois de 250ms sem
+  digitar, com a marca IA quando o trecho é de máquina), "Pesquisar", "Ações" (Nova pauta, Registrar insight, trocar
+  tema, conforme o papel) e "Ir para".
+- **Celular:** barra inferior fixa e translúcida com Início, Explorar, Meetups, Comunidade e "Mais" (abre a navegação
+  completa), respeitando a área segura; toasts sobem acima dela. Diálogos viram folhas que sobem da borda inferior
+  (`data-sheet`), exceto a paleta, que fica no alto por causa do teclado.
 - **Números e textos do motor:** nota editorial sempre inteira (`formatScore`); motivos do pipeline na língua do time
   (`humanReason`), nunca ids de etapa ou códigos crus. Cadeias sempre na ordem notícia → pauta → meetup → insight.
 - **Atualidade:** o que é de outro dia diz a idade (o panorama de ontem vira a faixa "Ainda não há panorama de hoje");

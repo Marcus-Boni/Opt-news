@@ -18,7 +18,7 @@ import { addArtifact, createMeetup, getMeetup, listMeetups, updateMeetup } from 
 import { calibration, curationQueue, decideReview, forceItem, labelItem } from "./intelligence/curation.ts";
 import { foundryName } from "./intelligence/foundry.ts";
 import { heuristicProvider } from "./intelligence/model.ts";
-import { createSource, getSource, listSources, updateSource } from "./intelligence/sources.ts";
+import { activity, createSource, getSource, listSources, updateSource } from "./intelligence/sources.ts";
 import { search } from "./search.ts";
 
 /** Synthetic personas exist only in the dev tenant; no real employee is ever listed here. */
@@ -171,6 +171,7 @@ export function registerRoutes(app: FastifyInstance, { sql, config, lookup }: Ro
     config.MODEL_PROVIDER === "foundry" ? foundryName(config.FOUNDRY_DEPLOYMENT ?? "") : heuristicProvider.name;
   const sourceDeps = { privateHosts: config.INGEST_PRIVATE_HOSTS, lookup, model };
   route(app, sql, endpoints.sourceStatus, async ({ actor }) => listSources(sql, actor, model));
+  route(app, sql, endpoints.activity, async ({ actor }) => activity(sql, actor));
   route(app, sql, endpoints.getSource, async ({ actor, params }) => getSource(sql, actor, params.sourceId, model));
   route(app, sql, endpoints.createSource, async ({ actor, body, req }) =>
     sql.begin((tx) => createSource(tx, actor, body, sourceDeps, req.id)),
