@@ -57,7 +57,7 @@ export function Library() {
             <ul className="divide-y">
               {list.map((i) => (
                 // The title link stretches over the row, so the whole entry is one target with a short name.
-                <li key={i.id} className="relative py-5 first:pt-0">
+                <li key={i.id} data-spotlight="fill" className="-mx-4 rounded-xl px-4 py-5">
                   <h2 className="text-[1.0625rem] leading-snug font-semibold tracking-[-0.015em]">
                     <Link
                       to={`/conhecimento/${i.id}`}
@@ -182,7 +182,7 @@ export function NewInsight() {
                   return (
                     <li
                       key={`${r.type}-${r.id}`}
-                      className="grid gap-3 rounded-lg border bg-card p-3 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end"
+                      className="grid gap-3 surface rounded-xl p-3 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end"
                     >
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground">{REF_LABEL[r.type]}</p>

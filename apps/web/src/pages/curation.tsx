@@ -182,7 +182,7 @@ function Reviews({ q }: { q: Query<Queue> }) {
   const drop = (storyId: string) =>
     q.setData((d) => ({ ...d, reviews: d.reviews.filter((r) => r.storyId !== storyId) }));
   return (
-    <ul className="divide-y rounded-xl border bg-card">
+    <ul className="divide-y divide-border/60 surface rounded-2xl">
       {reviews.map((r) => (
         <ReviewRow key={r.storyId} r={r} onDone={() => drop(r.storyId)} onReload={q.reload} />
       ))}
@@ -193,7 +193,7 @@ function Reviews({ q }: { q: Query<Queue> }) {
 function Submissions({ rows }: { rows: Queue["submissions"] }) {
   if (rows.length === 0) return <Empty>Nenhuma indicação com problema.</Empty>;
   return (
-    <ul className="divide-y rounded-xl border bg-card">
+    <ul className="divide-y divide-border/60 surface rounded-2xl">
       {rows.map((s) => (
         <li key={s.id} className="px-4 py-3.5 text-sm">
           <p className="break-all">
@@ -359,7 +359,7 @@ function Decisions({ q, onLabelled }: { q: Query<Queue>; onLabelled: () => void 
       empty={(d) => d.items.length === 0 && "Nenhuma decisão do pipeline neste filtro."}
     >
       {(d) => (
-        <ul className="divide-y rounded-xl border bg-card">
+        <ul className="divide-y divide-border/60 surface rounded-2xl">
           {d.items.map((i) => (
             <ItemRow
               key={i.id}
@@ -382,7 +382,7 @@ function CalibrationCard({ q }: { q: Query<Data<"calibration">> }) {
     <Section title="Calibração">
       <Async q={q} what="a calibração" lines={4}>
         {(c) => (
-          <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-sm">
+          <div className="flex flex-col gap-4 text-sm">
             <Facts>
               <Fact term="Modelo">{c.model}</Fact>
               <Fact term="Rótulos">{c.labels}</Fact>

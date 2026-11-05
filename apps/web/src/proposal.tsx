@@ -68,7 +68,7 @@ export function ProposalItem({ proposal: p, onChange }: { proposal: Proposal; on
   const tone = p.status === "selected" ? "success" : p.status === "open" ? (open ? "accent" : "neutral") : "neutral";
 
   return (
-    <article id={`pauta-${p.id}`} className="scroll-mt-20 border-t py-6 first:border-t-0 first:pt-0">
+    <article id={`pauta-${p.id}`} data-spotlight className="surface scroll-mt-20 rounded-2xl p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <Pill tone={tone}>
           {p.status === "open" && !open ? "Votação encerrada" : (PROPOSAL_STATUS[p.status] ?? p.status)}

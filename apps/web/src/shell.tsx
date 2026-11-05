@@ -98,7 +98,7 @@ function NavGroup({ label, items }: { label: string; items: NavEntry[] }) {
                   asChild
                   isActive={active}
                   tooltip={item.label}
-                  className="data-[active=true]:font-semibold [&[data-active=true]>svg]:text-sidebar-primary"
+                  className="transition-[background-color,color] duration-200 data-[active=true]:bg-[linear-gradient(90deg,color-mix(in_oklab,var(--sidebar-primary)_18%,transparent),transparent_90%)] data-[active=true]:font-semibold [&[data-active=true]>svg]:text-sidebar-primary"
                 >
                   <NavLink to={item.to} end={item.to === "/"} onClick={() => setOpenMobile(false)}>
                     <Icon name={item.icon} />
@@ -254,8 +254,8 @@ export function Shell() {
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild tooltip="Opt News — início">
                 <Link to="/">
-                  <span className="grid size-8 shrink-0 place-items-center">
-                    <Mark className="h-6 w-auto" />
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-sidebar-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.06),inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+                    <Mark className="h-4.5 w-auto" />
                   </span>
                   <span className="grid leading-tight">
                     <span
@@ -288,7 +288,7 @@ export function Shell() {
       <SidebarInset>
         <header
           data-app-header
-          className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3 sm:px-4"
+          className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-4"
         >
           <Hint
             label={

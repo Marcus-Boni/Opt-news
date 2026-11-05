@@ -298,7 +298,11 @@ export function StoryPage() {
           )}
 
           {s.selectionReason && !retracted && (
-            <section aria-labelledby="por-que" className="max-w-[44rem] rounded-xl bg-muted px-5 py-4" data-reveal>
+            <section
+              aria-labelledby="por-que"
+              className="max-w-[44rem] rounded-2xl bg-ai-soft/60 px-5 py-4 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--ai)_20%,transparent)]"
+              data-reveal
+            >
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                 <h2 id="por-que" className="text-sm font-semibold">
                   Por que foi selecionada
@@ -361,7 +365,8 @@ export function StoryPage() {
         <aside
           aria-label="Relevância, desdobramentos e proveniência"
           // Below xl the rail drops under the discussion: on a phone the conversation comes right after the summary.
-          className="flex min-w-0 flex-col gap-10 max-xl:order-last xl:col-start-2 xl:row-span-2 xl:row-start-1"
+          data-rail
+          className="flex min-w-0 flex-col gap-5 max-xl:order-last xl:col-start-2 xl:row-span-2 xl:row-start-1"
         >
           <Section title="Relevância">
             <div className="flex flex-col gap-5 text-sm">

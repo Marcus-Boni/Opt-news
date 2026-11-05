@@ -23,14 +23,21 @@ export function StatusPill({ status }: { status: Story["status"] }) {
   return null;
 }
 
-/** Editorial score as a quiet datum: the number in brand text, the meaning in its tooltip. */
+/** Editorial score as a quiet datum: the number in brand text over a hairline meter of the same value (0–100), the
+ * meaning in its tooltip. */
 export function ScoreMark({ score }: { score: number | null }) {
   if (score === null) return null;
+  const pct = Math.max(0, Math.min(100, score));
   return (
     <Hint label="Pontuação editorial automática (0–100): prioridade de leitura, não certeza dos fatos">
-      <span className="relative z-10 inline-flex h-6 min-w-8 shrink-0 items-center justify-center rounded-md bg-brand-soft px-1.5 font-mono text-xs font-medium text-brand-text">
-        {formatScore(score)}
-        <span className="sr-only"> de 100 de pontuação editorial</span>
+      <span className="relative z-10 inline-flex h-7 min-w-9 shrink-0 cursor-default flex-col items-stretch justify-center gap-1 rounded-md bg-brand-soft px-1.5 font-mono text-xs leading-none font-medium text-brand-text">
+        <span className="text-center">
+          {formatScore(score)}
+          <span className="sr-only"> de 100 de pontuação editorial</span>
+        </span>
+        <span aria-hidden="true" className="h-0.5 overflow-hidden rounded-full bg-brand/20">
+          <span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+        </span>
       </span>
     </Hint>
   );
@@ -62,9 +69,10 @@ export function StoryRow({
     // Rows rise as the scroll brings them in (CSS scroll-driven, `data-row-in`); rows already on screen are just there.
     <article
       data-row-in
+      data-spotlight={lead ? undefined : "fill"}
       className={cn(
-        "group/row relative rounded-xl transition-colors",
-        lead ? "pb-2" : "-mx-3 border-b border-border/70 px-3 py-5 last:border-b-0 hover:bg-muted/50",
+        "group/row relative rounded-xl",
+        lead ? "pb-2" : "-mx-4 border-b border-border/60 px-4 py-5 last:border-b-0",
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -82,7 +90,7 @@ export function StoryRow({
         className={cn(
           "mt-2 font-bold tracking-[-0.025em] text-balance text-foreground",
           opening && "vt-story-title",
-          lead ? "text-[1.75rem] leading-[1.15] sm:text-[2.25rem]" : "text-[1.1875rem] leading-snug",
+          lead ? "text-[2rem] leading-[1.08] tracking-[-0.035em] sm:text-[2.75rem]" : "text-[1.1875rem] leading-snug",
         )}
       >
         <Link

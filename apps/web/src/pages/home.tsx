@@ -7,7 +7,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useRef } from "react";
+import { lazy, Suspense, useRef } from "react";
 import { Link } from "@/link";
 import { OptsolvSymbol } from "@/components/brand/optsolv";
 import SplitText from "@/components/SplitText";
@@ -33,6 +33,32 @@ function splitLead(items: StoryCard[]): [StoryCard | undefined, StoryCard[]] {
 
 gsap.registerPlugin(ScrollTrigger);
 
+// The brand's one protagonist graphic (three.js, loaded only here and on the presentation pages), beside the lead.
+const ChevronField = lazy(() => import("@/components/chevron-field").then((m) => ({ default: m.ChevronField })));
+
+/** The cover: the day's strongest story at display size, the symbol's point field beside it (never under the text). */
+function Cover({ story, topicLabel }: { story: StoryCard; topicLabel: (slug: string) => string }) {
+  return (
+    <section
+      aria-label="Destaque"
+      data-reveal
+      className="surface relative isolate mb-10 grid overflow-hidden rounded-3xl lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]"
+    >
+      <div className="min-w-0 p-6 sm:p-10">
+        <StoryRow story={story} topicLabel={topicLabel} lead />
+      </div>
+      <div
+        aria-hidden="true"
+        className="relative hidden min-h-72 overflow-hidden border-l border-border/60 bg-[radial-gradient(70%_60%_at_50%_45%,color-mix(in_oklab,var(--brand)_14%,transparent),transparent_75%)] lg:block"
+      >
+        <Suspense fallback={null}>
+          <ChevronField className="absolute inset-0" />
+        </Suspense>
+      </div>
+    </section>
+  );
+}
+
 /** Today's date in São Paulo, in the briefing's YYYY-MM-DD form. */
 const todayKey = () => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date());
 
@@ -42,8 +68,9 @@ function StalePanorama({ briefing }: { briefing: Briefing }) {
     <section
       aria-labelledby="panorama-titulo"
       data-reveal
-      className="mb-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-2xl bg-depth px-6 py-5 text-depth-foreground"
+      className="relative isolate mb-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 overflow-hidden rounded-2xl bg-depth px-6 py-5 text-depth-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.08)]"
     >
+      <span aria-hidden="true" className="aurora opacity-60" />
       <div className="min-w-0">
         <h2 id="panorama-titulo" className="text-sm font-semibold">
           Ainda não há panorama de hoje
@@ -85,8 +112,9 @@ function Panorama({ briefing }: { briefing: Briefing }) {
       ref={field}
       aria-labelledby="panorama-titulo"
       data-reveal
-      className="relative isolate mb-10 overflow-hidden rounded-2xl bg-depth px-6 py-7 text-depth-foreground sm:px-9 sm:py-9"
+      className="relative isolate mb-10 overflow-hidden rounded-3xl bg-depth px-6 py-7 text-depth-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] sm:px-9 sm:py-10"
     >
+      <span aria-hidden="true" className="aurora" />
       <OptsolvSymbol
         data-watermark
         className="pointer-events-none absolute -right-10 -bottom-16 -z-10 h-72 w-auto text-depth-foreground opacity-[0.07] sm:h-80"
@@ -135,6 +163,7 @@ export function Home() {
   const discussions = useApi("recentDiscussions");
   const briefing = useApi("getBriefing", { params: { date: "latest" } });
   const today = formatDay(Date.now());
+  const [lead, rest] = stories.data ? splitLead(stories.data.items) : [undefined, []];
 
   const viewAll = (to: string, text: string) => (
     <Button asChild variant="link" size="sm" className="text-xs">
@@ -202,6 +231,7 @@ export function Home() {
       title="Briefing"
       subtitle={`${today.charAt(0).toUpperCase()}${today.slice(1)} · horário de Brasília`}
       rail={rail}
+      hero={lead && <Cover story={lead} topicLabel={label} />}
     >
       <Async
         q={stories}
@@ -212,16 +242,10 @@ export function Home() {
           page.items.length === 0 && "Nenhuma notícia curada ainda. Assim que a coleta rodar, o briefing aparece aqui."
         }
       >
-        {(page) => {
-          const [lead, rest] = splitLead(page.items);
+        {() => {
           const b = briefing.data;
           return (
             <>
-              {lead && (
-                <section aria-label="Destaque" className="mb-10" data-reveal>
-                  <StoryRow story={lead} topicLabel={label} lead />
-                </section>
-              )}
               {/* No briefing yet (404) is normal on a fresh install: the field simply does not show. */}
               {b?.overview && (b.date === todayKey() ? <Panorama briefing={b} /> : <StalePanorama briefing={b} />)}
               <Section title="Mais recentes" action={viewAll("/explorar", "Explorar tudo")}>

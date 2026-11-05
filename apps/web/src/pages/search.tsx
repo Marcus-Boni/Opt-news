@@ -105,7 +105,7 @@ export function SearchPage() {
                       <ul className="divide-y">
                         {hits.map((h) => (
                           // The title link stretches over the row; its accessible name stays the title.
-                          <li key={h.id} className="relative py-4 first:pt-0">
+                          <li key={h.id} data-spotlight="fill" className="-mx-4 rounded-xl px-4 py-4">
                             <h3 className="text-[1.0625rem] leading-snug font-semibold tracking-[-0.015em]">
                               <Link
                                 to={hrefFor(h.type, h.id)}

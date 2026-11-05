@@ -19,8 +19,11 @@ export function SessionStatePill({ state }: { state: MeetupSession["state"] }) {
 export function SessionLine({ session: m, compact = false }: { session: MeetupSession; compact?: boolean }) {
   const start = new Date(m.scheduledStart);
   return (
-    <li className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 border-t py-4 first:border-t-0 first:pt-0">
-      <div className="text-center leading-none" aria-hidden="true">
+    <li className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 border-t py-4 first:border-t-0 first:pt-0">
+      <div
+        className="self-start rounded-xl bg-muted/70 py-2 text-center leading-none shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_6%,transparent)]"
+        aria-hidden="true"
+      >
         <div className="text-xs text-muted-foreground">{weekday.format(start).replace(".", "")}</div>
         {/* Orange marks what is still ahead; a past session's date is just a date. */}
         <div

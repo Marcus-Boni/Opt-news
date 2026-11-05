@@ -125,7 +125,7 @@ function Proposals({ startCreating = false }: { startCreating?: boolean }) {
           }}
         />
       )}
-      <div className="max-w-3xl">
+      <div className="flex max-w-3xl flex-col gap-4">
         <Async
           q={proposals}
           what="as pautas"

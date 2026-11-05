@@ -379,7 +379,7 @@ function EmptyMark() {
 
 export function Empty({ children, title }: { children: ReactNode; title?: string }) {
   return (
-    <EmptyBox className="border border-dashed py-8">
+    <EmptyBox className="border border-dashed bg-[radial-gradient(60%_80%_at_50%_0%,color-mix(in_oklab,var(--brand)_6%,transparent),transparent)] py-8">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <EmptyMark />
@@ -445,9 +445,12 @@ export function Page({
   actions,
   rail,
   crumbs,
+  hero,
   children,
 }: {
   title: string;
+  /** A full-width opening block above the content and its rail (the Início cover). */
+  hero?: ReactNode;
   subtitle?: ReactNode;
   /** The way back on a detail page: where this page lives, from the section down (the page itself is the title). */
   crumbs?: { to: string; label: string }[];
@@ -474,17 +477,24 @@ export function Page({
           </BreadcrumbList>
         </Breadcrumb>
       )}
-      <header data-reveal className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <header data-reveal className="mb-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
-          <h1 className="text-[1.75rem] leading-[1.15] font-bold tracking-[-0.03em] sm:text-[2rem]">{title}</h1>
-          {subtitle && <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>}
+          <h1
+            data-title
+            className="text-[2rem] leading-[1.05] font-bold tracking-[-0.035em] sm:text-[2.5rem] lg:text-[2.75rem]"
+          >
+            {title}
+          </h1>
+          {subtitle && <p className="mt-2.5 max-w-[68ch] text-[0.9375rem] text-muted-foreground">{subtitle}</p>}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </header>
+      {hero}
       {rail ? (
         <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_19rem]">
           <div className="min-w-0">{children}</div>
-          <aside className="flex min-w-0 flex-col gap-9" aria-label="Contexto">
+          {/* Each block of the rail is its own raised panel (index.css, [data-rail]). */}
+          <aside data-rail className="flex min-w-0 flex-col gap-5" aria-label="Contexto">
             {rail}
           </aside>
         </div>

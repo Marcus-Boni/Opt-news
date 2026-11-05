@@ -62,7 +62,11 @@ export function Explore() {
       title="Explorar"
       subtitle="Todas as notícias selecionadas pela curadoria automática, com fonte e data de coleta."
     >
-      <div data-reveal className="flex flex-col gap-3 border-b pb-5">
+      <div
+        data-reveal
+        data-sticky-filters
+        className="sticky top-[4.25rem] z-10 mb-8 flex flex-col gap-3 rounded-2xl bg-card/80 p-3 shadow-elev-1 backdrop-blur-xl backdrop-saturate-150"
+      >
         <div className="flex flex-wrap items-end gap-3">
           <search className="min-w-0 flex-1 basis-64">
             <form onSubmit={submit} className="flex gap-2">

@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/theme";
 import { RequireSession, SessionProvider } from "./session.tsx";
 import { Shell } from "./shell.tsx";
 import { prime, settle } from "./api.ts";
+import { installSpotlight } from "./spotlight.ts";
 import { Mark } from "./ui.tsx";
 
 /**
@@ -205,6 +206,7 @@ const router = createBrowserRouter([
 
 const root = document.getElementById("root");
 if (root) {
+  installSpotlight();
   createRoot(root).render(
     <StrictMode>
       <ThemeProvider>

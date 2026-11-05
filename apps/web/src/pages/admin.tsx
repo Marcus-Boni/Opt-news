@@ -259,11 +259,12 @@ function Overview({ rows }: { rows: SourceStatus[] }) {
   const still = reducedMotion();
   return (
     <>
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {figures.map((f) => (
           <div
             key={f.label}
-            className="relative flex flex-col gap-1 bg-card px-4 py-4 transition-colors has-[a:hover]:bg-muted/60 sm:px-5"
+            data-spotlight
+            className="surface relative flex flex-col gap-2 rounded-2xl px-4 py-4 sm:px-5 sm:py-5"
           >
             <dt className="text-sm text-muted-foreground">
               {f.to ? (
@@ -278,7 +279,7 @@ function Overview({ rows }: { rows: SourceStatus[] }) {
             </dt>
             <dd
               className={cn(
-                "flex items-baseline gap-1.5 text-[1.75rem] leading-tight font-bold tracking-[-0.03em]",
+                "flex items-baseline gap-1.5 text-[2.25rem] leading-none font-bold tracking-[-0.035em]",
                 f.alert && "text-destructive",
               )}
             >
@@ -291,7 +292,7 @@ function Overview({ rows }: { rows: SourceStatus[] }) {
         ))}
       </dl>
       <Section title="Funil da curadoria">
-        <figure className="flex flex-col gap-4 rounded-xl border bg-card p-4 sm:p-6">
+        <figure className="flex flex-col gap-4 surface rounded-2xl p-4 sm:p-6">
           {collected > 0 ? (
             <div aria-hidden="true">
               <FunnelChart
