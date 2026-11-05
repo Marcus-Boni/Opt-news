@@ -18,7 +18,7 @@ import { DiscussionLine } from "../discussion.tsx";
 import { formatDay, plural, relativeTime, TZ } from "../format.ts";
 import { ProposalLine } from "../proposal.tsx";
 import { StoryRow, useTopics } from "../story-card.tsx";
-import { Async, Page, Section } from "../ui.tsx";
+import { Async, NextStep, Page, Section } from "../ui.tsx";
 import { SessionLine } from "../session-line.tsx";
 
 /** The lead is the best-scored published story among the latest ones, not simply the newest. */
@@ -180,6 +180,7 @@ export function Home() {
           empty={(list) =>
             list.length === 0 && "Nenhuma pauta aberta. Proponha uma a partir de uma notícia que mereça conversa."
           }
+          emptyAction={<NextStep to="/explorar">Escolher uma notícia</NextStep>}
         >
           {(list) => (
             <ul className="flex flex-col">
@@ -197,6 +198,7 @@ export function Home() {
           empty={(list) =>
             list.length === 0 && "Nenhum meetup agendado. As pautas mais votadas viram a próxima sessão."
           }
+          emptyAction={<NextStep to="/meetups">Votar nas pautas</NextStep>}
         >
           {(list) => (
             <ul className="flex flex-col">
@@ -213,6 +215,7 @@ export function Home() {
           what="os debates"
           shape="comments"
           empty={(list) => list.length === 0 && "Nenhum debate ainda. Comente uma notícia para abrir o primeiro."}
+          emptyAction={<NextStep to="/explorar">Abrir Explorar</NextStep>}
         >
           {(list) => (
             <ul className="flex flex-col">

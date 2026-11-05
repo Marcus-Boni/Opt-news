@@ -22,6 +22,7 @@ import { EASE_OUT, reducedMotion } from "@/motion";
 import { api, useAction, usePaged } from "./api.ts";
 import { hrefFor } from "./format.ts";
 import { useMe } from "./session.tsx";
+import { StoryPreview } from "./story-preview.tsx";
 import { Empty, ErrorState, Loading, Pill, ProblemNote, Section, Time } from "./ui.tsx";
 
 type TargetType = Comment["targetType"];
@@ -440,9 +441,17 @@ export function DiscussionLine({ entry: { comment, target } }: { entry: Discussi
         <p className="plain mt-0.5 line-clamp-3 text-sm leading-relaxed">{comment.body}</p>
         <p className="mt-1.5 text-xs text-muted-foreground">
           {WHERE[target.type]}{" "}
-          <Link to={`${hrefFor(target.type, target.id)}#discussao`} className="link">
-            {target.title}
-          </Link>
+          {target.type === "story" ? (
+            <StoryPreview id={target.id}>
+              <Link to={`${hrefFor(target.type, target.id)}#discussao`} className="link">
+                {target.title}
+              </Link>
+            </StoryPreview>
+          ) : (
+            <Link to={`${hrefFor(target.type, target.id)}#discussao`} className="link">
+              {target.title}
+            </Link>
+          )}
         </p>
       </div>
     </li>

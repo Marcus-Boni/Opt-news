@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import { Link, NavLink } from "@/link";
+import { cn } from "@/lib/utils";
 import { type CommandAction, CommandMenu, type NavEntry } from "@/components/command-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -210,6 +211,51 @@ function ThemeToggle() {
   );
 }
 
+const TABS: NavEntry[] = [
+  { to: "/", label: "Início", icon: "home" },
+  { to: "/explorar", label: "Explorar", icon: "explore" },
+  { to: "/meetups", label: "Meetups", icon: "meetups" },
+  { to: "/comunidade", label: "Comunidade", icon: "community" },
+];
+
+/** Phones: the four daily places under the thumb, and "Mais" for the rest of the navigation (the sidebar sheet). */
+function TabBar() {
+  const { pathname } = useLocation();
+  const { setOpenMobile } = useSidebar();
+  return (
+    <nav
+      aria-label="Navegação rápida"
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border/60 bg-background/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+    >
+      {TABS.map((t) => {
+        const active = t.to === "/" ? pathname === "/" : pathname.startsWith(t.to);
+        return (
+          <NavLink
+            key={t.to}
+            to={t.to}
+            end={t.to === "/"}
+            className={cn(
+              "flex h-14 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium text-muted-foreground transition-colors active:scale-[0.97]",
+              active && "text-foreground [&>svg]:text-brand",
+            )}
+          >
+            <Icon name={t.icon} className="size-5" />
+            {t.label}
+          </NavLink>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => setOpenMobile(true)}
+        className="flex h-14 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium text-muted-foreground active:scale-[0.97]"
+      >
+        <Icon name="menu" className="size-5" />
+        Mais
+      </button>
+    </nav>
+  );
+}
+
 function ReadingProgress() {
   return <span aria-hidden="true" data-reading-progress className="absolute inset-x-0 -bottom-px h-0.5 bg-brand" />;
 }
@@ -309,9 +355,15 @@ export function Shell() {
           <ThemeToggle />
           {READING.test(location.pathname) && <ReadingProgress />}
         </header>
-        <main id="conteudo" ref={main} tabIndex={-1} className="flex-1 outline-none">
+        <main
+          id="conteudo"
+          ref={main}
+          tabIndex={-1}
+          className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] outline-none md:pb-0"
+        >
           <Outlet />
         </main>
+        <TabBar />
       </SidebarInset>
       <ScrollRestoration />
     </SidebarProvider>

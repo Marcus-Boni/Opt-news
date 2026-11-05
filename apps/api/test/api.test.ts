@@ -490,10 +490,30 @@ describe("events and briefings (N-06/N-07)", () => {
 });
 
 describe("source administration (N-01)", () => {
+  test("activity: 84 São Paulo days, today last, only for curators", async () => {
+    assert.equal((await ana.get("/api/v1/admin/activity")).statusCode, 403);
+    const { days } = (await diego.get("/api/v1/admin/activity")).json();
+    assert.equal(days.length, 84);
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+    assert.equal(days.at(-1).date, today);
+    const [row] = await sql<{ published: number }[]>`
+      SELECT count(*)::int AS published FROM content.stories
+      WHERE status = 'published' AND first_seen_at > now() - interval '83 days'`;
+    assert.equal(
+      days.reduce((n: number, d: { stories: number }) => n + d.stories, 0),
+      row?.published,
+    );
+  });
+
   test("only curators and admins see sources; the detail explains each item's fate", async () => {
     assert.equal((await ana.get("/api/v1/admin/sources")).statusCode, 403);
     const list = (await diego.get("/api/v1/admin/sources")).json();
     assert.ok(list.some((s: { id: string; threshold: number }) => s.id === "radar-ia" && s.threshold === 76));
+    // The week strip: seven daily counts of collected items, never more than the source holds.
+    const radar = list.find((s: { id: string; week: number[]; items: Record<string, number> }) => s.id === "radar-ia");
+    assert.equal(radar.week.length, 7);
+    const held = Object.values(radar.items as Record<string, number>).reduce((a, b) => a + b, 0);
+    assert.ok(radar.week.reduce((a: number, b: number) => a + b, 0) <= held);
     const detail = (await diego.get("/api/v1/admin/sources/sentinela")).json();
     const hijack = detail.recent.find((r: { title: string }) => r.title.startsWith("Post pede ao avaliador"));
     assert.deepEqual([hijack.status, hijack.storyId], ["failed", null]);

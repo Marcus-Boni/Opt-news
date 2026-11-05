@@ -32,6 +32,7 @@ interface Row {
   failed: number;
   published: number;
   underReview: number;
+  week: number[];
 }
 
 const count = (db: Db, status: string) =>
@@ -43,8 +44,30 @@ const SELECT = (db: Db) => db`
     ${count(db, "discovered")} AS pending, ${count(db, "selected")} AS selected, ${count(db, "not_selected")} AS not_selected,
     ${count(db, "rejected")} AS rejected, ${count(db, "archived")} AS archived, ${count(db, "failed")} AS failed,
     (SELECT count(*)::int FROM content.stories st WHERE st.source_id = s.id AND st.status = 'published') AS published,
-    (SELECT count(*)::int FROM content.stories st WHERE st.source_id = s.id AND st.status = 'under_review') AS under_review
+    (SELECT count(*)::int FROM content.stories st WHERE st.source_id = s.id AND st.status = 'under_review') AS under_review,
+    (SELECT array_agg(
+        (SELECT count(*)::int FROM content.raw_items r
+          WHERE r.source_id = s.id AND (r.observed_at AT TIME ZONE ${TZ})::date = d.day)
+        ORDER BY d.day)
+      FROM (SELECT (now() AT TIME ZONE ${TZ})::date - k AS day FROM generate_series(0, 6) k) d) AS week
   FROM content.sources s`;
+
+const TZ = "America/Sao_Paulo";
+
+/** One row per day of the last 12 weeks: published stories (by first sighting), comments and proposals. */
+export async function activity(db: Db, actor: Actor) {
+  authorize(actor, "moderate");
+  const days = await db<{ date: string; stories: number; comments: number; proposals: number }[]>`
+    WITH d AS (SELECT ((now() AT TIME ZONE ${TZ})::date - k) AS day FROM generate_series(0, 83) k)
+    SELECT to_char(d.day, 'YYYY-MM-DD') AS date,
+      (SELECT count(*)::int FROM content.stories st
+        WHERE st.status = 'published' AND (st.first_seen_at AT TIME ZONE ${TZ})::date = d.day) AS stories,
+      (SELECT count(*)::int FROM community.comments c
+        WHERE c.status = 'visible' AND (c.created_at AT TIME ZONE ${TZ})::date = d.day) AS comments,
+      (SELECT count(*)::int FROM meetups.proposals p WHERE (p.created_at AT TIME ZONE ${TZ})::date = d.day) AS proposals
+    FROM d ORDER BY d.day`;
+  return { days };
+}
 
 /** The gate shown is the one the active model is held to. */
 function view({ pending, selected, notSelected, rejected, archived, failed, ...s }: Row, model: string) {

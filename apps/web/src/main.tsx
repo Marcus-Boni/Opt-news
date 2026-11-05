@@ -215,7 +215,7 @@ if (root) {
             <SessionProvider>
               <RouterProvider router={router} />
             </SessionProvider>
-            <Toaster position="bottom-right" />
+            <Toaster position="bottom-right" mobileOffset={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }} />
           </TooltipProvider>
         </MotionConfig>
       </ThemeProvider>

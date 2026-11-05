@@ -22,6 +22,7 @@ import { reducedMotion } from "@/motion";
 import { api, useAction, useApi } from "../api.ts";
 import { formatDateTime, plural, TIER } from "../format.ts";
 import { useMe } from "../session.tsx";
+import { ActivityMap, WeekStrip } from "@/components/activity";
 import { Async, ExternalLink, Fact, Facts, Page, Pill, ProblemNote, Section, Time } from "../ui.tsx";
 
 const ITEM_STATUS: Record<string, { label: string; tone: "neutral" | "success" | "warning" | "error" | "accent" }> = {
@@ -326,6 +327,7 @@ function SourcesTable({ rows, onSaved }: { rows: SourceStatus[]; onSaved: () => 
         <TableRow className="hover:bg-transparent">
           <TableHead>Fonte</TableHead>
           <TableHead className="hidden sm:table-cell">Estado</TableHead>
+          <TableHead className="hidden lg:table-cell">7 dias</TableHead>
           <TableHead className="hidden text-right md:table-cell">Publicadas</TableHead>
           <TableHead className="hidden text-right md:table-cell">Em revisão</TableHead>
           <TableHead className="hidden text-right md:table-cell">Falhas</TableHead>
@@ -376,6 +378,9 @@ function SourcesTable({ rows, onSaved }: { rows: SourceStatus[]; onSaved: () => 
             <TableCell className="hidden py-3.5 align-top sm:table-cell">
               <Health s={s} />
             </TableCell>
+            <TableCell className="hidden py-3.5 align-top lg:table-cell">
+              <WeekStrip week={s.week} />
+            </TableCell>
             <TableCell className="tabular hidden py-3.5 text-right align-top md:table-cell">{s.published}</TableCell>
             <TableCell className="tabular hidden py-3.5 text-right align-top md:table-cell">{s.underReview}</TableCell>
             <TableCell
@@ -399,6 +404,7 @@ function SourcesTable({ rows, onSaved }: { rows: SourceStatus[]; onSaved: () => 
 export function Admin() {
   const me = useMe();
   const sources = useApi("sourceStatus", {}, me.can.moderate);
+  const activity = useApi("activity", {}, me.can.moderate);
   const [creating, setCreating] = useState(false);
   if (!me.can.moderate) return <NoAccess />;
   return (
@@ -432,6 +438,11 @@ export function Admin() {
         {(rows) => (
           <div className="flex flex-col gap-10">
             <Overview rows={rows} />
+            <Section title="Atividade do time">
+              <Async q={activity} what="a atividade" lines={3}>
+                {(a) => <ActivityMap days={a.days} />}
+              </Async>
+            </Section>
             <Section title="Fontes">
               <SourcesTable rows={rows} onSaved={() => sources.reload()} />
             </Section>

@@ -2,6 +2,7 @@
 // never as markup. Pages import from here so the app speaks one visual language.
 import {
   ArrowLeft,
+  ArrowRight,
   ArrowUp,
   ArrowUpRight,
   BookOpen,
@@ -34,7 +35,14 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Empty as EmptyBox, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty as EmptyBox,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton as SkeletonBar } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "@/link";
@@ -377,7 +385,19 @@ function EmptyMark() {
   );
 }
 
-export function Empty({ children, title }: { children: ReactNode; title?: string }) {
+/** An empty block's next step: one quiet button that leads somewhere useful. */
+export function NextStep({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Button asChild variant="outline" size="sm" className="mt-1">
+      <Link to={to}>
+        {children}
+        <ArrowRight data-icon="inline-end" />
+      </Link>
+    </Button>
+  );
+}
+
+export function Empty({ children, title, action }: { children: ReactNode; title?: string; action?: ReactNode }) {
   return (
     <EmptyBox className="border border-dashed bg-[radial-gradient(60%_80%_at_50%_0%,color-mix(in_oklab,var(--brand)_6%,transparent),transparent)] py-8">
       <EmptyHeader>
@@ -387,6 +407,7 @@ export function Empty({ children, title }: { children: ReactNode; title?: string
         {title && <EmptyTitle>{title}</EmptyTitle>}
         <EmptyDescription>{children}</EmptyDescription>
       </EmptyHeader>
+      {action && <EmptyContent>{action}</EmptyContent>}
     </EmptyBox>
   );
 }
@@ -398,6 +419,7 @@ export function Async<T>({
   lines = 3,
   shape,
   empty,
+  emptyAction,
 }: {
   q: { data: T | undefined; error: ApiError | undefined; reload: () => void };
   what: string;
@@ -405,11 +427,13 @@ export function Async<T>({
   lines?: number;
   shape?: SkeletonShape;
   empty?: (data: T) => ReactNode | false;
+  /** The next step offered when `empty` says the block is empty (NextStep). */
+  emptyAction?: ReactNode;
 }) {
   if (q.error) return <ErrorState error={q.error} what={what} onRetry={q.reload} />;
   if (q.data === undefined) return <Loading lines={lines} shape={shape} label={`Carregando ${what}…`} />;
   const nothing = empty?.(q.data);
-  return nothing ? <Empty>{nothing}</Empty> : children(q.data);
+  return nothing ? <Empty action={emptyAction}>{nothing}</Empty> : children(q.data);
 }
 
 export function Section({

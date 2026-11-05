@@ -24,6 +24,10 @@ escuro) são de interface e ficam marcados como tal.
 - **Produto:** "Opt News" em Public Sans Bold, ao lado do símbolo (laranja, igual em toda a interface).
 - **Movimento-assinatura:** o chevron do símbolo. A cadeia notícia → pauta → meetup → insight é desenhada com
   chevrons (`ChevronTrail`, exportado como `Trail` em `ui.tsx`); ao chegar, um impulso laranja percorre a cadeia.
+- **Cadeia viva:** na notícia, "Caminho desta notícia" (`ValueChain`, `components/value-chain.tsx`) mostra as quatro
+  etapas com o estado real: concluída (chevron laranja), em andamento (pulsa duas vezes ao chegar), ainda não
+  (tracejada). O impulso laranja percorre os conectores das etapas alcançadas. "Meetup" só diz "pauta selecionada":
+  o detalhe da notícia não traz sessões, então a cadeia nunca afirma que um encontro aconteceu.
 - **Grafismos oficiais:** no máximo um por tela, discreto (hoje só no painel do login, `public/brand/`).
 - **Capa do Início:** a notícia de maior nota em tamanho de manchete (até 44px) numa superfície larga, com o campo de
   pontos do símbolo (`ChevronField`, carregado só aqui, no login e na apresentação) numa coluna ao lado, nunca sob o
@@ -172,8 +176,30 @@ superfície de trabalho. Regras só delas:
   baixo, o pipeline fica em coluna também no desktop e a barra fixa não aparece.
 - **Números:** só propriedades do sistema (2 notas, 72 h, 1 fonte por notícia), nunca resultados ou métricas.
 
+## Ritmo de trabalho
+
+- **Votar é um impulso:** a seta do botão sobe e assenta (Web Animations); pautas abertas ficam ordenadas por votos
+  e a que muda de posição desliza até o novo lugar (motion `layout`, mola curta).
+- **Linha do tempo do acontecimento:** o fio laranja entre as coberturas se desenha com a rolagem e cada ponto acende
+  quando sua cobertura chega (`.thread`, `animation-timeline: view()`).
+- **Prévia de notícia:** links de notícia em debates e pautas abrem um cartão com fonte, nota e resumo ao repousar o
+  ponteiro (`StoryPreview`, 350ms, busca só ao abrir). Toque não tem prévia: o link abre a notícia.
+- **Modo leitura:** na notícia, uma coluna central de 42rem, resumo em 21px, trilho oculto; lembrado por pessoa.
+- **Explorar por dia:** em "Recentes" o feed é agrupado pelo dia de São Paulo ("Hoje", "Ontem", "Segunda-feira, 2 de
+  novembro"), com o cabeçalho do dia fixo sob a barra de filtros. Em "Relevância" não há grupos.
+- **Dados de operação no tamanho do dado:** a coluna "7 dias" das fontes (itens coletados por dia, hoje em laranja) e
+  o mapa "Atividade do time" (12 semanas, um quadrado por dia, cinco tons de laranja, totais ao lado). Números
+  sempre nas dicas e no resumo para leitores de tela. Dados de `GET /api/v1/admin/activity` e `SourceStatus.week`.
+- **Curadoria pelo teclado:** na fila "Em revisão", J/K movem, P publica, R abre a retirada (que confirma), O abre a
+  notícia. Teclas não agem com campo, diálogo ou menu aberto, nem com modificadores. A linha ativa ganha aresta laranja.
+
 ## Feedback e ajuda
 
+- **Desfazer em vez de "tem certeza?":** decisões reversíveis na tela (selecionar ou rejeitar pauta) aparecem na hora
+  e só vão ao servidor quando o toast de 6s fecha sem "Desfazer" (`withUndo`, `src/undo.ts`). Sair da página com uma
+  decisão pendente pede confirmação ao navegador. Ações destrutivas sem volta seguem com diálogo.
+- **Vazio com próximo passo:** todo bloco vazio diz o que fazer e, quando há para onde ir, oferece um botão discreto
+  (`NextStep`, via `emptyAction` do `Async`).
 - **Toasts (Sonner):** só para o resultado de uma ação ("Pauta aberta para votação", "Alterações salvas"), com
   ação quando há próximo passo ("Ver em Meetups"). Superfície de cartão, ícone na cor semântica, ação no laranja de
   ação. Erros que pedem correção ficam **inline** junto do campo (`ProblemNote`), não em toast.
@@ -185,7 +211,12 @@ superfície de trabalho. Regras só delas:
 - **Filtros de lista:** uma barra, uma decisão por controle (texto, `Select` de tema, `Select` de período, ordem);
   o que está ativo aparece como pílulas removíveis com "Limpar filtros". O campo de Explorar filtra só aquele feed;
   a Busca cobre notícias, meetups e insights.
-- **Paleta (Ctrl K):** "Ações" (Nova pauta, Registrar insight, trocar tema, conforme o papel) e "Ir para".
+- **Paleta (Ctrl K):** "Conteúdo" (até 6 notícias, insights e meetups da busca unificada, depois de 250ms sem
+  digitar, com a marca IA quando o trecho é de máquina), "Pesquisar", "Ações" (Nova pauta, Registrar insight, trocar
+  tema, conforme o papel) e "Ir para".
+- **Celular:** barra inferior fixa e translúcida com Início, Explorar, Meetups, Comunidade e "Mais" (abre a navegação
+  completa), respeitando a área segura; toasts sobem acima dela. Diálogos viram folhas que sobem da borda inferior
+  (`data-sheet`), exceto a paleta, que fica no alto por causa do teclado.
 - **Números e textos do motor:** nota editorial sempre inteira (`formatScore`); motivos do pipeline na língua do time
   (`humanReason`), nunca ids de etapa ou códigos crus. Cadeias sempre na ordem notícia → pauta → meetup → insight.
 - **Atualidade:** o que é de outro dia diz a idade (o panorama de ontem vira a faixa "Ainda não há panorama de hoje");

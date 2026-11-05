@@ -14,7 +14,7 @@ import { api, useAction, useApi } from "../api.ts";
 import { Discussion } from "../discussion.tsx";
 import { hrefFor, INSIGHT_STATUS, plural, REF_LABEL, RELATION_LABEL } from "../format.ts";
 import { useMe } from "../session.tsx";
-import { Async, Dot, ErrorState, Loading, Page, Pill, ProblemNote, Section, Time, Trail } from "../ui.tsx";
+import { Async, Dot, ErrorState, Loading, NextStep, Page, Pill, ProblemNote, Section, Time, Trail } from "../ui.tsx";
 
 type RefType = Insight["references"][number]["type"];
 type Relation = Insight["references"][number]["relation"];
@@ -52,6 +52,7 @@ export function Library() {
             list.length === 0 &&
             "A biblioteca está vazia. Registre o primeiro insight a partir de uma notícia ou de um meetup."
           }
+          emptyAction={me.can.contribute && <NextStep to="/conhecimento/novo">Registrar insight</NextStep>}
         >
           {(list) => (
             <ul className="divide-y">

@@ -3,9 +3,12 @@
 // the page only hides what the member cannot do.
 import { toast } from "sonner";
 import { Check } from "lucide-react";
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useId, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { Link } from "@/link";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import {
   Dialog,
   DialogContent,
@@ -67,8 +70,27 @@ function Scores({ scores, threshold }: { scores: [number, number] | null; thresh
   );
 }
 
-function ReviewRow({ r, onDone, onReload }: { r: Review; onDone: () => void; onReload: () => void }) {
+interface RowCommands {
+  publish: () => void;
+  retract: () => void;
+}
+
+function ReviewRow({
+  r,
+  onDone,
+  onReload,
+  active,
+  register,
+}: {
+  r: Review;
+  onDone: () => void;
+  onReload: () => void;
+  /** The row the keyboard is on (J/K); P and R act on it. */
+  active: boolean;
+  register: (id: string, commands: RowCommands | null) => void;
+}) {
   const id = useId();
+  const row = useRef<HTMLLIElement>(null);
   const decide = useAction();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -93,8 +115,22 @@ function ReviewRow({ r, onDone, onReload }: { r: Review; onDone: () => void; onR
     e.preventDefault();
     void send("retract");
   };
+  useEffect(() => {
+    register(r.storyId, { publish: () => void send("publish"), retract: () => toggle(true) });
+    return () => register(r.storyId, null);
+  });
+  useEffect(() => {
+    if (active) row.current?.scrollIntoView({ block: "nearest" });
+  }, [active]);
   return (
-    <li className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+    <li
+      ref={row}
+      aria-current={active || undefined}
+      className={cn(
+        "flex flex-col gap-3 px-4 py-4 transition-colors first:rounded-t-2xl last:rounded-b-2xl sm:flex-row sm:items-start sm:justify-between",
+        active && "bg-muted/60 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--brand)_45%,transparent)]",
+      )}
+    >
       <div className="min-w-0">
         <p className="font-medium text-foreground">
           <Link to={`/noticias/${r.storyId}`} className="hover:text-brand-text hover:underline">
@@ -176,17 +212,76 @@ function ReviewRow({ r, onDone, onReload }: { r: Review; onDone: () => void; onR
   );
 }
 
+/** Keys only reach the queue when nobody is typing and no dialog or menu is open. */
+const typing = (e: KeyboardEvent) =>
+  e.metaKey ||
+  e.ctrlKey ||
+  e.altKey ||
+  (e.target instanceof HTMLElement &&
+    (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))) ||
+  document.querySelector('[role="dialog"],[role="menu"],[role="listbox"]') !== null;
+
 function Reviews({ q }: { q: Query<Queue> }) {
+  const navigate = useNavigate();
   const reviews = q.data?.reviews ?? [];
+  const [cursor, setCursor] = useState(-1);
+  const commands = useRef(new Map<string, RowCommands>());
+  const register = useCallback((id: string, c: RowCommands | null) => {
+    if (c) commands.current.set(id, c);
+    else commands.current.delete(id);
+  }, []);
+  const active = reviews[Math.min(cursor, reviews.length - 1)];
+
+  // Triage from the keyboard: J/K move, P publishes, R asks to retract, O opens the story.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (typing(e) || reviews.length === 0) return;
+      const key = e.key.toLowerCase();
+      if (key === "j") setCursor((c) => Math.min(c + 1, reviews.length - 1));
+      else if (key === "k") setCursor((c) => Math.max(c - 1, 0));
+      else if (active && key === "p") commands.current.get(active.storyId)?.publish();
+      else if (active && key === "r") commands.current.get(active.storyId)?.retract();
+      else if (active && key === "o") navigate(`/noticias/${active.storyId}`);
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [reviews.length, active, navigate]);
+
   if (reviews.length === 0) return <Empty>Nenhuma notícia em revisão.</Empty>;
   const drop = (storyId: string) =>
     q.setData((d) => ({ ...d, reviews: d.reviews.filter((r) => r.storyId !== storyId) }));
   return (
-    <ul className="divide-y divide-border/60 surface rounded-2xl">
-      {reviews.map((r) => (
-        <ReviewRow key={r.storyId} r={r} onDone={() => drop(r.storyId)} onReload={q.reload} />
-      ))}
-    </ul>
+    <div className="flex flex-col gap-2.5">
+      <p className="hidden flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground sm:flex">
+        <span>Atalhos:</span>
+        <span>
+          <Kbd>J</Kbd> <Kbd>K</Kbd> navegar
+        </span>
+        <span>
+          <Kbd>P</Kbd> publicar
+        </span>
+        <span>
+          <Kbd>R</Kbd> retirar
+        </span>
+        <span>
+          <Kbd>O</Kbd> abrir
+        </span>
+      </p>
+      <ul className="divide-y divide-border/60 surface rounded-2xl">
+        {reviews.map((r) => (
+          <ReviewRow
+            key={r.storyId}
+            r={r}
+            active={r === active}
+            register={register}
+            onDone={() => drop(r.storyId)}
+            onReload={q.reload}
+          />
+        ))}
+      </ul>
+    </div>
   );
 }
 
