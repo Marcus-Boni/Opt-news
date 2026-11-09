@@ -49,7 +49,7 @@ function initials(name: string) {
 }
 
 /** Initials in a neutral disc; the name is always written next to it, so screen readers skip it. */
-function AuthorAvatar({ name, size }: { name: string; size?: "sm" | "default" }) {
+export function AuthorAvatar({ name, size }: { name: string; size?: "sm" | "default" }) {
   return (
     <Avatar size={size} aria-hidden="true">
       <AvatarFallback className="text-xs font-semibold">{initials(name)}</AvatarFallback>
@@ -424,7 +424,7 @@ export function Discussion({
   );
 }
 
-type DiscussionEntry = { comment: Comment; target: { type: TargetType; id: string; title: string } };
+export type DiscussionEntry = { comment: Comment; target: { type: TargetType; id: string; title: string } };
 
 const WHERE: Record<TargetType, string> = { story: "na notícia", meetup: "no meetup", insight: "no insight" };
 

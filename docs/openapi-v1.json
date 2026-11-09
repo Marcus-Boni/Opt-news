@@ -1254,6 +1254,12 @@
                         "null"
                       ]
                     },
+                    "sourceExcerpt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "provenance": {
                       "type": "object",
                       "properties": {
@@ -1380,6 +1386,7 @@
                     "event",
                     "language",
                     "selectionReason",
+                    "sourceExcerpt",
                     "provenance",
                     "retractedAt",
                     "proposals",

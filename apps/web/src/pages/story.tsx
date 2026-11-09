@@ -1,12 +1,13 @@
 // Notícia: source facts (headline, byline, original link) kept apart from machine text (summary, selection reason),
 // which always carries the IA mark; then what the team did with it (the chevron chain) and the full provenance.
 import type { StoryDetail } from "@optnews/contracts";
-import { ArrowUpRight, BookOpen, BookOpenText, CalendarPlus, MessageSquare } from "lucide-react";
+import { ArrowUpRight, BookOpen, BookOpenText, CalendarPlus, MessageSquare, Vote } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Link } from "@/link";
 import { cn } from "@/lib/utils";
-import { type ChainStep, ValueChain } from "@/components/value-chain";
+import { type ChainStep, ChainStrip, ValueChain } from "@/components/value-chain";
+import { SourceCheck } from "../source-check.tsx";
 import { toast } from "sonner";
 import {
   Breadcrumb,
@@ -169,7 +170,7 @@ function ProposeForm({
 function chainOf(s: StoryDetail): ChainStep[] {
   const open = s.proposals.filter((p) => p.status === "open");
   const selected = s.proposals.filter((p) => p.status === "selected");
-  const lead = selected[0] ?? open[0] ?? s.proposals[0];
+  const votes = open.reduce((n, p) => n + p.votes, 0);
   return [
     {
       key: "noticia",
@@ -183,22 +184,29 @@ function chainOf(s: StoryDetail): ChainStep[] {
       state: selected.length > 0 ? "done" : open.length > 0 ? "active" : s.proposals.length > 0 ? "done" : "ahead",
       detail:
         open.length > 0
-          ? `Em votação · ${plural(
-              open.reduce((n, p) => n + p.votes, 0),
-              "voto",
-              "votos",
-            )}`
+          ? `${plural(open.length, "pauta em votação", "pautas em votação")} · ${plural(votes, "voto", "votos")}`
           : s.proposals.length > 0
             ? plural(s.proposals.length, "pauta proposta", "pautas propostas")
             : "Nenhuma pauta ainda",
-      to: lead ? `/meetups?aba=propostas#pauta-${lead.id}` : undefined,
+      items: s.proposals.map((p) => ({
+        key: p.id,
+        title: p.title,
+        to: `/meetups?aba=propostas#pauta-${p.id}`,
+        meta: `${PROPOSAL_STATUS[p.status] ?? p.status} · ${plural(p.votes, "voto", "votos")}`,
+      })),
     },
     {
       key: "meetup",
       label: "Meetup",
       state: selected.length > 0 ? (s.insights.length > 0 ? "done" : "active") : "ahead",
-      detail: selected.length > 0 ? "Pauta selecionada para meetup" : "Depende de uma pauta selecionada",
-      to: selected.length > 0 ? "/meetups?aba=agenda" : undefined,
+      detail:
+        selected.length > 0 ? (
+          <Link to="/meetups?aba=agenda" className="link">
+            Pauta selecionada: ver agenda
+          </Link>
+        ) : (
+          "Depende de uma pauta selecionada"
+        ),
     },
     {
       key: "insight",
@@ -208,7 +216,12 @@ function chainOf(s: StoryDetail): ChainStep[] {
         s.insights.length > 0
           ? plural(s.insights.length, "insight registrado", "insights registrados")
           : "Nenhum ainda",
-      to: s.insights[0] ? `/conhecimento/${s.insights[0].id}` : undefined,
+      items: s.insights.map((i) => ({
+        key: i.id,
+        title: i.title,
+        to: `/conhecimento/${i.id}`,
+        meta: INSIGHT_STATUS[i.status] ?? i.status,
+      })),
     },
   ];
 }
@@ -261,11 +274,14 @@ export function StoryPage() {
   const retracted = s.status === "retracted";
   const canAct = me.can.contribute && !retracted;
   const score = s.editorialScore;
+  const chain = chainOf(s);
+  const openProposal = s.proposals.find((p) => p.status === "open");
+  const others = s.event?.stories.filter((c) => c.id !== s.id) ?? [];
 
   return (
     <article className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
       <title>{`${s.headline} · Opt News`}</title>
-      <Breadcrumb className="mb-5" data-reveal>
+      <Breadcrumb className={cn("mb-5", reading && "mx-auto max-w-[42rem]")} data-reveal>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
@@ -276,7 +292,7 @@ export function StoryPage() {
             <span key={t} className="contents">
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink asChild className="font-medium text-brand-text">
+                <BreadcrumbLink asChild className="font-medium text-foreground">
                   <Link to={`/explorar?tema=${encodeURIComponent(t)}`}>{label(t)}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
@@ -286,7 +302,7 @@ export function StoryPage() {
       </Breadcrumb>
 
       {/* The headline is the shared element of the list → story transition, so it is not part of the arrival. */}
-      <header className="max-w-3xl">
+      <header className={cn("max-w-3xl", reading && "mx-auto max-w-[42rem]")}>
         <h1 className="vt-story-title text-[2rem] leading-[1.1] font-bold tracking-[-0.035em] text-balance sm:text-[2.75rem]">
           {s.headline}
         </h1>
@@ -354,13 +370,6 @@ export function StoryPage() {
         </Button>
       </header>
 
-      <section aria-labelledby="caminho" data-reveal className="surface mt-9 rounded-2xl px-5 py-5 sm:px-6">
-        <h2 id="caminho" className="mb-4 text-sm font-semibold text-muted-foreground">
-          Caminho desta notícia
-        </h2>
-        <ValueChain label="Onde esta notícia está no caminho até o conhecimento" steps={chainOf(s)} />
-      </section>
-
       <Separator className="my-9" />
 
       <div
@@ -378,14 +387,27 @@ export function StoryPage() {
                 </h2>
                 {s.aiGenerated ? <AiTag /> : <span className="text-xs text-muted-foreground">Resumo editorial</span>}
               </div>
-              <p
-                className={cn(
-                  "plain text-foreground",
-                  reading ? "text-[1.3125rem] leading-[1.75]" : "text-[1.125rem] leading-[1.7]",
-                )}
-              >
-                {s.summary}
-              </p>
+              {s.aiGenerated && s.sourceExcerpt ? (
+                <SourceCheck
+                  summary={s.summary}
+                  headline={s.headline}
+                  excerpt={s.sourceExcerpt}
+                  sourceName={s.source.name}
+                  className={cn(
+                    "text-foreground",
+                    reading ? "text-[1.3125rem] leading-[1.75]" : "text-[1.125rem] leading-[1.7]",
+                  )}
+                />
+              ) : (
+                <p
+                  className={cn(
+                    "plain text-foreground",
+                    reading ? "text-[1.3125rem] leading-[1.75]" : "text-[1.125rem] leading-[1.7]",
+                  )}
+                >
+                  {s.summary}
+                </p>
+              )}
               {s.aiGenerated && (
                 <p className="mt-3 text-xs text-muted-foreground">
                   Escrito automaticamente pela curadoria a partir do trecho da fonte; não é texto da fonte nem de um
@@ -420,9 +442,22 @@ export function StoryPage() {
           {canAct ? (
             <div className="flex flex-col gap-4" data-reveal>
               <div className="flex flex-wrap gap-2">
-                <Button aria-expanded={proposing} onClick={() => setProposing((v) => !v)}>
+                {/* An open proposal already exists: voting on it comes first, a new one is the alternative. */}
+                {openProposal && (
+                  <Button asChild>
+                    <Link to={`/meetups?aba=propostas#pauta-${openProposal.id}`}>
+                      <Vote data-icon="inline-start" />
+                      Votar na pauta aberta
+                    </Link>
+                  </Button>
+                )}
+                <Button
+                  variant={openProposal ? "outline" : "default"}
+                  aria-expanded={proposing}
+                  onClick={() => setProposing((v) => !v)}
+                >
                   <CalendarPlus data-icon="inline-start" />
-                  Propor meetup
+                  {openProposal ? "Propor outra pauta" : "Propor meetup"}
                 </Button>
                 <Button asChild variant="outline">
                   <Link to={`/conhecimento/novo?story=${s.id}`}>
@@ -436,6 +471,9 @@ export function StoryPage() {
                     Comentar
                   </a>
                 </Button>
+              </div>
+              <div className="xl:hidden">
+                <ChainStrip steps={chain} to="#caminho" />
               </div>
               {proposing && (
                 <ProposeForm
@@ -473,6 +511,10 @@ export function StoryPage() {
           data-rail
           className="flex min-w-0 flex-col gap-5 max-xl:order-last xl:col-start-2 xl:row-span-2 xl:row-start-1"
         >
+          <Section title="Caminho desta notícia" id="caminho">
+            <ValueChain label="Onde esta notícia está no caminho até o conhecimento" steps={chain} />
+          </Section>
+
           <Section title="Relevância">
             <div className="flex flex-col gap-5 text-sm">
               <div>
@@ -482,7 +524,7 @@ export function StoryPage() {
                 ) : (
                   <>
                     <p className="mt-1 flex items-baseline gap-1.5">
-                      <span className="tabular text-3xl font-bold tracking-[-0.03em] text-brand-text">
+                      <span className="tabular text-3xl font-bold tracking-[-0.03em] text-foreground">
                         <CountUp to={Math.round(score)} duration={1} />
                       </span>
                       <span className="text-muted-foreground">de 100 · {scoreWord(score)}</span>
@@ -513,9 +555,9 @@ export function StoryPage() {
             </div>
           </Section>
 
-          {s.event && s.event.stories.length > 1 && (
+          {s.event && others.length > 0 && (
             <Section
-              title="Mesmo acontecimento"
+              title="Outras coberturas"
               action={
                 <Button asChild variant="link" size="sm" className="text-xs">
                   <Link to={`/acontecimentos/${s.event.id}`}>Linha do tempo</Link>
@@ -523,46 +565,19 @@ export function StoryPage() {
               }
             >
               <Trail
-                label="Coberturas do mesmo acontecimento"
-                items={s.event.stories.map((c) => ({
+                label="Outras coberturas do mesmo acontecimento"
+                items={others.map((c) => ({
                   key: c.id,
                   title: c.headline,
-                  to: c.id === s.id ? undefined : `/noticias/${c.id}`,
-                  current: c.id === s.id,
-                  meta: `${c.source.name}${c.id === s.id ? " · esta página" : ""}`,
+                  to: `/noticias/${c.id}`,
+                  meta: c.source.name,
                 }))}
               />
             </Section>
           )}
 
-          <Section title="Desdobramentos">
-            <Trail
-              label="Desdobramentos desta notícia"
-              items={[
-                { key: s.id, title: s.headline, meta: "Notícia · esta página", current: true },
-                ...s.proposals.map((p) => ({
-                  key: p.id,
-                  title: p.title,
-                  to: `/meetups?aba=propostas#pauta-${p.id}`,
-                  meta: `Pauta · ${PROPOSAL_STATUS[p.status] ?? p.status} · ${plural(p.votes, "voto", "votos")}`,
-                })),
-                ...s.insights.map((i) => ({
-                  key: i.id,
-                  title: i.title,
-                  to: `/conhecimento/${i.id}`,
-                  meta: `Insight · ${INSIGHT_STATUS[i.status] ?? i.status}`,
-                })),
-              ]}
-            />
-            {s.proposals.length + s.insights.length === 0 && (
-              <p className="mt-3 text-xs text-muted-foreground">
-                Nenhuma pauta ou insight ligado a esta notícia ainda.
-              </p>
-            )}
-          </Section>
-
           <Section title="Proveniência">
-            <Facts>
+            <Facts stacked>
               <Fact term="Processo">{PROVIDER_LABEL[s.provenance.provider] ?? "Curadoria automática"}</Fact>
               <Fact term="Política editorial">
                 {s.provenance.policyVersion ? (

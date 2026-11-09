@@ -127,6 +127,8 @@ describe("stories (feed, detail, ACL)", () => {
     assert.match(s.provenance.policyVersion, /^pt-BR@/);
     assert.equal(s.provenance.modelVersion, "roteirizado-fixtures@1");
     assert.equal(s.optsolvRelevanceScore, null);
+    // The source's own feed excerpt comes along as plain text, for checking the AI summary against it.
+    assert.ok(typeof s.sourceExcerpt === "string" && s.sourceExcerpt.length > 0 && s.sourceExcerpt.length <= 800);
     assert.equal((await ana.get(`/api/v1/stories/${story["fx-undated"]}`)).statusCode, 404);
     assert.equal((await ana.get("/api/v1/stories/not-a-uuid")).statusCode, 404);
   });

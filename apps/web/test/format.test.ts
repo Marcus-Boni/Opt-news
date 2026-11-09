@@ -8,6 +8,7 @@ import {
   relativeTime,
   saoPauloInputToIso,
 } from "../src/format.ts";
+import { keyOf, sentencesOf } from "../src/support.ts";
 
 test("datetime-local is read as São Paulo wall time and sent as UTC", () => {
   assert.equal(saoPauloInputToIso("2026-11-20T19:30"), "2026-11-20T22:30:00.000Z");
@@ -43,4 +44,17 @@ test("feed day headings follow the São Paulo calendar", () => {
   assert.equal(dayHeading("2026-11-05T03:30:00Z", now), "Hoje"); // 00:30 local, same day
   assert.equal(dayHeading("2026-11-05T02:30:00Z", now), "Ontem"); // 23:30 local on the 4th
   assert.equal(dayHeading("2026-11-02T15:00:00Z", now), "Segunda-feira, 2 de novembro");
+});
+
+test("summary sentences are measured against the source's own words", () => {
+  const source = "Atlas AI lança framework aberto para orquestrar agentes com aprovação humana.";
+  const [repeats, adds] = sentencesOf(
+    "O framework aberto orquestra agentes com aprovação humana. Concorrentes ainda não reagiram ao anúncio.",
+    source,
+  );
+  assert.ok(repeats && adds);
+  assert.equal(repeats.ratio, 1); // framework, aberto, orquestra(r), agentes, aprovação, humana
+  assert.equal(adds.found, 0);
+  assert.equal(keyOf("de"), null);
+  assert.equal(keyOf("Integrações,"), keyOf("integração"));
 });

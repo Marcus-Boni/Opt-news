@@ -9,6 +9,17 @@ const guard = (e: BeforeUnloadEvent) => {
   e.preventDefault();
 };
 
+/** Keeps the browser from leaving silently while a decision waits; call the returned function to let go. */
+export function holdUnload(): () => void {
+  if (waiting++ === 0) window.addEventListener("beforeunload", guard);
+  let held = true;
+  return () => {
+    if (!held) return;
+    held = false;
+    if (--waiting === 0) window.removeEventListener("beforeunload", guard);
+  };
+}
+
 export function withUndo({
   message,
   description,
@@ -23,10 +34,7 @@ export function withUndo({
   revert: () => void;
 }) {
   let settled = false;
-  if (waiting++ === 0) window.addEventListener("beforeunload", guard);
-  const release = () => {
-    if (--waiting === 0) window.removeEventListener("beforeunload", guard);
-  };
+  const release = holdUnload();
   const timer = window.setTimeout(async () => {
     if (settled) return;
     settled = true;

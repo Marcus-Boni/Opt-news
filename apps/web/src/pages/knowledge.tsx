@@ -5,16 +5,32 @@ import { Plus } from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { Link } from "@/link";
+import { Chevron } from "@/components/chevron-trail";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api, useAction, useApi } from "../api.ts";
 import { Discussion } from "../discussion.tsx";
-import { hrefFor, INSIGHT_STATUS, plural, REF_LABEL, RELATION_LABEL } from "../format.ts";
+import { hrefFor, INSIGHT_STATUS, REF_LABEL, RELATION_LABEL } from "../format.ts";
 import { useMe } from "../session.tsx";
-import { Async, Dot, ErrorState, Loading, NextStep, Page, Pill, ProblemNote, Section, Time, Trail } from "../ui.tsx";
+import {
+  Async,
+  Dot,
+  Empty,
+  ErrorState,
+  Loading,
+  NextStep,
+  Page,
+  Pill,
+  ProblemNote,
+  SELECTED,
+  Section,
+  Time,
+  Trail,
+} from "../ui.tsx";
 
 type RefType = Insight["references"][number]["type"];
 type Relation = Insight["references"][number]["relation"];
@@ -24,23 +40,46 @@ function StatusPill({ status }: { status: Insight["status"] }) {
   return <Pill tone={tone}>{INSIGHT_STATUS[status] ?? status}</Pill>;
 }
 
+/** Filters on the library, each a state of an insight; "all" shows everything. */
+const FILTERS = [
+  { value: "all", label: "Todos" },
+  { value: "proposed", label: INSIGHT_STATUS.proposed ?? "Proposto" },
+  { value: "reviewing", label: INSIGHT_STATUS.reviewing ?? "Em revisão" },
+  { value: "accepted", label: INSIGHT_STATUS.accepted ?? "Aceito" },
+] as const;
+
+/** Where an insight came from, in the chain's order: news → proposal → meetup. */
+function Origin({ refs }: { refs: Insight["references"] }) {
+  const chain = [...refs]
+    .filter((r) => r.type !== "insight")
+    .sort((a, b) => CHAIN.indexOf(a.type) - CHAIN.indexOf(b.type))
+    .slice(0, 3);
+  if (chain.length === 0) return null;
+  return (
+    <p className="relative z-10 mt-2 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
+      <span className="sr-only">Origem:</span>
+      {chain.map((r, n) => (
+        <span key={`${r.type}-${r.id}`} className="inline-flex min-w-0 items-center gap-1.5">
+          {n > 0 && <Chevron className="h-2.5 text-brand" />}
+          <span className="font-medium text-foreground/70">{REF_LABEL[r.type] ?? r.type}</span>
+          <Link to={hrefFor(r.type, r.id)} className="max-w-[28ch] truncate hover:text-foreground hover:underline">
+            {r.title}
+          </Link>
+        </span>
+      ))}
+    </p>
+  );
+}
+
 export function Library() {
   const me = useMe();
   const insights = useApi("listInsights");
+  const [params, setParams] = useSearchParams();
+  const filter = FILTERS.find((f) => f.value === params.get("estado"))?.value ?? "all";
   return (
     <Page
       title="Conhecimento"
       subtitle="Hipóteses, decisões e aprendizados do time, cada um ligado às notícias e meetups que o originaram."
-      actions={
-        me.can.contribute && (
-          <Button asChild>
-            <Link to="/conhecimento/novo">
-              <Plus data-icon="inline-start" />
-              Registrar insight
-            </Link>
-          </Button>
-        )
-      }
     >
       <div className="max-w-3xl">
         <Async
@@ -54,38 +93,70 @@ export function Library() {
           }
           emptyAction={me.can.contribute && <NextStep to="/conhecimento/novo">Registrar insight</NextStep>}
         >
-          {(list) => (
-            <ul className="divide-y">
-              {list.map((i) => (
-                // The title link stretches over the row, so the whole entry is one target with a short name.
-                <li key={i.id} data-spotlight="fill" className="-mx-4 rounded-xl px-4 py-5">
-                  <h2 className="text-[1.0625rem] leading-snug font-semibold tracking-[-0.015em]">
-                    <Link
-                      to={`/conhecimento/${i.id}`}
-                      className="underline-offset-4 after:absolute after:inset-0 hover:underline"
-                    >
-                      {i.title}
-                    </Link>
-                  </h2>
-                  <p className="plain mt-1.5 line-clamp-2 max-w-[68ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
-                    {i.hypothesis}
-                  </p>
-                  <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                    <StatusPill status={i.status} />
-                    <span>{i.author.displayName}</span>
-                    <Dot />
-                    <Time iso={i.createdAt} />
-                    {i.references.length > 0 && (
-                      <>
-                        <Dot />
-                        <span className="tabular">{plural(i.references.length, "referência", "referências")}</span>
-                      </>
-                    )}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
+          {(all) => {
+            const list = filter === "all" ? all : all.filter((i) => i.status === filter);
+            return (
+              <>
+                {/* The library's own toolbar: what to show, and the one action, both on the content column. */}
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    spacing={0}
+                    value={filter}
+                    onValueChange={(v) => v && setParams(v === "all" ? {} : { estado: v }, { replace: true })}
+                    aria-label="Filtrar por estado"
+                  >
+                    {FILTERS.map((f) => (
+                      <ToggleGroupItem key={f.value} value={f.value} className={`h-9 px-3 ${SELECTED}`}>
+                        {f.label}
+                        <span className="tabular ml-1.5 text-xs opacity-70">
+                          {f.value === "all" ? all.length : all.filter((i) => i.status === f.value).length}
+                        </span>
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                  {me.can.contribute && (
+                    <Button asChild>
+                      <Link to="/conhecimento/novo">
+                        <Plus data-icon="inline-start" />
+                        Registrar insight
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+                {list.length === 0 ? (
+                  <Empty>Nenhum insight neste estado.</Empty>
+                ) : (
+                  <ul className="divide-y">
+                    {list.map((i) => (
+                      // The title link stretches over the row, so the whole entry is one target with a short name.
+                      <li key={i.id} data-spotlight="fill" className="-mx-4 rounded-xl px-4 py-5">
+                        <h2 className="text-[1.0625rem] leading-snug font-semibold tracking-[-0.015em]">
+                          <Link
+                            to={`/conhecimento/${i.id}`}
+                            className="underline-offset-4 after:absolute after:inset-0 hover:underline"
+                          >
+                            {i.title}
+                          </Link>
+                        </h2>
+                        <p className="plain mt-1.5 line-clamp-2 max-w-[68ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+                          {i.hypothesis}
+                        </p>
+                        <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          <StatusPill status={i.status} />
+                          <span>{i.author.displayName}</span>
+                          <Dot />
+                          <Time iso={i.createdAt} />
+                        </p>
+                        <Origin refs={i.references} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            );
+          }}
         </Async>
       </div>
     </Page>

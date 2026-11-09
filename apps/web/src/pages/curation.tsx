@@ -9,6 +9,7 @@ import { Link } from "@/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import { UndoButton } from "@/components/undo-button";
 import {
   Dialog,
   DialogContent,
@@ -81,12 +82,15 @@ function ReviewRow({
   onReload,
   active,
   register,
+  position,
 }: {
   r: Review;
   onDone: () => void;
   onReload: () => void;
-  /** The row the keyboard is on (J/K); P and R act on it. */
+  /** The row the keyboard is on (J/K): it takes focus, and P and R act on it. */
   active: boolean;
+  /** "2 de 5", read first when the row takes focus. */
+  position: string;
   register: (id: string, commands: RowCommands | null) => void;
 }) {
   const id = useId();
@@ -94,6 +98,8 @@ function ReviewRow({
   const decide = useAction();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
+  // Publishing reaches everyone, so it waits in an undo window first (UndoButton); P again or the button cancels.
+  const [publishing, setPublishing] = useState(false);
   const toggle = (next: boolean) => {
     setOpen(next);
     if (!next) {
@@ -106,6 +112,7 @@ function ReviewRow({
     const res = await decide.run(() =>
       api("decideReview", { params: { id: r.storyId }, body: text ? { decision, note: text } : { decision } }),
     );
+    setPublishing(false);
     if (!res.ok) return;
     toast.success(decision === "publish" ? "Notícia publicada" : "Notícia retirada", { description: r.headline });
     setOpen(false);
@@ -116,21 +123,32 @@ function ReviewRow({
     void send("retract");
   };
   useEffect(() => {
-    register(r.storyId, { publish: () => void send("publish"), retract: () => toggle(true) });
+    register(r.storyId, {
+      publish: () => setPublishing((p) => !p),
+      retract: () => !publishing && toggle(true),
+    });
     return () => register(r.storyId, null);
   });
   useEffect(() => {
-    if (active) row.current?.scrollIntoView({ block: "nearest" });
+    if (!active) return;
+    row.current?.focus({ preventScroll: true });
+    row.current?.scrollIntoView({ block: "nearest" });
   }, [active]);
   return (
     <li
       ref={row}
+      tabIndex={active ? 0 : -1}
       aria-current={active || undefined}
       className={cn(
-        "flex flex-col gap-3 px-4 py-4 transition-colors first:rounded-t-2xl last:rounded-b-2xl sm:flex-row sm:items-start sm:justify-between",
+        "flex flex-col gap-3 px-4 py-4 transition-colors outline-none first:rounded-t-2xl last:rounded-b-2xl sm:flex-row sm:items-start sm:justify-between",
         active && "bg-muted/60 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--brand)_45%,transparent)]",
+        publishing && "bg-brand-soft/40",
       )}
     >
+      <span className="sr-only">{position}.</span>
+      <span className="sr-only" aria-live="polite">
+        {publishing ? "Publicação em 6 segundos. Pressione P ou Desfazer para cancelar." : ""}
+      </span>
       <div className="min-w-0">
         <p className="font-medium text-foreground">
           <Link to={`/noticias/${r.storyId}`} className="hover:text-brand-text hover:underline">
@@ -165,13 +183,20 @@ function ReviewRow({
       </div>
       <div className="flex shrink-0 gap-2">
         {/* One filled orange action per screen region: on a queue of cards the decision buttons stay neutral. */}
-        <Button size="sm" variant="secondary" disabled={decide.pending} onClick={() => void send("publish")}>
+        <UndoButton
+          pending={publishing}
+          onStart={() => setPublishing(true)}
+          onUndo={() => setPublishing(false)}
+          onCommit={() => void send("publish")}
+          label={`publicação de ${r.headline}`}
+          disabled={decide.pending}
+        >
           {decide.pending && !open && <Spinner data-icon="inline-start" aria-hidden="true" />}
           Publicar<span className="sr-only"> {r.headline}</span>
-        </Button>
+        </UndoButton>
         <Dialog open={open} onOpenChange={toggle}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="outline" disabled={decide.pending}>
+            <Button size="sm" variant="outline" disabled={decide.pending || publishing}>
               Retirar<span className="sr-only"> {r.headline}</span>
             </Button>
           </DialogTrigger>
@@ -260,7 +285,7 @@ function Reviews({ q }: { q: Query<Queue> }) {
           <Kbd>J</Kbd> <Kbd>K</Kbd> navegar
         </span>
         <span>
-          <Kbd>P</Kbd> publicar
+          <Kbd>P</Kbd> publicar ou desfazer
         </span>
         <span>
           <Kbd>R</Kbd> retirar
@@ -270,10 +295,11 @@ function Reviews({ q }: { q: Query<Queue> }) {
         </span>
       </p>
       <ul className="divide-y divide-border/60 surface rounded-2xl">
-        {reviews.map((r) => (
+        {reviews.map((r, i) => (
           <ReviewRow
             key={r.storyId}
             r={r}
+            position={`${i + 1} de ${reviews.length}`}
             active={r === active}
             register={register}
             onDone={() => drop(r.storyId)}

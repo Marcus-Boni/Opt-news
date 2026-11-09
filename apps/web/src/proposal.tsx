@@ -56,7 +56,7 @@ function VoteControl({ proposal: p, onChange }: { proposal: Proposal; onChange: 
           </Button>
         ) : null}
         <span className="text-sm text-muted-foreground" aria-live="polite">
-          <RollingNumber value={p.votes} className="font-semibold text-brand-text" /> {p.votes === 1 ? "voto" : "votos"}
+          <RollingNumber value={p.votes} className="font-semibold text-foreground" /> {p.votes === 1 ? "voto" : "votos"}
         </span>
       </div>
       {rolledBack && action.error && (
@@ -185,7 +185,7 @@ export function ProposalLine({ proposal: p }: { proposal: Proposal }) {
         {p.title}
       </Link>
       <p className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
-        <span className="tabular font-medium text-brand-text">{plural(p.votes, "voto", "votos")}</span>
+        <span className="tabular font-medium text-foreground/80">{plural(p.votes, "voto", "votos")}</span>
         <Dot />
         <span>encerra {relativeTime(p.votingClosesAt)}</span>
       </p>

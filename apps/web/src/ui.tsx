@@ -538,13 +538,21 @@ export function useScrollToHash(ready: boolean) {
 }
 
 /** Label over value, for bylines and provenance. */
-export function Facts({ children }: { children: ReactNode }) {
-  return <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[max-content_minmax(0,1fr)]">{children}</dl>;
+/** `stacked` keeps each label above its value at every width (narrow rails, long values). */
+export function Facts({ children, stacked = false }: { children: ReactNode; stacked?: boolean }) {
+  return (
+    <dl
+      data-stacked={stacked || undefined}
+      className={cn("group/facts grid gap-x-6 gap-y-3 text-sm", !stacked && "sm:grid-cols-[max-content_minmax(0,1fr)]")}
+    >
+      {children}
+    </dl>
+  );
 }
 
 export function Fact({ term, children }: { term: string; children: ReactNode }) {
   return (
-    <div className="grid gap-0.5 sm:contents">
+    <div className="grid gap-0.5 group-data-[stacked]/facts:grid sm:contents">
       <dt className="text-muted-foreground">{term}</dt>
       <dd className="min-w-0 wrap-anywhere text-foreground">{children}</dd>
     </div>

@@ -216,12 +216,12 @@ const TABS: NavEntry[] = [
   { to: "/explorar", label: "Explorar", icon: "explore" },
   { to: "/meetups", label: "Meetups", icon: "meetups" },
   { to: "/comunidade", label: "Comunidade", icon: "community" },
+  { to: "/conhecimento", label: "Conhecimento", icon: "knowledge" },
 ];
 
-/** Phones: the four daily places under the thumb, and "Mais" for the rest of the navigation (the sidebar sheet). */
+/** Phones: Início and the four pillars under the thumb; the header's menu button opens the rest (search, curation). */
 function TabBar() {
   const { pathname } = useLocation();
-  const { setOpenMobile } = useSidebar();
   return (
     <nav
       aria-label="Navegação rápida"
@@ -235,23 +235,15 @@ function TabBar() {
             to={t.to}
             end={t.to === "/"}
             className={cn(
-              "flex h-14 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium text-muted-foreground transition-colors active:scale-[0.97]",
+              "flex h-14 min-w-0 flex-col items-center justify-center gap-1 px-0.5 text-[0.625rem] font-medium text-muted-foreground transition-colors active:scale-[0.97] [&>span]:max-w-full [&>span]:truncate",
               active && "text-foreground [&>svg]:text-brand",
             )}
           >
             <Icon name={t.icon} className="size-5" />
-            {t.label}
+            <span>{t.label}</span>
           </NavLink>
         );
       })}
-      <button
-        type="button"
-        onClick={() => setOpenMobile(true)}
-        className="flex h-14 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium text-muted-foreground active:scale-[0.97]"
-      >
-        <Icon name="menu" className="size-5" />
-        Mais
-      </button>
     </nav>
   );
 }

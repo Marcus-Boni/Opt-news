@@ -23,14 +23,14 @@ export function StatusPill({ status }: { status: Story["status"] }) {
   return null;
 }
 
-/** Editorial score as a quiet datum: the number in brand text over a hairline meter of the same value (0–100), the
+/** Editorial score as a quiet datum: a neutral number over a hairline meter in brand orange of the same value (0–100), the
  * meaning in its tooltip. */
 export function ScoreMark({ score }: { score: number | null }) {
   if (score === null) return null;
   const pct = Math.max(0, Math.min(100, score));
   return (
     <Hint label="Pontuação editorial automática (0–100): prioridade de leitura, não certeza dos fatos">
-      <span className="relative z-10 inline-flex h-7 min-w-9 shrink-0 cursor-default flex-col items-stretch justify-center gap-1 rounded-md bg-brand-soft px-1.5 font-mono text-xs leading-none font-medium text-brand-text">
+      <span className="relative z-10 inline-flex h-7 min-w-9 shrink-0 cursor-default flex-col items-stretch justify-center gap-1 rounded-md bg-muted px-1.5 font-mono text-xs leading-none font-medium text-foreground">
         <span className="text-center">
           {formatScore(score)}
           <span className="sr-only"> de 100 de pontuação editorial</span>
@@ -77,7 +77,7 @@ export function StoryRow({
     >
       <div className="flex items-start justify-between gap-4">
         <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-          {story.topics[0] && <span className="font-semibold text-brand-text">{topicLabel(story.topics[0])}</span>}
+          {story.topics[0] && <span className="font-semibold text-foreground/80">{topicLabel(story.topics[0])}</span>}
           {story.topics[0] && <Dot />}
           <span className="font-medium text-foreground/80">{story.source.name}</span>
           <Dot />

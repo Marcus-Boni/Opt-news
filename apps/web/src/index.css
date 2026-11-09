@@ -275,6 +275,10 @@
   [data-rail] > section {
     @apply surface rounded-2xl p-5;
   }
+  /* An empty block inside a rail panel is already framed by the panel: no second card. */
+  [data-rail] [data-slot="empty"] {
+    @apply border-0 bg-none py-4;
+  }
   /* Loading bars: a soft light passes over the muted bar. */
   .shimmer {
     position: relative;
@@ -452,6 +456,11 @@
     scale: 0 1;
   }
 }
+@keyframes chain-impulse-y {
+  from {
+    scale: 1 0;
+  }
+}
 @keyframes chain-pulse {
   0% {
     box-shadow: 0 0 0 0 color-mix(in oklab, var(--brand) 45%, transparent);
@@ -463,9 +472,15 @@
 .chain-impulse {
   transform-origin: left;
 }
+.chain-impulse-y {
+  transform-origin: top;
+}
 @media (prefers-reduced-motion: no-preference) {
   .chain-impulse {
     animation: chain-impulse 0.8s var(--ease-out-expo) 0.2s backwards;
+  }
+  .chain-impulse-y {
+    animation-name: chain-impulse-y;
   }
   .chain-pulse::after {
     content: "";
@@ -505,6 +520,25 @@
       animation-timeline: view();
       animation-range: entry 60% cover 40%;
     }
+  }
+}
+
+/* Undo window (components/undo-button.tsx): the ring around the button drains as the time runs out. */
+@keyframes undo-drain {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+.undo-drain {
+  stroke-dasharray: 100;
+  animation: undo-drain linear forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .undo-drain {
+    animation: none;
   }
 }
 

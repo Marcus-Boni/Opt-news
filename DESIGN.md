@@ -24,9 +24,11 @@ escuro) são de interface e ficam marcados como tal.
 - **Produto:** "Opt News" em Public Sans Bold, ao lado do símbolo (laranja, igual em toda a interface).
 - **Movimento-assinatura:** o chevron do símbolo. A cadeia notícia → pauta → meetup → insight é desenhada com
   chevrons (`ChevronTrail`, exportado como `Trail` em `ui.tsx`); ao chegar, um impulso laranja percorre a cadeia.
-- **Cadeia viva:** na notícia, "Caminho desta notícia" (`ValueChain`, `components/value-chain.tsx`) mostra as quatro
-  etapas com o estado real: concluída (chevron laranja), em andamento (pulsa duas vezes ao chegar), ainda não
-  (tracejada). O impulso laranja percorre os conectores das etapas alcançadas. "Meetup" só diz "pauta selecionada":
+- **Cadeia viva:** na notícia, "Caminho desta notícia" (`ValueChain`, `components/value-chain.tsx`) é o primeiro
+  painel do trilho: as quatro etapas com o estado real (concluída: chevron laranja; em andamento: pulsa ao chegar;
+  ainda não: tracejada) e, sob cada etapa, o que está ligado a ela (as pautas com estado e votos, os insights). O
+  impulso laranja desce pelos conectores alcançados. Abaixo de 1280px, uma faixa de uma linha (`ChainStrip`) logo
+  após as ações leva ao painel completo. A cadeia nunca fica entre o título e o resumo: a leitura vem primeiro. "Meetup" só diz "pauta selecionada":
   o detalhe da notícia não traz sessões, então a cadeia nunca afirma que um encontro aconteceu.
 - **Grafismos oficiais:** no máximo um por tela, discreto (hoje só no painel do login, `public/brand/`).
 - **Capa do Início:** a notícia de maior nota em tamanho de manchete (até 44px) numa superfície larga, com o campo de
@@ -55,7 +57,8 @@ até 10% de apoio; laranja vivo e roxo vivo nunca competem na mesma região.
 | Gráficos | `chart-1..5` | #FF4800 #743DFF #9E8477 #FF855A #271284 | idem | oficial | séries |
 | Estados | `success`, `warning`, `destructive` | | | interface | só onde carregam significado |
 
-**Regra do laranja:** é a cor de ação, por isso aparece em pontos com função, nunca como parede: no máximo **um**
+**Regra do laranja:** é a cor de ação, por isso aparece em pontos com função, nunca como parede (nem como texto de
+categoria, contagem de votos ou número de nota: esses são neutros; a nota leva laranja só na barrinha): no máximo **um**
 botão primário por região, item ativo da navegação, foco, seleção e marcas de dado. Nada de barra lateral laranja,
 seção inteira laranja ou texto branco sobre laranja. O panorama do dia é texto de IA, por isso fica no roxo escuro, e
 seu único laranja é a ação "Ler o briefing completo". Em gráficos, as etapas ficam neutras e o laranja marca só o
@@ -111,8 +114,8 @@ semântica (laranja = ação, roxo = IA):
 - **Vidro só com função:** o cabeçalho do app e a barra de filtros fixa de Explorar ficam translúcidos com desfoque,
   porque o conteúdo rola por baixo deles. Em nenhum outro lugar.
 - **Botão principal:** gradiente vertical curto do laranja escuro para ele mesmo 10% mais escuro (o topo nunca fica
-  mais claro que `--primary`, para manter 5,1:1 com o branco), fio de luz interno e sombra laranja com deslocamento.
-  Pressionar encolhe para 0,97 (todos os botões).
+  mais claro que `--primary`, para manter 5,1:1 com o branco), fio de luz interno e sombra **neutra** curta (nada de
+  brilho laranja). Desabilitado vira neutro (`bg-muted`), sem sombra. Pressionar encolhe para 0,97 (todos os botões).
 - **Carregamento:** os esqueletos têm um brilho que passa (`.shimmer`), desligado sob movimento reduzido.
 
 ## Movimento
@@ -178,6 +181,16 @@ superfície de trabalho. Regras só delas:
 
 ## Ritmo de trabalho
 
+- **Conferir com a fonte** (`source-check.tsx`, lógica em `support.ts`): no resumo de IA, um interruptor transforma
+  cada frase num trecho selecionável; o trecho que a própria fonte publicou no feed (`StoryDetail.sourceExcerpt`,
+  ≤800 caracteres, ADR-0008) aparece abaixo com as palavras que sustentam a frase realçadas em `brand-soft`, e as
+  frases que a fonte quase não sustenta ganham fundo roxo proporcional ao que a IA acrescentou. É comparação de
+  palavras, dito na própria tela; nunca um selo de verdade. Desligado por padrão.
+- **Publicar na Curadoria espera** (`UndoButton`, `components/undo-button.tsx`): Publicar (botão ou tecla P) abre
+  6 s em que o tempo restante se esvazia na borda do botão e a linha fica em `brand-soft`; P de novo ou "Desfazer"
+  cancela; só ao fim o pedido vai ao servidor. J/K movem o foco de verdade para a linha (lida como "2 de 5" pelo
+  leitor de tela). Sair da página com publicação pendente pede confirmação (`holdUnload`).
+
 - **Votar é um impulso:** a seta do botão sobe e assenta (Web Animations); pautas abertas ficam ordenadas por votos
   e a que muda de posição desliza até o novo lugar (motion `layout`, mola curta).
 - **Linha do tempo do acontecimento:** o fio laranja entre as coberturas se desenha com a rolagem e cada ponto acende
@@ -186,7 +199,13 @@ superfície de trabalho. Regras só delas:
   ponteiro (`StoryPreview`, 350ms, busca só ao abrir). Toque não tem prévia: o link abre a notícia.
 - **Modo leitura:** na notícia, uma coluna central de 42rem, resumo em 21px, trilho oculto; lembrado por pessoa.
 - **Explorar por dia:** em "Recentes" o feed é agrupado pelo dia de São Paulo ("Hoje", "Ontem", "Segunda-feira, 2 de
-  novembro"), com o cabeçalho do dia fixo sob a barra de filtros. Em "Relevância" não há grupos.
+  novembro"), com o cabeçalho do dia fixo e opaco logo abaixo da barra de filtros (altura medida, `--filters-h`).
+  Em "Relevância" não há grupos. Barra e lista dividem a mesma largura (`max-w-4xl`). No celular só a busca fica na
+  barra; tema, período e ordem vão para a folha "Filtros (n)" que sobe da borda inferior.
+- **Comunidade em conversas:** os comentários recentes se agrupam pelo que discutem (notícia, meetup, insight), com
+  quantos, quando foi o último, quem participa e as duas falas mais recentes; o título de notícia tem prévia.
+- **Conhecimento:** filtro por estado na URL (`?estado=`), com contagem, e a origem de cada insight na ordem da
+  cadeia (Notícia › Pauta › Meetup); a ação "Registrar insight" fica na barra da própria lista.
 - **Dados de operação no tamanho do dado:** a coluna "7 dias" das fontes (itens coletados por dia, hoje em laranja) e
   o mapa "Atividade do time" (12 semanas, um quadrado por dia, cinco tons de laranja, totais ao lado). Números
   sempre nas dicas e no resumo para leitores de tela. Dados de `GET /api/v1/admin/activity` e `SourceStatus.week`.
@@ -214,8 +233,8 @@ superfície de trabalho. Regras só delas:
 - **Paleta (Ctrl K):** "Conteúdo" (até 6 notícias, insights e meetups da busca unificada, depois de 250ms sem
   digitar, com a marca IA quando o trecho é de máquina), "Pesquisar", "Ações" (Nova pauta, Registrar insight, trocar
   tema, conforme o papel) e "Ir para".
-- **Celular:** barra inferior fixa e translúcida com Início, Explorar, Meetups, Comunidade e "Mais" (abre a navegação
-  completa), respeitando a área segura; toasts sobem acima dela. Diálogos viram folhas que sobem da borda inferior
+- **Celular:** barra inferior fixa e translúcida com Início e os quatro pilares (Explorar, Meetups, Comunidade,
+  Conhecimento); o botão de menu do cabeçalho abre o resto. Respeita a área segura; toasts sobem acima dela. Diálogos viram folhas que sobem da borda inferior
   (`data-sheet`), exceto a paleta, que fica no alto por causa do teclado.
 - **Números e textos do motor:** nota editorial sempre inteira (`formatScore`); motivos do pipeline na língua do time
   (`humanReason`), nunca ids de etapa ou códigos crus. Cadeias sempre na ordem notícia → pauta → meetup → insight.

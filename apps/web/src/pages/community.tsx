@@ -9,9 +9,11 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { api, useAction, useApi } from "../api.ts";
-import { DiscussionLine } from "../discussion.tsx";
+import { AuthorAvatar, type DiscussionEntry } from "../discussion.tsx";
+import { hrefFor, plural } from "../format.ts";
+import { StoryPreview } from "../story-preview.tsx";
 import { useMe } from "../session.tsx";
-import { Async, NextStep, Page, ProblemNote, Section } from "../ui.tsx";
+import { Async, Dot, NextStep, Page, ProblemNote, Section, Time } from "../ui.tsx";
 
 type Submission = ResponseOf<typeof endpoints.submitStory>;
 
@@ -123,6 +125,83 @@ function SubmitLink() {
   );
 }
 
+const KIND = { story: "Notícia", meetup: "Meetup", insight: "Insight" } as const;
+
+interface ConversationGroup {
+  key: string;
+  target: DiscussionEntry["target"];
+  entries: DiscussionEntry[];
+}
+
+/** Recent comments gathered by what they discuss, most recently active first (the feed already comes newest first). */
+function conversations(list: DiscussionEntry[]): ConversationGroup[] {
+  const groups = new Map<string, ConversationGroup>();
+  for (const e of list) {
+    const key = `${e.target.type}:${e.target.id}`;
+    const g = groups.get(key) ?? { key, target: e.target, entries: [] };
+    g.entries.push(e);
+    groups.set(key, g);
+  }
+  return [...groups.values()];
+}
+
+/** One conversation: what it is about, who is in it, and its latest words. */
+function Conversation({ conversation: { target, entries } }: { conversation: ConversationGroup }) {
+  const href = `${hrefFor(target.type, target.id)}#discussao`;
+  const people = [...new Map(entries.map((e) => [e.comment.author.id, e.comment.author.displayName])).values()];
+  const latest = entries[0];
+  const title = (
+    <Link to={href} className="underline-offset-4 hover:underline">
+      {target.title}
+    </Link>
+  );
+  return (
+    <li data-spotlight className="surface flex flex-col gap-4 rounded-2xl p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-muted-foreground">{KIND[target.type]}</p>
+          <h3 className="mt-1 text-[1.0625rem] leading-snug font-semibold tracking-[-0.015em] text-balance">
+            {target.type === "story" ? <StoryPreview id={target.id}>{title}</StoryPreview> : title}
+          </h3>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+            <span className="tabular">{plural(entries.length, "comentário recente", "comentários recentes")}</span>
+            {latest && (
+              <>
+                <Dot />
+                <span>
+                  última <Time iso={latest.comment.createdAt} />
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+        {/* Who is in the conversation, overlapping like a table of people. */}
+        <span className="flex shrink-0 -space-x-1" aria-label={`Participantes: ${people.join(", ")}`} role="img">
+          {people.slice(0, 4).map((name) => (
+            <span key={name} className="rounded-full ring-2 ring-card">
+              <AuthorAvatar name={name} size="sm" />
+            </span>
+          ))}
+        </span>
+      </div>
+      <ol className="flex flex-col gap-3 border-l-2 border-border pl-4">
+        {entries.slice(0, 2).map((e) => (
+          <li key={e.comment.id} className="min-w-0">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{e.comment.author.displayName}</span> ·{" "}
+              <Time iso={e.comment.createdAt} />
+            </p>
+            <p className="plain mt-0.5 line-clamp-3 text-sm leading-relaxed">{e.comment.body}</p>
+          </li>
+        ))}
+      </ol>
+      <Button asChild variant="link" size="sm" className="self-start text-xs">
+        <Link to={href}>{entries.length > 2 ? `Ver as ${entries.length} mensagens` : "Abrir a conversa"}</Link>
+      </Button>
+    </li>
+  );
+}
+
 export function Community() {
   const me = useMe();
   const discussions = useApi("recentDiscussions");
@@ -140,7 +219,7 @@ export function Community() {
         </Section>
       }
     >
-      <Section title="Debates recentes">
+      <Section title="Conversas recentes">
         <div className="max-w-3xl">
           <Async
             q={discussions}
@@ -154,9 +233,9 @@ export function Community() {
             emptyAction={<NextStep to="/explorar">Explorar notícias</NextStep>}
           >
             {(list) => (
-              <ul>
-                {list.map((d) => (
-                  <DiscussionLine key={d.comment.id} entry={d} />
+              <ul className="flex flex-col gap-4">
+                {conversations(list).map((c) => (
+                  <Conversation key={c.key} conversation={c} />
                 ))}
               </ul>
             )}

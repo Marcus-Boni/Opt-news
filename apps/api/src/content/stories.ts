@@ -5,6 +5,7 @@ import { notFound } from "../http/problem.ts";
 import type { Actor } from "../identity/policy.ts";
 import { audit } from "../ops/record.ts";
 import { listedStories } from "../targets.ts";
+import { cleanText } from "./publish.ts";
 import { type Lookup, assertPublicUrl } from "./url-guard.ts";
 
 type Card = ResultOf<typeof endpoints.getStory>;
@@ -126,10 +127,13 @@ export async function getStory(db: Db, actor: Actor, id: string): Promise<Card> 
       syncedAt: string;
       retractedAt: string | null;
       provider: string;
+      sourceExcerpt: string | null;
     })[]
   >`
     SELECT ${COLUMNS(db)}, s.language, s.selection_reason, s.model_version, s.policy_version, s.evidence_urls,
-      s.synced_at, s.retracted_at, s.provider
+      s.synced_at, s.retracted_at, s.provider,
+      -- The feed's own excerpt (ADR-0008 keeps only headline, excerpt and link), for checking the summary against it.
+      (SELECT r.excerpt FROM content.raw_items r WHERE s.provider = 'optnews' AND r.id::text = s.upstream_id) AS source_excerpt
     FROM content.stories s
     WHERE s.id = ${id} AND (${listedStories(db, actor)} OR s.status = 'retracted')`;
   if (!r) throw notFound();
@@ -144,6 +148,7 @@ export async function getStory(db: Db, actor: Actor, id: string): Promise<Card> 
     ...card(r),
     language: r.language,
     selectionReason: retracted ? null : r.selectionReason,
+    sourceExcerpt: retracted ? null : cleanText(r.sourceExcerpt, 800),
     provenance: {
       provider: r.provider,
       modelVersion: r.modelVersion,

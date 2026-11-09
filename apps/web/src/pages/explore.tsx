@@ -2,12 +2,13 @@
 // shows as removable chips. Every filter lives in the URL so a view can be shared and the back button works. The
 // field filters this feed only; the search page (Busca) covers meetups and insights too.
 import type { StoryCard } from "@optnews/contracts";
-import { ListFilter, X } from "lucide-react";
-import { type FormEvent, useMemo } from "react";
+import { ListFilter, SlidersHorizontal, X } from "lucide-react";
+import { type CSSProperties, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { usePaged } from "../api.ts";
@@ -67,6 +68,67 @@ export function Explore() {
   };
 
   const filtered = Boolean(q || topic || period);
+  const active = [topic, period, sort === "relevance" ? "x" : ""].filter(Boolean).length;
+  // The bar's real height places the day headings right under it (it wraps differently at each width).
+  const bar = useRef<HTMLDivElement>(null);
+  const [barHeight, setBarHeight] = useState(0);
+  useEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setBarHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const controls = (
+    <>
+      <Select value={topic || ALL} onValueChange={(v) => set("tema", v === ALL ? "" : v)}>
+        <SelectTrigger aria-label="Tema" className="w-full data-[size=default]:h-9 sm:w-48">
+          <SelectValue placeholder="Todos os temas…" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={ALL}>Todos os temas</SelectItem>
+            {topics.data?.map((t) => (
+              <SelectItem key={t.slug} value={t.slug}>
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <Select value={period || ALL} onValueChange={(v) => set("periodo", v === ALL ? "" : v)}>
+        <SelectTrigger aria-label="Período" className="data-[size=default]:h-9">
+          <SelectValue placeholder="Todo o período…" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={ALL}>Todo o período</SelectItem>
+            {Object.entries(PERIOD_LABEL).map(([value, text]) => (
+              <SelectItem key={value} value={value}>
+                {text}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        spacing={0}
+        value={sort}
+        onValueChange={(v) => v && set("ordem", v === "relevance" ? "relevancia" : "")}
+        aria-label="Ordenar por"
+      >
+        <ToggleGroupItem value="recent" className={`h-9 px-3 ${SELECTED}`}>
+          Recentes
+        </ToggleGroupItem>
+        <ToggleGroupItem value="relevance" className={`h-9 px-3 ${SELECTED}`}>
+          Relevância
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </>
+  );
 
   return (
     <Page
@@ -74,9 +136,10 @@ export function Explore() {
       subtitle="Todas as notícias selecionadas pela curadoria automática, com fonte e data de coleta."
     >
       <div
+        ref={bar}
         data-reveal
         data-sticky-filters
-        className="sticky top-[4.25rem] z-10 mb-8 flex flex-col gap-3 rounded-2xl bg-card/80 p-3 shadow-elev-1 backdrop-blur-xl backdrop-saturate-150"
+        className="sticky top-[4.25rem] z-10 mb-8 flex max-w-4xl flex-col gap-3 rounded-2xl bg-card/80 p-3 shadow-elev-1 backdrop-blur-xl backdrop-saturate-150"
       >
         <div className="flex flex-wrap items-end gap-3">
           <search className="min-w-0 flex-1 basis-64">
@@ -100,51 +163,23 @@ export function Explore() {
               </Button>
             </form>
           </search>
-          <Select value={topic || ALL} onValueChange={(v) => set("tema", v === ALL ? "" : v)}>
-            <SelectTrigger aria-label="Tema" className="w-full data-[size=default]:h-9 sm:w-56">
-              <SelectValue placeholder="Todos os temas…" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={ALL}>Todos os temas</SelectItem>
-                {topics.data?.map((t) => (
-                  <SelectItem key={t.slug} value={t.slug}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Select value={period || ALL} onValueChange={(v) => set("periodo", v === ALL ? "" : v)}>
-            <SelectTrigger aria-label="Período" className="data-[size=default]:h-9">
-              <SelectValue placeholder="Todo o período…" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={ALL}>Todo o período</SelectItem>
-                {Object.entries(PERIOD_LABEL).map(([value, text]) => (
-                  <SelectItem key={value} value={value}>
-                    {text}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            spacing={0}
-            value={sort}
-            onValueChange={(v) => v && set("ordem", v === "relevance" ? "relevancia" : "")}
-            aria-label="Ordenar por"
-          >
-            <ToggleGroupItem value="recent" className={`h-9 px-3 ${SELECTED}`}>
-              Recentes
-            </ToggleGroupItem>
-            <ToggleGroupItem value="relevance" className={`h-9 px-3 ${SELECTED}`}>
-              Relevância
-            </ToggleGroupItem>
-          </ToggleGroup>
+          {/* Wide screens: the controls sit in the bar. Phones: one "Filtros" button opens them in a bottom sheet. */}
+          <div className="hidden sm:contents">{controls}</div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button type="button" variant="outline" className="sm:hidden">
+                <SlidersHorizontal data-icon="inline-start" />
+                Filtros{active > 0 ? ` (${active})` : ""}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="gap-0 rounded-t-2xl pb-[env(safe-area-inset-bottom)]">
+              <SheetHeader>
+                <SheetTitle>Filtros</SheetTitle>
+                <SheetDescription>Tema, período e ordem do feed.</SheetDescription>
+              </SheetHeader>
+              <div className="flex flex-col gap-3 px-4 pb-6 [&_[data-slot=select-trigger]]:w-full">{controls}</div>
+            </SheetContent>
+          </Sheet>
         </div>
         {filtered && (
           <ul aria-label="Filtros ativos" className="flex flex-wrap items-center gap-2">
@@ -184,7 +219,11 @@ export function Explore() {
         )}
       </div>
 
-      <section aria-labelledby="resultados" className="mt-6 max-w-3xl">
+      <section
+        aria-labelledby="resultados"
+        className="mt-6 max-w-4xl"
+        style={{ "--filters-h": `${barHeight}px` } as CSSProperties}
+      >
         <div className="mb-4 flex items-baseline justify-between gap-3">
           <h2 id="resultados" className="text-base font-semibold tracking-[-0.015em]">
             {q ? `Resultados para “${q}”` : topic ? label(topic) : "Todas as notícias"}
@@ -215,7 +254,7 @@ export function Explore() {
               ? byDay(feed.items).map(([key, items]) => (
                   // Newest first, so the feed reads by day; the heading stays under the filters while its day scrolls.
                   <section key={key} className="flex flex-col">
-                    <h3 className="sticky top-[8.75rem] z-[5] -mx-4 mt-4 mb-1 rounded-lg bg-background/80 px-4 py-2 text-xs font-semibold text-muted-foreground backdrop-blur-md first:mt-0">
+                    <h3 className="sticky top-[calc(4.25rem+var(--filters-h))] z-[5] -mx-4 mt-4 mb-1 bg-background px-4 pt-3 pb-2 text-xs font-semibold text-muted-foreground first:mt-0">
                       {dayHeading(`${key}T12:00:00-03:00`)}
                     </h3>
                     {items.map((s) => (

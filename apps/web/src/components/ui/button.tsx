@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[linear-gradient(180deg,var(--primary),color-mix(in_oklab,var(--primary),black_10%))] font-semibold text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_1px_2px_rgb(0_0_0/0.25),0_8px_18px_-8px_color-mix(in_oklab,var(--primary)_80%,transparent)] hover:bg-[color-mix(in_oklab,var(--primary),black_12%)] hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_1px_2px_rgb(0_0_0/0.25),0_12px_24px_-8px_color-mix(in_oklab,var(--primary)_95%,transparent)]",
+          "bg-[linear-gradient(180deg,var(--primary),color-mix(in_oklab,var(--primary),black_10%))] font-semibold text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_1px_2px_rgb(0_0_0/0.3),0_4px_10px_-4px_rgb(0_0_0/0.35)] hover:bg-[color-mix(in_oklab,var(--primary),black_12%)] disabled:bg-none disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none",
         outline:
           "bg-card shadow-elev-1 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
