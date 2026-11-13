@@ -122,6 +122,12 @@ const router = createBrowserRouter([
     hydrateFallbackElement: <BootFallback />,
   },
   {
+    path: "/jornada",
+    lazy: page(() => import("./pages/journey.tsx"), "Journey"),
+    errorElement: <Crash />,
+    hydrateFallbackElement: <BootFallback />,
+  },
+  {
     element: <RequireSession />,
     loader: () => {
       void prime("topics");

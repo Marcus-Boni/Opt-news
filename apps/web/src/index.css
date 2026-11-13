@@ -630,6 +630,47 @@ html.theme-sweep::view-transition-new(root) {
   }
 }
 
+/*
+ * A jornada (pages/journey.tsx): captions set over a moving 3D shot. No panel sits behind a caption: the stage is
+ * told where the caption is and the points themselves step back there (journey/shaders.ts), which keeps the text
+ * above 4.5:1. On narrow screens the caption sits at the bottom and a veil also rises from that edge. The ground is
+ * what shows before the stage draws, and what stays when WebGL is missing.
+ */
+.journey-ground {
+  background:
+    radial-gradient(70% 60% at 8% 100%, color-mix(in oklab, var(--brand) 9%, transparent), transparent 70%),
+    radial-gradient(60% 55% at 96% 0%, color-mix(in oklab, var(--warm-light) 4%, transparent), transparent 70%),
+    var(--background);
+}
+.journey-caption {
+  position: relative;
+  isolation: isolate;
+}
+@media (width < 64rem) {
+  .journey-caption::before {
+    content: "";
+    position: absolute;
+    inset: -4.5rem -2.5rem -4rem;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(to top, rgb(20 16 16 / 0.94) calc(100% - 5.5rem), transparent);
+  }
+}
+@keyframes journey-cue {
+  50% {
+    translate: 0 5px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .journey-cue {
+    animation: journey-cue 1.8s ease-in-out infinite;
+  }
+}
+/* The pause control stops everything that moves by itself, this included. */
+[data-paused] .journey-cue {
+  animation-play-state: paused;
+}
+
 /* Lenis smooth scrolling (reading surfaces). */
 html.lenis,
 html.lenis body {

@@ -157,10 +157,10 @@ elemento**. CSS e Web Animations movem pelas propriedades independentes `transla
 
 ## Superfícies de apresentação
 
-A landing (`/sobre`, pública) e o login (`/entrar`) são as duas telas de marca do produto; o resto do app é
-superfície de trabalho. Regras só delas:
+A landing (`/sobre`, pública) e o login (`/entrar`) são as telas de marca do produto, ao lado da jornada
+(`/jornada`, com regras próprias mais abaixo); o resto do app é superfície de trabalho. Regras da landing e do login:
 - **Um grafismo protagonista:** o campo de pontos do símbolo (`components/chevron-field.tsx`, three.js carregado só
-  nessas telas). É o desenho oficial amostrado em pontos laranja sobre o grafite: condensa ao chegar, respira e
+  nessas telas e na jornada). É o desenho oficial amostrado em pontos laranja sobre o grafite: condensa ao chegar, respira e
   cede ao ponteiro. Não é um símbolo novo (Brand System §7) e nunca leva texto por cima. Sob
   `prefers-reduced-motion` fica montado e parado; sem WebGL, entra o SVG do símbolo.
 - **Fundo escuro forçado** (classe `dark` na seção) no herói, no painel do login e no rodapé, porque é o chão do
@@ -178,6 +178,62 @@ superfície de trabalho. Regras só delas:
   outras recuam enquanto a sessão abre (transição CSS do estado). Tudo desligado sob movimento reduzido: a página só lê de cima para
   baixo, o pipeline fica em coluna também no desktop e a barra fixa não aparece.
 - **Números:** só propriedades do sistema (2 notas, 72 h, 1 fonte por notícia), nunca resultados ou métricas.
+
+### A jornada (`/jornada`)
+
+Terceira tela de marca, pública como a landing e ligada a ela ("Acompanhe uma notícia em 3D", na seção do
+pipeline). É a única superfície de **experiência** do produto: o visitante está dentro da obra. Um plano-sequência
+em three.js, sempre sobre grafite (classe `dark`), em que **um só corpo de pontos** é a notícia e a rolagem leva a
+câmera por sete atos: ruído → coleta → duas notas → redação → curadoria → cadeia → símbolo. Código em
+`src/pages/journey.tsx` (legendas, HUD, coreografia) e `src/journey/` (`stage.ts` o palco, `shaders.ts`,
+`formations.ts` as sete figuras, `svg-path.ts` a arte oficial como geometria, `chapters.ts` o texto).
+
+- **Um corpo, sete figuras.** 44 mil pontos (28 mil ou 16 mil em aparelhos mais modestos) com o mesmo índice em todas
+  as figuras; o shader leva cada ponto de uma figura à seguinte no seu próprio compasso, pelo fluxo, e por isso a
+  figura se desfaz e condensa em vez de deslizar. As figuras são geradas por semente (`formations.ts`, com teste).
+- **Cor com a semântica da marca, mais estrita que no app.** Claro quente é a notícia crua; laranja vivo é o que o
+  sistema selecionou ou alguém decidiu; **roxo só aparece enquanto a máquina escreve** (o ato da redação inteiro,
+  fundo incluído) e na marca de IA da notícia no ato da curadoria. Fora disso a luz ambiente é laranja à esquerda e
+  neutra à direita: aqui não vale a luz roxa do app, porque a própria legenda afirma que o roxo é só da IA.
+- **Arte oficial, nunca redesenhada.** O símbolo final e os chevrons da cadeia são os caminhos de
+  `components/brand/optsolv.tsx` amostrados em pontos; o trilho sob a rota são os mesmos chevrons extrudados. Nenhum
+  símbolo novo, nenhum texto sobre o símbolo.
+- **Sólidos:** só dois. O trilho de chevrons (grafite sempre um tom acima do chão, quase invisível em repouso; aquece
+  em laranja sob o corpo enquanto o leitor viaja, some com a distância e sai de cena sob a máquina) e o núcleo do
+  modelo no ato da redação (corpo escuro, aresta roxa, linhas de texto).
+- **Legendas, não seções.** Cada ato é um `<section>` alto com um quadro fixo (`sticky`); o texto é HTML real (h1 no
+  primeiro ato, h2 nos demais), sem painel atrás: o palco recebe o retângulo da legenda visível e **os próprios
+  pontos recuam ali**, com borda suave (`uVeil` em `shaders.ts`), o que mantém o contraste acima de 4,5:1 sem
+  desenhar caixa nenhuma; em telas estreitas, onde a legenda ocupa a base, um véu de grafite também sobe da borda
+  inferior (`.journey-caption`). As legendas dos outros atos continuam na árvore de acessibilidade (só a opacidade
+  muda); se o foco do teclado cai num controle de um ato fora da tela, a página leva o leitor até ele na hora. A
+  legenda chega quando a figura assentou (título linha a linha por trás de máscara, o resto em cascata) e sai
+  antes do corpo viajar: o trecho de transição fica sem texto, de propósito. O título do
+  ato da IA é digitado (ScrambleText) e mantém o `aria-label` com o texto final. Título 44–84px, títulos dos atos
+  32–52px. Em telas largas a figura alterna de lado e a legenda fica do outro; em telas estreitas a figura sobe e a
+  legenda ocupa a base (a cadeia vira coluna).
+- **Orientação:** a própria cadeia. Sete chevrons na borda inferior (≥1024px) sobre um véu como o do topo, o ato
+  atual em laranja, cada um um botão que leva ao ato; no celular, o contador "3 / 7" no topo. O trilho de leitura laranja do app marca o avanço.
+- **Interação-assinatura:** no ato da curadoria o visitante decide. A notícia chega sem laranja nenhum; Publicar
+  (botão ou P) manda um anel pelo corpo e **deixa a moldura e a marca da fonte em laranja** (laranja = decisão), e
+  assim ela segue para a cadeia; Retirar (R) a desfaz, ela se recompõe e perde a marca. É demonstração e a tela diz
+  isso; as teclas só valem com a legenda do ato visível. No ato da redação a marca de IA aparece como amostra
+  ("no app, o que a máquina escreve leva esta marca"), sem rotular o texto da própria página, que é de gente. Na
+  cadeia, os quatro nomes seguem os chevrons projetados da cena e acendem quando o impulso passa. O ponteiro fino
+  afasta os pontos próximos e, na curadoria, inclina a notícia.
+- **Lente:** profundidade de campo nos pontos, bloom, franja de cor que abre com a velocidade, vinheta e grão;
+  mapeamento de tom neutro, para o laranja da marca não desviar.
+- **Custo sob controle:** três orçamentos (pontos, teto de pixels, bloom, MSAA) escolhidos pelo aparelho; se a taxa
+  cair abaixo de ~27 quadros por 2 s (um navegador limitado a 30 fica como está), o palco reduz resolução, depois
+  pontos, depois o bloom; para se um degrau não trouxe ganho e nunca sobe de volta. Quadros retidos pelo navegador
+  (janela coberta) não contam. O palco tem a altura grande da tela (`lvh`), então a barra de endereço do celular não
+  o redimensiona no meio da rolagem. O laço para com a aba oculta; tudo é liberado ao sair, inclusive se a montagem
+  falhar no meio.
+- **Movimento reduzido:** página comum, um ato por tela, sem rolagem suave nem legendas animadas; o palco desenha
+  **um quadro parado por ato** (cadeia já acesa) e some o botão de pausa. **Sem WebGL** (ou contexto perdido): fundo
+  estático com o símbolo oficial e a cadeia como lista. Com movimento, o botão de pausa no topo para o que se move
+  sozinho (deriva dos pontos, inclinação pelo ponteiro, a seta de rolagem; WCAG 2.2.2); o que o leitor move rolando
+  continua.
 
 ## Ritmo de trabalho
 

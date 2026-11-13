@@ -345,7 +345,11 @@ function Pipeline() {
           Como uma notícia chega à sua tela
         </h2>
         <p data-inview className="mt-4 max-w-[52ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
-          Seis etapas, todas registradas. A IA avalia e escreve; pessoas decidem.
+          Seis etapas, todas registradas. A IA avalia e escreve; pessoas decidem.{" "}
+          <Link to="/jornada" className="link">
+            Acompanhe uma notícia em 3D
+          </Link>
+          .
         </p>
         {!still && (
           <div aria-hidden="true" className="mt-8 hidden items-center gap-4 lg:flex">
