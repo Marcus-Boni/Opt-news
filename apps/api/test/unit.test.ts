@@ -2,12 +2,24 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { feedXml, ITEMS } from "../../../tools/fixtures/feeds.ts";
+import { loadConfig } from "../src/config.ts";
 import { cleanText } from "../src/content/publish.ts";
 import { parseFeed, plainText } from "../src/intelligence/feeds.ts";
 import { OUTPUTS } from "../src/intelligence/model.ts";
 import { assertPublicUrl, canonicalUrl, isBlockedAddress } from "../src/content/url-guard.ts";
 import { type Actor, can } from "../src/identity/policy.ts";
 import { fakeLookup } from "./helpers.ts";
+
+describe("database TLS", () => {
+  const remote = "postgres://u:p@srv.postgres.database.azure.com:5432/opt-news";
+  test("a remote database needs a verified certificate; local ones do not", () => {
+    assert.throws(() => loadConfig({ DATABASE_URL: remote }), /verify-full/);
+    assert.throws(() => loadConfig({ DATABASE_URL: `${remote}?sslmode=require` }), /verify-full/);
+    assert.ok(loadConfig({ DATABASE_URL: `${remote}?sslmode=verify-full` }));
+    assert.ok(loadConfig({ DATABASE_URL: "postgres://optnews:optnews@127.0.0.1:5433/optnews" }));
+    assert.ok(loadConfig({ DATABASE_URL: "postgres://optnews:optnews@db:5432/optnews" }));
+  });
+});
 
 describe("url guard", () => {
   test("canonical form drops fragment, tracking params, default port and trailing slash", () => {

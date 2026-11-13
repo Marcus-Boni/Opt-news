@@ -105,6 +105,39 @@ docker compose --profile app up --build
 
 Sobe banco, feeds sintéticos, API servindo o web compilado em http://127.0.0.1:8080 e worker. A imagem é construída pelo `Dockerfile` da raiz.
 
+## Banco publicado (Azure Database for PostgreSQL)
+
+Decisão em [ADR-0016](docs/12-adrs.md). A aplicação usa um papel próprio, dono só do banco `opt-news`; o admin do servidor nunca vai para `.env` nem para a aplicação.
+
+**1. Papel da aplicação (uma vez, pelo admin do servidor, conectado ao banco `opt-news`):**
+
+```sql
+CREATE ROLE optnews_app LOGIN NOINHERIT NOCREATEDB NOCREATEROLE CONNECTION LIMIT 40 PASSWORD '<senha aleatória forte>';
+GRANT optnews_app TO <admin>;               -- PG16+: o admin precisa ser membro para transferir o banco
+ALTER DATABASE "opt-news" OWNER TO optnews_app;
+ALTER SCHEMA public OWNER TO optnews_app;   -- no Azure o public nasce de azure_pg_admin, sem CREATE para outros
+REVOKE ALL ON DATABASE "opt-news" FROM PUBLIC;
+```
+
+Para rotacionar a senha: `ALTER ROLE optnews_app PASSWORD '<nova>'` e atualizar o segredo onde a aplicação o lê.
+
+**2. `.env` aponta para o papel, com certificado verificado.** A config recusa host remoto sem `sslmode=verify-full`, porque o driver `postgres` com `sslmode=require` cifra mas aceita qualquer certificado.
+
+```bash
+DATABASE_URL=postgres://optnews_app:<senha>@<servidor>.postgres.database.azure.com:5432/opt-news?sslmode=verify-full
+```
+
+**3. Migrar e popular**, como o próprio papel (ele fica dono dos objetos):
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+O seed é sintético (personas, taxonomia e fontes de `tools/fake-feeds`), igual ao local. O esquema `ops_jobs` do pg-boss é criado quando o worker sobe.
+
+**Nunca** aponte `TEST_DATABASE_URL` para o servidor publicado: os testes apagam e recriam o esquema.
+
 ## Mapa do código
 
 | Caminho | O que é |
@@ -124,4 +157,5 @@ Sobe banco, feeds sintéticos, API servindo o web compilado em http://127.0.0.1:
 
 - Código: reverter o commit; não há estado fora do banco.
 - Banco local: `npm run db:rollback` desfaz a última migração (a `0001` apaga todos os schemas do Opt News — só em ambiente local).
+- Banco publicado: nada de `db:rollback` além da última migração aditiva; para voltar no tempo, restauração point-in-time do Azure (janela de 7 dias) para um **novo** servidor, e troca do `DATABASE_URL`. Para voltar ao banco local, basta repor o `DATABASE_URL` do `.env.example`.
 - Coleta/modelo: se fontes ou o provedor falharem, o portal continua servindo o que já foi publicado; recibos evitam pagar duas vezes no reprocessamento.

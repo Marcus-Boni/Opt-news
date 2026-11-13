@@ -227,7 +227,7 @@ O login simulado é recusado com `NODE_ENV=production`. A lista completa e os fl
 
 | Variável | Padrão | Para que serve |
 |---|---|---|
-| `DATABASE_URL` | banco local na porta 5433 | Conexão do PostgreSQL |
+| `DATABASE_URL` | banco local na porta 5433 | Conexão do PostgreSQL. Host remoto exige `sslmode=verify-full` ([banco publicado](README-dev.md#banco-publicado-azure-database-for-postgresql)) |
 | `TEST_DATABASE_URL` | banco `optnews_test` | Banco dos testes. O nome precisa terminar em `_test` |
 | `AUTH_MODE` | `dev` | Login simulado. `entra` depende do tenant aprovado |
 | `MODEL_PROVIDER` | `simulated` | `foundry` usa o modelo real e exige endpoint e deployment |

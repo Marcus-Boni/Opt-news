@@ -163,3 +163,22 @@
 - **Agent-Reach como dependência:** o projeto é um kit de CLIs para agentes interativos. Os canais com login reaproveitam cookies do navegador, o que esbarra em credenciais e nos termos dos sites, e outros canais exigem chaves de terceiros. O que serve a um pipeline de servidor (YouTube, GitHub releases, Reddit) já tem RSS ou Atom nativo e entra como fonte `rss` comum.
 
 **Migração:** `0003_web_list`, só aditiva (coluna `link_prefix` e o tipo no check). O `down` remove o prefixo e mantém o tipo `web_list` enquanto houver fontes dele, para que seus itens continuem rastreáveis.
+
+## ADR-0016 — Banco publicado: Azure Database for PostgreSQL Flexible Server
+
+**Status:** Aceita para dev/staging (2026-11-13). Produção continua dependendo de Q-05 (hospedagem, região e limites).
+
+**Contexto:** o sistema sai do PostgreSQL local (Docker) rumo à publicação. O banco `opt-news` foi criado num Flexible Server de desenvolvimento da Optsolv que já existia (PostgreSQL 17, Burstable B1ms, Brazil South, TLS 1.2+ obrigatório, autenticação por senha e Entra). O servidor é **compartilhado** com bancos de outros sistemas, inclusive de produção.
+
+**Decisão:**
+- **Papel próprio.** A aplicação (API, worker, migrações e seed) conecta como `optnews_app`: dono só do banco `opt-news`, sem `CREATEDB`/`CREATEROLE`, limite de 40 conexões (pools: API 10, worker 4, pg-boss 10). `CONNECT` e `TEMPORARY` revogados de `PUBLIC` nesse banco. O admin do servidor nunca vai para `.env`, imagem ou configuração da aplicação. Um papel só, e não migrador + runtime separados, porque o pg-boss cria e migra o próprio esquema (`ops_jobs`) em tempo de execução.
+- **Certificado verificado.** `sslmode=verify-full` é obrigatório para host remoto, com trava em `loadConfig`: o driver `postgres` trata `sslmode=require` como "cifrar e aceitar qualquer certificado". A cadeia do Azure já está no repositório de CAs do Node; nenhum arquivo de certificado é versionado.
+- **Mesmas migrações.** `npm run db:migrate` e `db:seed` com o `DATABASE_URL` do papel; os objetos ficam com o dono certo desde o início. O seed continua sintético enquanto o login real (Q-04) e as fontes reais (Q-02) não forem aprovados.
+- **Testes fora dele.** `TEST_DATABASE_URL` continua local: os testes apagam e recriam o esquema.
+- **Segredo.** A senha do papel fica só no `.env` local (ignorado pelo git). No deploy, ela vai para o Key Vault — ou, de preferência, é substituída por autenticação Entra com identidade gerenciada (o servidor já aceita), quando a hospedagem (Q-05) existir.
+
+**Riscos registrados (fora do escopo do Opt News, donos do servidor):** firewall com regra que libera todos os IPs e outra que libera qualquer serviço do Azure; servidor B1ms sem alta disponibilidade, sem backup geo-redundante, sem crescimento automático de disco e com retenção de 7 dias — adequado a dev/staging, não à produção. O papel herda `CONNECT` nos outros bancos via `PUBLIC`; revogar isso exige mexer nos bancos de outros sistemas.
+
+**Alternativas descartadas:** usar o admin do servidor (daria acesso a todos os bancos do servidor); servidor dedicado agora (custo e dimensionamento dependem de Q-05/Q-17); Entra já nesta etapa (sem identidade gerenciada até existir a hospedagem).
+
+**Rollback:** repor o `DATABASE_URL` local do `.env.example`. No servidor, restauração point-in-time (7 dias) para um novo servidor; `DROP DATABASE "opt-news"` e `DROP ROLE optnews_app` removem tudo do Opt News sem afetar os outros bancos.

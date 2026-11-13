@@ -36,6 +36,9 @@ const Env = z.object({
 
 export type Config = z.infer<typeof Env>;
 
+/** Loopback and the docker compose service: plain connections are fine there. */
+const LOCAL_DB_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "db"]);
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const config = Env.parse(env);
   // Simulated login must never reach production; the real Entra flow is blocked on Q-04 (tenant/app registration).
@@ -44,6 +47,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   if (config.NODE_ENV === "production" && config.INGEST_PRIVATE_HOSTS.length > 0) {
     throw new Error("INGEST_PRIVATE_HOSTS é só para feeds locais de desenvolvimento");
+  }
+  // The postgres driver treats sslmode=require as "encrypt but trust any certificate"; a remote database must verify it.
+  const db = new URL(config.DATABASE_URL);
+  if (!LOCAL_DB_HOSTS.has(db.hostname) && db.searchParams.get("sslmode") !== "verify-full") {
+    throw new Error("DATABASE_URL remoto exige sslmode=verify-full (certificado verificado)");
   }
   if (config.AUTH_MODE === "entra") {
     throw new Error("AUTH_MODE=entra ainda não implementado: depende de tenant e app registration aprovados (Q-04)");
