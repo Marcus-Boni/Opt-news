@@ -195,12 +195,13 @@ export function registerEntra(
       req.log.warn({ err: error }, "entra sign-in rejected");
       return fail("entra");
     }
-    if (claims.acct === 1) return fail("convidado");
+    // Fail closed: only an explicit tenant member (acct=0, optional claim on the app registration) gets in.
+    if (claims.acct !== 0) return fail("convidado");
 
     const member = await memberFromClaims(sql, claims, req.id);
     if (member.status !== "active") return fail("desativado");
     const { token } = await openSession(sql, member.id);
     setSessionCookie(reply, token, secure);
-    return reply.redirect(flow.returnTo);
+    return reply.redirect(safeReturnTo(flow.returnTo)); // the flow cookie is client-held: validate again
   });
 }

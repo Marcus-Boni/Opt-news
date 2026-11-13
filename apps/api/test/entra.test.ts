@@ -25,6 +25,7 @@ function idToken(claims: Record<string, unknown>, kid = "k1"): string {
     oid: "aaaaaaaa-0000-4000-8000-000000000001",
     name: "Pessoa Optsolv",
     preferred_username: "pessoa@optsolv.example",
+    acct: 0,
     nonce: "n-1",
     iat: now,
     nbf: now,
@@ -161,6 +162,9 @@ describe("Microsoft sign-in flow", () => {
     const guest = await signIn();
     assert.equal(guest.headers.location, "/entrar?erro=convidado");
     assert.ok(!guest.cookies.some((c) => c.name === "optnews_session"));
+    extra = { acct: undefined, oid: "aaaaaaaa-0000-4000-8000-000000000003" };
+    const unknown = await signIn();
+    assert.equal(unknown.headers.location, "/entrar?erro=convidado", "no acct claim fails closed");
 
     extra = {};
     await sql`UPDATE identity.members SET status = 'disabled' WHERE tenant_id = ${TENANT}`;
