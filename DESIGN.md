@@ -32,7 +32,7 @@ escuro) são de interface e ficam marcados como tal.
   o detalhe da notícia não traz sessões, então a cadeia nunca afirma que um encontro aconteceu.
 - **Grafismos oficiais:** no máximo um por tela, discreto (hoje só no painel do login, `public/brand/`).
 - **Capa do Início:** a notícia de maior nota em tamanho de manchete (até 44px) numa superfície larga, com o campo de
-  pontos do símbolo (`ChevronField`, carregado só aqui, no login e na apresentação) numa coluna ao lado, nunca sob o
+  pontos do símbolo (`ChevronField`, carregado só aqui e no login) numa coluna ao lado, nunca sob o
   texto; some abaixo de 1024px. Ícones de
   interface são lucide; os ícones oficiais (PNG com fundo branco) não entram no app nem se misturam com lucide.
 
@@ -132,14 +132,13 @@ elemento**. CSS e Web Animations movem pelas propriedades independentes `transla
   aparecem); trilho de leitura laranja sob o cabeçalho nas páginas de leitura (notícia, acontecimento, briefing,
   meetup, insight; `animation-timeline: scroll(root)`, vazio quando a página não rola); estados declarativos (persona
   escolhida no login).
-- **Web Animations (`el.animate`):** retornos curtos de controle: comentário novo, símbolo do estado vazio, chevron do
-  pilar sob o ponteiro na apresentação.
+- **Web Animations (`el.animate`):** retornos curtos de controle: comentário novo, símbolo do estado vazio.
 - **motion:** indicador ativo da navegação (`layoutId`), contador de votos que rola o dígito na direção da mudança
   (`RollingNumber`), ícone do botão de tema que gira entre sol e lua, `CountUp` (React Bits), `SmoothTab` (Kokonut
   UI) e `FunnelChart` (bklit).
-- **GSAP:** coreografia de rolagem: impulso nos chevrons (`Trail`), SplitText do panorama e do herói da apresentação,
-  marca d'água do símbolo no panorama, blocos da apresentação que chegam ao entrar na tela (`data-inview`,
-  `useScrollReveal`), botões que inclinam para o ponteiro (`useMagnetic`, só na apresentação).
+- **GSAP:** coreografia de rolagem: impulso nos chevrons (`Trail`), SplitText do panorama e das legendas da
+  apresentação, marca d'água do símbolo no panorama, botões que inclinam para o ponteiro (`useMagnetic`, só na
+  apresentação).
 - **Lenis:** rolagem suave do documento, movida pelo ticker do GSAP (um só laço de quadros com o ScrollTrigger),
   parada enquanto um modal trava a rolagem e realinhada (medida de novo) à posição do `ScrollRestoration` a cada rota.
 - **Entre páginas (View Transitions, `src/link.tsx`):** todo `Link`/`NavLink` interno navega como transição. A moldura
@@ -157,36 +156,32 @@ elemento**. CSS e Web Animations movem pelas propriedades independentes `transla
 
 ## Superfícies de apresentação
 
-A landing (`/sobre`, pública) e o login (`/entrar`) são as telas de marca do produto, ao lado da jornada
-(`/jornada`, com regras próprias mais abaixo); o resto do app é superfície de trabalho. Regras da landing e do login:
-- **Um grafismo protagonista:** o campo de pontos do símbolo (`components/chevron-field.tsx`, three.js carregado só
-  nessas telas e na jornada). É o desenho oficial amostrado em pontos laranja sobre o grafite: condensa ao chegar, respira e
-  cede ao ponteiro. Não é um símbolo novo (Brand System §7) e nunca leva texto por cima. Sob
+A apresentação (`/sobre`, pública) e o login (`/entrar`) são as telas de marca do produto; o resto do app é
+superfície de trabalho. A apresentação é a jornada de uma notícia e tem regras próprias mais abaixo. Regras do
+login:
+- **Um grafismo protagonista:** o campo de pontos do símbolo (`components/chevron-field.tsx`; three.js só é carregado
+  ali, na capa do Início e na apresentação). É o desenho oficial amostrado em pontos laranja sobre o grafite: condensa ao chegar,
+  respira e cede ao ponteiro. Não é um símbolo novo (Brand System §7) e nunca leva texto por cima. Sob
   `prefers-reduced-motion` fica montado e parado; sem WebGL, entra o SVG do símbolo.
-- **Fundo escuro forçado** (classe `dark` na seção) no herói, no painel do login e no rodapé, porque é o chão do
-  logo em claro quente. As seções de leitura seguem o tema do app.
-- **Tipografia maior:** título do herói 40–68px, títulos de seção 32–40px, mesmo tracking −0.03em. Sem eyebrow,
-  sem caixa alta, sem texto em gradiente; os cartões do pipeline recebem a luz do ponteiro como o app.
-- **Movimento:** o título do herói sobe linha a linha por trás de uma máscara (SplitText com `autoSplit`) e o resto
-  chega em cascata; cada bloco abaixo chega quando entra na tela (`useScrollReveal`, uma vez); ao rolar para fora do
-  herói o texto sobe e some e o campo de pontos se desfaz de novo (`scatter`, lido a cada quadro); impulso laranja nos
-  conectores dos pilares (ScrollTrigger, uma vez) e, ao passar o ponteiro, o chevron do pilar recebe o mesmo empurrão
-  (Web Animations); faixa do pipeline fixada e percorrida pela rolagem (`pin` + `scrub` só ≥1024px) com trilho e
-  contador "03 / 06"; réguas dos números desenham da esquerda e os números contam (`CountUp`); os botões principais
-  inclinam para o ponteiro fino (`useMagnetic`); uma barra fixa com marca e "Entrar" desce quando o herói sai da
-  tela (inerte enquanto escondida); Lenis sincronizado com o ScrollTrigger. No login, a persona escolhida avança e as
-  outras recuam enquanto a sessão abre (transição CSS do estado). Tudo desligado sob movimento reduzido: a página só lê de cima para
-  baixo, o pipeline fica em coluna também no desktop e a barra fixa não aparece.
-- **Números:** só propriedades do sistema (2 notas, 72 h, 1 fonte por notícia), nunca resultados ou métricas.
+- **Fundo escuro forçado** (classe `dark`) no painel da marca, porque é o chão do logo em claro quente. O
+  formulário segue o tema do app.
+- **Tipografia maior:** nome do produto 40–60px no painel, mesmo tracking do app. Sem eyebrow, sem caixa alta, sem
+  texto em gradiente.
+- **Movimento:** a persona escolhida avança e as outras recuam enquanto a sessão abre (transição CSS do estado);
+  desligado sob movimento reduzido. "Conhecer o Opt News" leva à apresentação.
+- **Números (login e apresentação):** só propriedades do sistema (2 notas, 72 h, 1 fonte por notícia), nunca
+  resultados ou métricas.
 
-### A jornada (`/jornada`)
+### A apresentação: a jornada de uma notícia (`/sobre`)
 
-Terceira tela de marca, pública como a landing e ligada a ela ("Acompanhe uma notícia em 3D", na seção do
-pipeline). É a única superfície de **experiência** do produto: o visitante está dentro da obra. Um plano-sequência
-em three.js, sempre sobre grafite (classe `dark`), em que **um só corpo de pontos** é a notícia e a rolagem leva a
-câmera por sete atos: ruído → coleta → duas notas → redação → curadoria → cadeia → símbolo. Código em
-`src/pages/journey.tsx` (legendas, HUD, coreografia) e `src/journey/` (`stage.ts` o palco, `shaders.ts`,
-`formations.ts` as sete figuras, `svg-path.ts` a arte oficial como geometria, `chapters.ts` o texto).
+É a página de apresentação do produto, pública, para onde o login aponta. Substituiu a landing de seções (herói,
+pilares, pipeline, números): o que aquela página dizia em blocos, esta mostra acontecendo. `/jornada`, o endereço
+em que a jornada estreou, redireciona para `/sobre`. É a única superfície de **experiência** do produto: o
+visitante está dentro da obra. Um plano-sequência em three.js, sempre sobre grafite (classe `dark`), em que **um só
+corpo de pontos** é a notícia e a rolagem leva a câmera por sete atos: ruído → coleta → duas notas → redação →
+curadoria → cadeia → símbolo. Código em `src/pages/journey.tsx` (legendas, HUD, coreografia) e `src/journey/`
+(`stage.ts` o palco, `shaders.ts`, `formations.ts` as sete figuras, `svg-path.ts` a arte oficial como geometria,
+`chapters.ts` o texto). No fim, um só chamado: "Entrar" (ou "Abrir o Opt News" para quem já tem sessão).
 
 - **Um corpo, sete figuras.** 44 mil pontos (28 mil ou 16 mil em aparelhos mais modestos) com o mesmo índice em todas
   as figuras; o shader leva cada ponto de uma figura à seguinte no seu próprio compasso, pelo fluxo, e por isso a

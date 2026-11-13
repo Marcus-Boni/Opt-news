@@ -5,9 +5,9 @@ primary_target: "src/pages/journey.tsx"
 related_targets: ["src/journey/stage.ts"]
 ---
 
-# /jornada — A jornada de uma notícia
+# /sobre — A apresentação: a jornada de uma notícia
 
-Scope: public route `/jornada` in apps/web. Mode: Experience. Inside the established Optsolv world (DESIGN.md); no new identity.
+Scope: public route `/sobre` in apps/web, the product's presentation page (it first shipped at `/jornada`, which now redirects here). Mode: Experience. Inside the established Optsolv world (DESIGN.md); no new identity.
 
 Audience and job: someone at Optsolv (or invited) who has not used Opt News yet, or wants to show it. They should leave understanding that a story is collected, filtered, scored twice, written by AI and marked as such, decided by people, and then turned into pauta, meetup and insight. Action: Entrar. Content: only properties of the system (README, PRD); never results or metrics.
 

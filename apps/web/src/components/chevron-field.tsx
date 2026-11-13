@@ -2,7 +2,7 @@
 // (three.js). The points start scattered, assemble into the symbol on arrival and drift as a loose cloud that the
 // pointer pushes apart. The geometry is the official artwork sampled, never a new symbol (Brand System §7). Under
 // prefers-reduced-motion the field renders assembled and still; without WebGL the parent shows the SVG symbol.
-import { type RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { reducedMotion } from "@/motion";
 import { SYMBOL, SYMBOL_VIEWBOX } from "./brand/optsolv";
@@ -70,20 +70,10 @@ const FRAGMENT = /* glsl */ `
   }
 `;
 
-export function ChevronField({
-  className,
-  interactive = true,
-  scatter,
-}: {
-  className?: string;
-  interactive?: boolean;
-  /** 0..1, read every frame: how far the assembled symbol is pulled apart again (the landing ties it to scrolling). */
-  scatter?: RefObject<number>;
-}) {
+export function ChevronField({ className, interactive = true }: { className?: string; interactive?: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scatter is a ref, read every frame.
   useEffect(() => {
     const el = host.current;
     if (!el) return;
@@ -204,7 +194,7 @@ export function ChevronField({
       assembled = Math.min(1, assembled + dt / 2.4);
       const eased = 1 - 2 ** (-10 * assembled);
       const u = material.uniforms;
-      if (u.uAssembled) u.uAssembled.value = (assembled >= 1 ? 1 : eased) * (1 - (scatter?.current ?? 0));
+      if (u.uAssembled) u.uAssembled.value = assembled >= 1 ? 1 : eased;
       if (u.uTime) u.uTime.value = timer.getElapsed();
       points.rotation.y = Math.sin(timer.getElapsed() * 0.15) * 0.12;
       // The shader works in the object's space, which rotates: convert the hit each frame.

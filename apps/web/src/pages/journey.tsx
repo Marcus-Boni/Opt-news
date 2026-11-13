@@ -1,9 +1,10 @@
-// A jornada de uma notícia (/jornada): one continuous shot. A single body of points is the day's news; scrolling
-// carries the camera through seven acts while the body is collected, filtered, scored, written, judged, linked into
-// the chain and, at the end, becomes the Optsolv symbol (journey/stage.ts). The page is the film's caption track:
-// real headings and text set over the shot, one per act, each held while its figure is at rest and gone while the
-// body travels. Public, like /sobre. Under prefers-reduced-motion it is a plain page with one still frame per act;
-// without WebGL it reads the same over a static ground.
+// Apresentação (/sobre): the public face of Opt News for people who have not signed in yet, told as the journey of
+// one news story in one continuous shot. A single body of points is the day's news; scrolling carries the camera
+// through seven acts while the body is collected, filtered, scored, written, judged, linked into the chain and, at
+// the end, becomes the Optsolv symbol (journey/stage.ts). The page is the film's caption track: real headings and
+// text set over the shot, one per act, each held while its figure is at rest and gone while the body travels. Under
+// prefers-reduced-motion it is a plain page with one still frame per act; without WebGL it reads the same over a
+// static ground.
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
@@ -303,7 +304,7 @@ export function Journey() {
       data-paused={paused || undefined}
       className="dark relative isolate overflow-x-clip bg-background text-foreground"
     >
-      <title>A jornada de uma notícia · Opt News</title>
+      <title>Opt News · inteligência tecnológica da Optsolv</title>
       <a href="#fim" className="skip-link">
         Pular para o fim da jornada
       </a>
@@ -338,11 +339,10 @@ export function Journey() {
 
       <div data-reading-progress aria-hidden="true" className="fixed inset-x-0 top-0 z-40 h-0.5 bg-brand" />
       <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between bg-linear-to-b from-background/85 to-transparent px-5 pt-4 pb-8 sm:px-8">
-        <Link to="/sobre" className="inline-flex items-center gap-2.5 rounded-md" translate="no">
+        <span className="inline-flex items-center gap-2.5" translate="no">
           <Mark className="h-6 w-auto" />
           <span className="text-[1.0625rem] font-bold tracking-[-0.03em]">Opt News</span>
-          <span className="sr-only">, apresentação</span>
-        </Link>
+        </span>
         <div className="flex items-center gap-2">
           <p className="mr-1 font-mono text-xs text-foreground/60 lg:hidden">
             <span className="sr-only">Ato </span>
@@ -467,7 +467,7 @@ export function Journey() {
 
                   {i === LAST && (
                     <>
-                      <div id="fim" data-part className="mt-7 flex flex-wrap items-center gap-3">
+                      <div id="fim" data-part className="mt-7">
                         <span data-magnetic className="inline-block">
                           <Button asChild size="lg">
                             <Link to={enter.to}>
@@ -476,9 +476,6 @@ export function Journey() {
                             </Link>
                           </Button>
                         </span>
-                        <Button asChild variant="ghost" size="lg">
-                          <Link to="/sobre">Ver a apresentação</Link>
-                        </Button>
                       </div>
                       <div data-part className="mt-12">
                         <OptsolvTagline className="h-auto w-60 text-warm-light" />

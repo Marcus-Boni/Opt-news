@@ -88,15 +88,6 @@ export function Mark({ className = "size-6" }: { className?: string }) {
   return <OptsolvSymbol className={cn("text-brand", className)} />;
 }
 
-export function Wordmark({ className }: { className?: string }) {
-  return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <Mark className="h-6 w-auto" />
-      <span className="text-[1.0625rem] font-bold tracking-[-0.03em]">Opt News</span>
-    </span>
-  );
-}
-
 export function ExternalLink({
   href,
   children,

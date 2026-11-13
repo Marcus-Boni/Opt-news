@@ -64,23 +64,6 @@ export function useSmoothScroll() {
   }, [pathname]);
 }
 
-/** Presentation pages: every `[data-inview]` in the scope arrives as it scrolls into view, once; what is on screen
- * arrives now. (App pages use the CSS arrival on `[data-reveal]` instead.) */
-export function useScrollReveal(scope: RefObject<HTMLElement | null>) {
-  useGSAP(
-    () => {
-      if (reducedMotion()) return;
-      ScrollTrigger.batch(gsap.utils.toArray<HTMLElement>("[data-inview]"), {
-        start: "top 88%",
-        once: true,
-        onEnter: (batch) =>
-          gsap.from(batch, { y: 24, autoAlpha: 0, duration: 0.8, ease: "expo.out", stagger: 0.08, clearProps: "all" }),
-      });
-    },
-    { scope },
-  );
-}
-
 /** Calls to action: a `[data-magnetic]` wrapper leans toward a fine pointer over it and eases back when it leaves.
  * Keep it off elements another animation moves (wrap instead), or the two fight over `transform`. */
 export function useMagnetic(scope: RefObject<HTMLElement | null>) {

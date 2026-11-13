@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { MotionConfig } from "motion/react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, useRouteError } from "react-router";
+import { createBrowserRouter, replace, useRouteError } from "react-router";
 import { Link } from "@/link";
 import { RouterProvider } from "react-router/dom";
 import "./index.css";
@@ -116,17 +116,14 @@ const router = createBrowserRouter([
     hydrateFallbackElement: <BootFallback />,
   },
   {
+    // The presentation: public, and the page the sign-in screen points to.
     path: "/sobre",
-    lazy: page(() => import("./pages/landing.tsx"), "Landing"),
-    errorElement: <Crash />,
-    hydrateFallbackElement: <BootFallback />,
-  },
-  {
-    path: "/jornada",
     lazy: page(() => import("./pages/journey.tsx"), "Journey"),
     errorElement: <Crash />,
     hydrateFallbackElement: <BootFallback />,
   },
+  // The journey first shipped at this address; links to it land on the presentation without a history entry.
+  { path: "/jornada", loader: () => replace("/sobre"), hydrateFallbackElement: <BootFallback /> },
   {
     element: <RequireSession />,
     loader: () => {

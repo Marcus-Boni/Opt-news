@@ -57,7 +57,7 @@ npm run ingest:once
 
 **Feeds reais (lista proposta para Q-02 em `tools/real-sources.ts`):** num banco separado, rode `DATABASE_URL=<banco> npm run sources:real`. O comando cadastra as 24 fontes públicas com auditoria e pausa as sintéticas, para os dois tipos não se misturarem. Depois rode o worker com `MODEL_PROVIDER=foundry` e `INGEST_PRIVATE_HOSTS=` vazio. Só título, trecho e link são guardados (ADR-0008). Sites sem RSS, como Anthropic e Claude, entram como página de listagem (`web_list`, ADR-0015). Rodar o comando de novo só cadastra as fontes que faltam.
 
-**Apresentação (`/sobre`, pública):** a landing do produto; o login (`/entrar`) aponta para ela. O campo de pontos (three.js) só é carregado nessas duas telas.
+**Apresentação (`/sobre`, pública):** a jornada de uma notícia em 3D (`apps/web/src/pages/journey.tsx` e `apps/web/src/journey/`); o login (`/entrar`) aponta para ela e `/jornada` redireciona para ela. Funciona sem a API no ar.
 
 **Curadoria (`/curadoria`, Diego ou Eva):** notícias em revisão, indicações com problema, decisões do pipeline com "publicar mesmo assim" e rótulos de calibração (ADR-0014). As indicações de link entram no pipeline pela fonte `indicacoes`. `ARTICLE_READING=true` faz o modelo ler o artigo, que nunca é guardado; fica desligado até o Q-02.
 

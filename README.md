@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/evidencias/apresentacao/sobre-heroi-1440.png" alt="Página de apresentação do Opt News: o título “Notícias de tecnologia com fonte, debate do time e conhecimento aplicável” ao lado do símbolo da Optsolv desenhado por pontos laranja sobre fundo escuro" width="100%">
+<img src="docs/evidencias/jornada/01-ruido-1440.jpg" alt="Página de apresentação do Opt News: o título “A jornada de uma notícia” sobre uma espiral de pontos claros e laranja em fundo escuro" width="100%">
 
 # Opt News
 
@@ -67,8 +67,8 @@ Os quatro pilares são obrigatórios e se ligam de forma rastreável: notícia �
 
 - SPA React 19 com tema claro e escuro, busca rápida com `Ctrl K` e layout responsivo do celular ao desktop.
 - Identidade Optsolv aplicada a partir do Brand System oficial, documentada em [DESIGN.md](DESIGN.md).
-- Página de apresentação com o símbolo desenhado por pontos em three.js e movimento com GSAP, Lenis, Motion e CSS.
-- A jornada de uma notícia (`/jornada`): um plano-sequência 3D em que a rolagem leva a câmera por sete atos, da coleta ao conhecimento, com um só corpo de 44 mil pontos que muda de figura. Sem dependências novas.
+- Movimento com GSAP, Lenis, Motion e CSS; o símbolo desenhado por pontos em three.js no login e no Início.
+- Página de apresentação (`/sobre`), a jornada de uma notícia: um plano-sequência 3D em que a rolagem leva a câmera por sete atos, da coleta ao conhecimento, com um só corpo de 44 mil pontos que muda de figura. Sem dependências novas.
 - Todo movimento é desligado com `prefers-reduced-motion`. A meta de acessibilidade é WCAG 2.2 AA.
 - Interface em pt-BR e datas no fuso `America/Sao_Paulo`.
 
@@ -334,7 +334,7 @@ Detalhes em [docs/09-seguranca-governanca.md](docs/09-seguranca-governanca.md). 
 
 ## Status e roadmap
 
-O **vertical slice 01** está implementado e testado localmente: curadoria automática, feed, notícia com proveniência, acontecimentos, briefing diário, comunidade, meetups, conhecimento, busca, administração de fontes, fila de curadoria, página de apresentação e a jornada em 3D. O estado de cada tarefa, com a evidência, está em [docs/16-plano-vertical-slice.md](docs/16-plano-vertical-slice.md).
+O **vertical slice 01** está implementado e testado localmente: curadoria automática, feed, notícia com proveniência, acontecimentos, briefing diário, comunidade, meetups, conhecimento, busca, administração de fontes, fila de curadoria, e a página de apresentação, que é a jornada de uma notícia em 3D. O estado de cada tarefa, com a evidência, está em [docs/16-plano-vertical-slice.md](docs/16-plano-vertical-slice.md).
 
 **Próximo ciclo**
 
