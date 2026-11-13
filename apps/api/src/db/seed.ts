@@ -53,6 +53,11 @@ export async function seedBase(sql: Sql): Promise<void> {
       await sql`INSERT INTO identity.role_assignments (member_id, role) VALUES (${p.id}, ${role}) ON CONFLICT DO NOTHING`;
     }
   }
+  await seedTopics(sql);
+}
+
+/** The initial taxonomy (docs/14): the only seed a real environment gets (npm run db:seed:prod). */
+export async function seedTopics(sql: Sql): Promise<void> {
   for (const [i, [slug, label]] of TOPICS.entries()) {
     await sql`INSERT INTO content.topics (slug, label, position) VALUES (${slug}, ${label}, ${i}) ON CONFLICT (slug) DO NOTHING`;
   }
@@ -119,15 +124,21 @@ if (import.meta.main) {
   const config = loadConfig();
   const sql = connect(config.DATABASE_URL, 1);
   try {
-    await seedBase(sql);
-    await seedSources(sql, config.FAKE_FEEDS_BASE_URL);
-    const report = await ingestFixtures(sql);
-    const model = { sql, provider: scriptedModel(), dailyLimit: 1000 };
-    for (const day of [dayKey(new Date(Date.now() - 86_400_000)), dayKey(new Date())]) {
-      await generateDailyBriefing(model, day, { force: true });
+    if (process.argv.includes("--producao")) {
+      // Real environment: taxonomy only. No personas, synthetic sources or fixture stories.
+      await seedTopics(sql);
+      console.log("seed de produção ok: só a taxonomia");
+    } else {
+      await seedBase(sql);
+      await seedSources(sql, config.FAKE_FEEDS_BASE_URL);
+      const report = await ingestFixtures(sql);
+      const model = { sql, provider: scriptedModel(), dailyLimit: 1000 };
+      for (const day of [dayKey(new Date(Date.now() - 86_400_000)), dayKey(new Date())]) {
+        await generateDailyBriefing(model, day, { force: true });
+      }
+      await seedCollaboration(sql);
+      console.log("seed ok", report.outcomes);
     }
-    await seedCollaboration(sql);
-    console.log("seed ok", report.outcomes);
   } finally {
     await sql.end();
   }

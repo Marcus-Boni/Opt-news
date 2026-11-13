@@ -5,6 +5,8 @@ import { lookup as dnsLookup, type LookupAddress } from "node:dns";
 import http from "node:http";
 import https from "node:https";
 import { isIP } from "node:net";
+import type { Readable } from "node:stream";
+import { createBrotliDecompress, createGunzip, createInflate } from "node:zlib";
 import { isBlockedAddress } from "../content/url-guard.ts";
 
 export interface FetchOptions {
@@ -105,12 +107,24 @@ export async function guardedFetch(raw: string, opts: FetchOptions = {}): Promis
       res.resume();
       throw new Error(`resposta ${status} de ${url.host}`);
     }
+    // We never ask for compression, but some feeds (Google DeepMind) send gzip anyway. The size budget counts the
+    // decompressed bytes, so a small compressed bomb cannot blow past it.
+    const encoding = res.headers["content-encoding"]?.trim().toLowerCase();
+    const inflate = { gzip: createGunzip, "x-gzip": createGunzip, br: createBrotliDecompress, deflate: createInflate }[
+      encoding ?? ""
+    ];
+    if (encoding && encoding !== "identity" && !inflate) {
+      res.resume();
+      throw new Error(`codificação não suportada: ${encoding}`);
+    }
+    const body: Readable = inflate ? res.pipe(inflate()) : res;
     let size = 0;
     const chunks: Buffer[] = [];
-    for await (const chunk of res) {
+    for await (const chunk of body) {
       size += (chunk as Buffer).length;
       if (size > maxBytes) {
         res.destroy();
+        body.destroy();
         throw new Error(`resposta maior que ${maxBytes} bytes`);
       }
       chunks.push(chunk as Buffer);

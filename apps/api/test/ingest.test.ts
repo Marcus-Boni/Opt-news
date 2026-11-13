@@ -2,6 +2,7 @@
 // two scores → write → publish, on a real database, with a scripted model and no network.
 import assert from "node:assert/strict";
 import { createServer, type Server } from "node:http";
+import { gzipSync } from "node:zlib";
 import { after, before, describe, test } from "node:test";
 import {
   CORRECTION,
@@ -227,6 +228,30 @@ describe("failures are contained", () => {
     assert.equal(s?.lastError, "resposta 503");
   });
 
+  test("time budget spent: nothing new starts, the run says so, the next one picks up", async () => {
+    const model = scriptedModel();
+    const fetched: string[] = [];
+    const fetchFeed = fixtureFetch();
+    const report = await runIngest(
+      {
+        sql,
+        fetchFeed: (url) => {
+          fetched.push(url);
+          return fetchFeed(url);
+        },
+        model: { provider: model, dailyLimit: 1000 },
+        language: "pt-BR",
+      },
+      { force: true, deadline: Date.now() - 1 },
+    );
+    assert.equal(report.outOfTime, true);
+    assert.deepEqual(fetched, []);
+    assert.equal(
+      Object.values(report.outcomes).reduce((a, b) => a + b, 0),
+      0,
+    );
+  });
+
   test("daily budget reached: evaluation stops, items stay pending, nothing is called", async () => {
     const model = scriptedModel();
     const fresh: FixtureItem = {
@@ -319,6 +344,15 @@ describe("guarded fetch (SSRF)", () => {
         return res.end();
       }
       if (req.url === "/big") return res.end("x".repeat(5000));
+      if (req.url === "/gzip") {
+        // Sent compressed without being asked, as deepmind.google does.
+        res.writeHead(200, { "content-type": "application/xml", "content-encoding": "gzip" });
+        return res.end(gzipSync("<rss><title>Compactado</title></rss>"));
+      }
+      if (req.url === "/gzip-bomb") {
+        res.writeHead(200, { "content-type": "application/xml", "content-encoding": "gzip" });
+        return res.end(gzipSync("x".repeat(50_000)));
+      }
       if (req.url === "/latin1") {
         res.writeHead(200, { "content-type": "application/rss+xml; charset=ISO-8859-1" });
         return res.end(Buffer.from("<rss><title>Inteligência artificial</title></rss>", "latin1"));
@@ -354,6 +388,12 @@ describe("guarded fetch (SSRF)", () => {
     const opts = { privateHosts: ["127.0.0.1"] };
     assert.match(await guardedFetchText(`${base}/latin1`, opts), /Inteligência artificial/);
     assert.match(await guardedFetchText(`${base}/declared`, opts), /ação/);
+  });
+
+  test("gzip sent unasked is decompressed, and the size limit counts decompressed bytes", async () => {
+    const opts = { privateHosts: ["127.0.0.1"] };
+    assert.match(await guardedFetchText(`${base}/gzip`, opts), /Compactado/);
+    await assert.rejects(guardedFetchText(`${base}/gzip-bomb`, { ...opts, maxBytes: 1000 }), /maior que/);
   });
 
   test("size limit and non-web schemes", async () => {

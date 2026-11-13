@@ -14,6 +14,7 @@
     "db:migrate": "node --env-file-if-exists=.env apps/api/src/db/migrate.ts up",
     "db:rollback": "node --env-file-if-exists=.env apps/api/src/db/migrate.ts down",
     "db:seed": "node --env-file-if-exists=.env apps/api/src/db/seed.ts",
+    "db:seed:prod": "node --env-file-if-exists=.env apps/api/src/db/seed.ts --producao",
     "dev:api": "node --watch --env-file-if-exists=.env apps/api/src/main.ts",
     "dev:worker": "node --watch --env-file-if-exists=.env apps/worker/src/main.ts",
     "dev:web": "npm run dev -w @optnews/web",

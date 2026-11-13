@@ -235,3 +235,9 @@
 - Vercel Services: em beta, e sem cron documentado.
 
 **Rollback:** promover o deploy anterior no painel da Vercel ("Instant Rollback"). O banco não muda no deploy.
+
+**Adendo (2026-11-13): conteúdo real em produção.**
+- O banco de produção foi recriado só com a taxonomia (`db:seed:prod`), e as 24 fontes reais foram cadastradas.
+- O modelo roda com uma identidade própria, "Opt News - Curadoria", separada do login. Ela só tem *Cognitive Services OpenAI User* no recurso do Foundry e entra por variáveis `AZURE_*`, lidas pelo `DefaultAzureCredential`.
+- Cada execução hospedada tem orçamento de 240 s (`runIngest({ deadline })`): depois disso, nada novo começa, e o que sobrou fica pendente para a próxima. O worker local continua sem limite.
+- **Limite conhecido:** no Hobby, uma execução diária processa cerca de 20 itens. A cobertura completa exige execuções mais frequentes (Pro ou um disparador externo).

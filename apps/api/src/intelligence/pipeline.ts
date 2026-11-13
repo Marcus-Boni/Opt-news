@@ -262,20 +262,27 @@ export interface IngestReport {
   collected: CollectReport[];
   submissions: IntakeReport | null;
   outcomes: Record<Outcome, number>;
+  /** The time budget ran out: due sources and pending items left over wait for the next run. */
+  outOfTime: boolean;
 }
 
 /** One run: collect every due active source, then evaluate pending items oldest first. */
 export async function runIngest(
   deps: IngestDeps,
-  options: { force?: boolean; limit?: number } = {},
+  options: { force?: boolean; limit?: number; deadline?: number } = {},
 ): Promise<IngestReport> {
   const { sql } = deps;
+  // Hosted runs have a hard time limit: stop starting new work at the deadline; nothing in flight is cut.
+  const late = () => options.deadline !== undefined && Date.now() > options.deadline;
   const sources = await sql<Source[]>`
     SELECT id, name, kind, feed_url, link_prefix, tier, etag, last_modified FROM content.sources
     WHERE active AND kind IN ('rss', 'web_list') AND (${options.force ?? false} OR last_attempt_at IS NULL OR last_attempt_at < now() - make_interval(mins => interval_minutes))
     ORDER BY id`;
   const collected = [];
-  for (const s of sources) collected.push(await collectSource(deps, s));
+  for (const s of sources) {
+    if (late()) break;
+    collected.push(await collectSource(deps, s));
+  }
   const submissions = deps.fetchPage ? await intakeSubmissions(sql, deps.fetchPage) : null;
   const topics = new Set((await sql<{ slug: string }[]>`SELECT slug FROM content.topics`).map((t) => t.slug));
   const pending = await sql<Pending[]>`
@@ -293,10 +300,11 @@ export async function runIngest(
     deferred: 0,
   };
   for (const item of pending) {
+    if (late()) break;
     const outcome = await evaluateItem(deps, item, topics);
     outcomes[outcome]++;
     if (outcome === "deferred") break;
   }
   await settleSubmissions(sql);
-  return { collected, submissions, outcomes };
+  return { collected, submissions, outcomes, outOfTime: late() };
 }

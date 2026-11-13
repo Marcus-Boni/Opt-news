@@ -181,6 +181,8 @@ Decisão em [ADR-0018](docs/12-adrs.md). O projeto da Vercel aponta para a raiz 
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | app registration "Opt News" (ADR-0017) |
 | `CRON_SECRET` | aleatório, ≥ 32 caracteres: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `INGEST_SCHEDULE` (opcional) | `*/15 * * * *` no plano Pro; sem ela, o cron roda uma vez por dia |
+| `MODEL_PROVIDER`, `FOUNDRY_ENDPOINT`, `FOUNDRY_DEPLOYMENT` | `foundry` e o deployment aprovado (ADR-0013) |
+| `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` | identidade "Opt News - Curadoria": só o papel *Cognitive Services OpenAI User* no recurso do Foundry |
 
 `NODE_ENV` e `PLATFORM` vêm da config da função. Não as defina.
 
@@ -190,6 +192,8 @@ Decisão em [ADR-0018](docs/12-adrs.md). O projeto da Vercel aponta para a raiz 
 2. Migrações no banco de produção, antes do deploy (são aditivas): `npm run db:migrate`.
 3. Deploy: um push na branch de produção, se o projeto estiver ligado ao Git; ou, pela CLI, `npx vercel build --prod` e depois `npx vercel deploy --prebuilt --prod`.
 4. Smoke: `node tools/smoke.ts https://<domínio>`. O passo de login simulado falha em produção, de propósito.
+
+**Ambiente novo:** `npm run db:migrate`, depois `npm run db:seed:prod` (só a taxonomia, sem personas nem fontes sintéticas). Entre com a sua conta, conceda `admin` (SQL da seção do Entra) e rode `npm run sources:real`. A primeira coleta pode rodar daqui, sem limite de tempo: `MODEL_PROVIDER=foundry INGEST_PRIVATE_HOSTS= npm run ingest:once`.
 
 **Primeira vez:** cadastre `https://<domínio>/api/v1/auth/entra/callback` nos redirects do app (comando na seção do Entra) e confira o login com uma conta da Optsolv.
 
