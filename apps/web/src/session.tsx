@@ -92,9 +92,13 @@ export function RequireSession() {
       </div>
     );
   }
-  if (me === null)
+  if (me === null) {
+    // A first visit to the bare address is someone meeting the product: the presentation, not the sign-in form.
+    // Anything deeper is a link into the app, and signing out is a choice: both go to sign-in.
+    if (!signedOut && location.pathname === "/") return <Navigate to="/sobre" replace />;
     return (
       <Navigate to="/entrar" replace state={signedOut ? null : { from: `${location.pathname}${location.search}` }} />
     );
+  }
   return <Outlet />;
 }

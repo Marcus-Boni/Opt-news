@@ -174,7 +174,8 @@ login:
 
 ### A apresentação: a jornada de uma notícia (`/sobre`)
 
-É a página de apresentação do produto, pública, para onde o login aponta. Substituiu a landing de seções (herói,
+É a página de apresentação do produto, pública: é onde chega quem abre `/` sem sessão (endereços internos e a
+saída da conta vão para o login) e para onde o login aponta. Substituiu a landing de seções (herói,
 pilares, pipeline, números): o que aquela página dizia em blocos, esta mostra acontecendo. `/jornada`, o endereço
 em que a jornada estreou, redireciona para `/sobre`. É a única superfície de **experiência** do produto: o
 visitante está dentro da obra. Um plano-sequência em three.js, sempre sobre grafite (classe `dark`), em que **um só

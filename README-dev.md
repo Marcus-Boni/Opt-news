@@ -57,7 +57,7 @@ npm run ingest:once
 
 **Feeds reais (lista proposta para Q-02 em `tools/real-sources.ts`):** num banco separado, rode `DATABASE_URL=<banco> npm run sources:real`. O comando cadastra as 24 fontes públicas com auditoria e pausa as sintéticas, para os dois tipos não se misturarem. Depois rode o worker com `MODEL_PROVIDER=foundry` e `INGEST_PRIVATE_HOSTS=` vazio. Só título, trecho e link são guardados (ADR-0008). Sites sem RSS, como Anthropic e Claude, entram como página de listagem (`web_list`, ADR-0015). Rodar o comando de novo só cadastra as fontes que faltam.
 
-**Apresentação (`/sobre`, pública):** a jornada de uma notícia em 3D (`apps/web/src/pages/journey.tsx` e `apps/web/src/journey/`); o login (`/entrar`) aponta para ela e `/jornada` redireciona para ela. Funciona sem a API no ar.
+**Apresentação (`/sobre`, pública):** a jornada de uma notícia em 3D (`apps/web/src/pages/journey.tsx` e `apps/web/src/journey/`); quem abre `/` sem sessão cai nela, o login (`/entrar`) aponta para ela e `/jornada` redireciona para ela. Funciona sem a API no ar.
 
 **Curadoria (`/curadoria`, Diego ou Eva):** notícias em revisão, indicações com problema, decisões do pipeline com "publicar mesmo assim" e rótulos de calibração (ADR-0014). As indicações de link entram no pipeline pela fonte `indicacoes`. `ARTICLE_READING=true` faz o modelo ler o artigo, que nunca é guardado; fica desligado até o Q-02.
 
@@ -166,6 +166,34 @@ SELECT id, 'admin' FROM identity.members WHERE display_name = '<Nome Sobrenome>'
 ```
 
 Para testar sem conflito com outro servidor na 3001/5173: `API_PORT=8080 SERVE_WEB=true WEB_ORIGIN=http://localhost:8080 npm run dev:api`, depois de `npm run build`.
+
+## Publicação na Vercel
+
+Decisão em [ADR-0018](docs/12-adrs.md). O projeto da Vercel aponta para a raiz do repositório, e o `vercel.json` manda rodar `npm run build:vercel`, que gera `.vercel/output`: site estático, uma função da API em `gru1` e o cron.
+
+**Variáveis de ambiente (só Production):**
+
+| Variável | Valor |
+|---|---|
+| `DATABASE_URL` | papel `optnews_app`, com `sslmode=verify-full` (ADR-0016) |
+| `AUTH_MODE` | `entra` |
+| `WEB_ORIGIN` | `https://<domínio do projeto>` |
+| `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | app registration "Opt News" (ADR-0017) |
+| `CRON_SECRET` | aleatório, ≥ 32 caracteres: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `INGEST_SCHEDULE` (opcional) | `*/15 * * * *` no plano Pro; sem ela, o cron roda uma vez por dia |
+
+`NODE_ENV` e `PLATFORM` vêm da config da função. Não as defina.
+
+**Cada publicação:**
+
+1. `npm run lint && npm run typecheck && npm test`.
+2. Migrações no banco de produção, antes do deploy (são aditivas): `npm run db:migrate`.
+3. Deploy: um push na branch de produção, se o projeto estiver ligado ao Git; ou, pela CLI, `npx vercel build --prod` e depois `npx vercel deploy --prebuilt --prod`.
+4. Smoke: `node tools/smoke.ts https://<domínio>`. O passo de login simulado falha em produção, de propósito.
+
+**Primeira vez:** cadastre `https://<domínio>/api/v1/auth/entra/callback` nos redirects do app (comando na seção do Entra) e confira o login com uma conta da Optsolv.
+
+**Para conferir o build sem a Vercel:** rode `npm run build:vercel` e importe `.vercel/output/functions/api.func/index.mjs` com as variáveis acima. O arquivo é autocontido.
 
 ## Mapa do código
 
