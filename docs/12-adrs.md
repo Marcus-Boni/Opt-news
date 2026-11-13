@@ -182,3 +182,23 @@
 **Alternativas descartadas:** usar o admin do servidor (daria acesso a todos os bancos do servidor); servidor dedicado agora (custo e dimensionamento dependem de Q-05/Q-17); Entra já nesta etapa (sem identidade gerenciada até existir a hospedagem).
 
 **Rollback:** repor o `DATABASE_URL` local do `.env.example`. No servidor, restauração point-in-time (7 dias) para um novo servidor; `DROP DATABASE "opt-news"` e `DROP ROLE optnews_app` removem tudo do Opt News sem afetar os outros bancos.
+
+## ADR-0017 — Login com conta Microsoft (Entra ID) e criação da conta no primeiro acesso
+
+**Status:** Aceita (2026-11-13). Resolve a parte técnica de Q-04; Q-07 (quem é curador, organizador e admin) continua aberta.
+
+**Contexto:** a publicação exige login real; `AUTH_MODE=dev` é recusado em produção. O schema já identificava membros por `(tenant_id, entra_oid)` e não guarda credenciais.
+
+**Decisão:**
+- **App registration "Opt News"** de tenant único (só contas da Optsolv), cliente confidencial, escopos `openid profile`, sem fluxo implícito. Claim opcional `acct` no id_token, para recusar convidados do tenant.
+- **Fluxo authorization code + PKCE no servidor** (`/api/v1/auth/entra/login` e `/callback`). `state`, `nonce` e o verificador PKCE viajam num cookie `httpOnly` de 10 minutos, restrito ao caminho do fluxo. O código é trocado no servidor com o segredo do cliente.
+- **id_token verificado** com `node:crypto`: RS256 contra as chaves do tenant, emissor, audiência, `tid`, `exp`/`nbf` (tolerância de 5 min) e `nonce`. Nenhum token é guardado: depois da validação, sobra só o membro e a nossa sessão de servidor (a mesma do login simulado, 8 h, cookie `httpOnly`).
+- **Conta criada no primeiro login** (JIT): membro com o papel `member` e registro `member.created` na auditoria. O nome acompanha o Entra a cada login. Membro desativado continua barrado. Não guardamos e-mail (perfil mínimo).
+- **Retorno seguro:** `returnTo` aceita só caminhos do próprio site, para não virar redirect aberto. Erros voltam para `/entrar?erro=<motivo>` sem detalhe técnico.
+- `prompt=select_account`: depois de "Sair", o próximo login deixa escolher a conta, em vez de reentrar em silêncio.
+
+**Alternativas descartadas:** MSAL ou `jose` (dependência nova para o que ~80 linhas com `node:crypto` cobrem, testadas); login no navegador com SPA e tokens no front (exporia tokens ao JavaScript); guardar refresh/access tokens (não chamamos o Graph).
+
+**Pendências:** sem consentimento de admin do tenant, cada pessoa consente `openid profile` no primeiro login, se a política do tenant permitir. Segredo vence em 6 meses: renovar ou trocar por credencial federada da hospedagem. Uma tela de papéis substitui a concessão manual por SQL (README-dev).
+
+**Rollback:** `AUTH_MODE=dev` fora de produção. Os membros criados permanecem, com autoria intacta; para cortar o acesso, `status = 'disabled'`.

@@ -11,7 +11,8 @@ import type { Sql } from "./db/index.ts";
 import { notFound } from "./http/problem.ts";
 import { route } from "./http/route.ts";
 import { authorize, capabilities } from "./identity/policy.ts";
-import { openSession, revokeSession, SESSION_COOKIE, SESSION_HOURS } from "./identity/session.ts";
+import { registerEntra } from "./identity/entra.ts";
+import { openSession, revokeSession, SESSION_COOKIE, setSessionCookie } from "./identity/session.ts";
 import { createInsight, getInsight, listInsights } from "./knowledge/insights.ts";
 import { createProposal, decide, listProposals, vote } from "./meetups/proposals.ts";
 import { addArtifact, createMeetup, getMeetup, listMeetups, updateMeetup } from "./meetups/sessions.ts";
@@ -37,10 +38,13 @@ export interface RouteDeps {
   config: Config;
   /** DNS resolver for submitted URLs (tests replace it to stay offline). */
   lookup?: Lookup;
+  /** HTTP client for Microsoft Entra (tests replace it to stay offline). */
+  entraFetch?: typeof fetch;
 }
 
-export function registerRoutes(app: FastifyInstance, { sql, config, lookup }: RouteDeps): void {
+export function registerRoutes(app: FastifyInstance, { sql, config, lookup, entraFetch }: RouteDeps): void {
   const secure = config.NODE_ENV === "production";
+  if (config.AUTH_MODE === "entra") registerEntra(app, { sql, config, fetchFn: entraFetch });
 
   route(app, sql, endpoints.devPersonas, async () => {
     if (config.AUTH_MODE !== "dev") throw notFound();
@@ -63,13 +67,7 @@ export function registerRoutes(app: FastifyInstance, { sql, config, lookup }: Ro
       WHERE m.id = ${body.memberId} AND m.tenant_id = ${DEV_TENANT} AND m.status = 'active' GROUP BY m.id`;
       if (!member) throw notFound();
       const { token, csrfToken } = await openSession(sql, member.id);
-      reply.setCookie(SESSION_COOKIE, token, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure,
-        path: "/",
-        maxAge: SESSION_HOURS * 3600,
-      });
+      setSessionCookie(reply, token, secure);
       return { ...member, can: capabilities(member), csrfToken };
     },
     { perMinute: 20 },

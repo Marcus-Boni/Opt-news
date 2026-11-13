@@ -6,6 +6,12 @@ const Env = z.object({
   API_HOST: z.string().default("127.0.0.1"),
   API_PORT: z.coerce.number().int().default(3001),
   AUTH_MODE: z.enum(["dev", "entra"]).default("dev"),
+  /** Origin people open the web at; the Entra redirect URI is `${WEB_ORIGIN}/api/v1/auth/entra/callback`. */
+  WEB_ORIGIN: z.url().default("http://localhost:5173"),
+  /** App registration "Opt News" (single tenant): only accounts of this tenant can sign in. */
+  ENTRA_TENANT_ID: z.uuid().optional(),
+  ENTRA_CLIENT_ID: z.uuid().optional(),
+  ENTRA_CLIENT_SECRET: z.string().min(1).optional(),
   /** Language the pipeline writes summaries in; recorded on every story. */
   CONTENT_LANGUAGE: z.string().default("pt-BR"),
   /** `simulated` costs nothing and needs no network; `foundry` is the approved provider (Q-03). */
@@ -53,8 +59,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (!LOCAL_DB_HOSTS.has(db.hostname) && db.searchParams.get("sslmode") !== "verify-full") {
     throw new Error("DATABASE_URL remoto exige sslmode=verify-full (certificado verificado)");
   }
-  if (config.AUTH_MODE === "entra") {
-    throw new Error("AUTH_MODE=entra ainda não implementado: depende de tenant e app registration aprovados (Q-04)");
+  if (
+    config.AUTH_MODE === "entra" &&
+    (!config.ENTRA_TENANT_ID || !config.ENTRA_CLIENT_ID || !config.ENTRA_CLIENT_SECRET)
+  ) {
+    throw new Error("AUTH_MODE=entra exige ENTRA_TENANT_ID, ENTRA_CLIENT_ID e ENTRA_CLIENT_SECRET");
+  }
+  if (config.NODE_ENV === "production" && !config.WEB_ORIGIN.startsWith("https://")) {
+    throw new Error("WEB_ORIGIN precisa ser https em produção");
   }
   if (config.MODEL_PROVIDER === "foundry" && (!config.FOUNDRY_ENDPOINT || !config.FOUNDRY_DEPLOYMENT)) {
     throw new Error("MODEL_PROVIDER=foundry exige FOUNDRY_ENDPOINT e FOUNDRY_DEPLOYMENT");

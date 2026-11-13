@@ -1,4 +1,4 @@
-// Dev-only sign-in: pick a synthetic persona. Replaced by Microsoft Entra ID SSO once that decision lands (Q-04).
+// Sign-in: Microsoft Entra ID (AUTH_MODE=entra, ADR-0017) or, in development, a synthetic persona (AUTH_MODE=dev).
 // The brand moment of the app: the Optsolv logo on warm graphite with the symbol's point field, then the chooser.
 // Motion: the copy and the cards arrive (CSS `data-reveal`); when a persona is chosen it steps forward (the chevron's
 // "impulsiona") while the others step back, as a CSS transition on its state; the point field answers the pointer.
@@ -29,6 +29,27 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
+/** Reasons the API sends back from the Microsoft callback (`/entrar?erro=`). */
+const SIGN_IN_ERRORS: Record<string, string> = {
+  cancelado: "O login foi cancelado na tela da Microsoft.",
+  expirado: "O login demorou demais ou começou em outra aba. Tente de novo.",
+  convidado: "Contas convidadas não têm acesso. Entre com a sua conta da Optsolv.",
+  desativado: "Seu acesso ao Opt News foi desativado. Fale com a administração da plataforma.",
+  entra: "Não foi possível confirmar sua conta Microsoft. Tente de novo em instantes.",
+};
+
+/** The four-square Microsoft mark, as Microsoft's sign-in button guidance shows it. */
+function MicrosoftLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 21 21" className="size-5 shrink-0">
+      <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+      <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+      <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+      <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+    </svg>
+  );
+}
+
 export function Login() {
   const { me, signIn } = useSession();
   const navigate = useNavigate();
@@ -37,6 +58,7 @@ export function Login() {
   const login = useAction();
   const [chosen, setChosen] = useState<string | null>(null);
   const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const failure = SIGN_IN_ERRORS[new URLSearchParams(location.search).get("erro") ?? ""];
 
   if (me) return <Navigate to={from} replace />;
 
@@ -85,78 +107,96 @@ export function Login() {
             Entrar no Opt News
           </h1>
 
-          <div data-reveal>
-            <Notice>
-              <strong className="font-semibold">Ambiente de desenvolvimento — login simulado</strong> (SSO Microsoft
-              Entra ID pendente). As pessoas abaixo são fictícias; cada uma tem um papel diferente.
-            </Notice>
-          </div>
-
+          {/* The dev persona list answers 404 outside AUTH_MODE=dev: that is the sign to offer Microsoft sign-in. */}
           {personas.error?.status === 404 ? (
-            <p className="text-sm text-muted-foreground">O login simulado não está disponível neste ambiente.</p>
+            <div data-reveal className="flex flex-col gap-4">
+              {failure && (
+                <div role="alert">
+                  <Notice>{failure}</Notice>
+                </div>
+              )}
+              <Button asChild size="lg" className="h-12 w-full gap-3 text-[0.9375rem] sm:w-fit sm:px-6">
+                <a href={`/api/v1/auth/entra/login?returnTo=${encodeURIComponent(from)}`}>
+                  <MicrosoftLogo />
+                  Entrar com a conta Microsoft
+                </a>
+              </Button>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Use sua conta corporativa da Optsolv. No primeiro acesso, seu perfil no Opt News é criado
+                automaticamente.
+              </p>
+            </div>
           ) : (
             <Async q={personas} what="as personas de teste" lines={4}>
               {(items) => (
-                <ul className="flex flex-col gap-2" aria-label="Personas de teste">
-                  {items.map((p) => (
-                    // The chosen card steps forward and the others step back while the session opens; a failure
-                    // clears the choice and brings them back.
-                    <li
-                      key={p.id}
-                      data-reveal
-                      className={cn(
-                        "transition-[opacity,translate] duration-300 ease-out-expo",
-                        chosen === p.id && "translate-x-2",
-                        chosen !== null && chosen !== p.id && "opacity-40",
-                      )}
-                    >
-                      <Item asChild variant="outline">
-                        <Button
-                          variant="ghost"
-                          disabled={login.pending}
-                          aria-busy={login.pending && chosen === p.id}
-                          onClick={async () => {
-                            setChosen(p.id);
-                            const res = await login.run(() => api("devLogin", { body: { memberId: p.id } }));
-                            if (res.ok) {
-                              signIn(res.value);
-                              navigate(from, { replace: true });
-                            } else setChosen(null);
-                          }}
-                          className={cn(
-                            "h-auto justify-start gap-3.5 bg-card px-4 py-3 text-left font-normal whitespace-normal",
-                            "transition-[border-color,background-color] hover:border-brand hover:bg-brand-soft/40 disabled:cursor-wait disabled:opacity-100",
-                          )}
-                        >
-                          <Avatar size="lg">
-                            <AvatarFallback className="font-semibold text-foreground">
-                              {initials(p.displayName)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="flex min-w-0 flex-1 flex-col gap-1">
-                            <span className="flex flex-wrap items-center gap-1.5">
-                              <span className="font-semibold">{p.displayName}</span>
-                              {p.roles.map((r) => (
-                                <Badge key={r} variant={r === "visitor" || r === "member" ? "secondary" : "outline"}>
-                                  {ROLE_LABEL[r] ?? r}
-                                </Badge>
-                              ))}
+                <>
+                  <div data-reveal>
+                    <Notice>
+                      <strong className="font-semibold">Ambiente de desenvolvimento — login simulado.</strong> As
+                      pessoas abaixo são fictícias; cada uma tem um papel diferente.
+                    </Notice>
+                  </div>
+                  <ul className="flex flex-col gap-2" aria-label="Personas de teste">
+                    {items.map((p) => (
+                      // The chosen card steps forward and the others step back while the session opens; a failure
+                      // clears the choice and brings them back.
+                      <li
+                        key={p.id}
+                        data-reveal
+                        className={cn(
+                          "transition-[opacity,translate] duration-300 ease-out-expo",
+                          chosen === p.id && "translate-x-2",
+                          chosen !== null && chosen !== p.id && "opacity-40",
+                        )}
+                      >
+                        <Item asChild variant="outline">
+                          <Button
+                            variant="ghost"
+                            disabled={login.pending}
+                            aria-busy={login.pending && chosen === p.id}
+                            onClick={async () => {
+                              setChosen(p.id);
+                              const res = await login.run(() => api("devLogin", { body: { memberId: p.id } }));
+                              if (res.ok) {
+                                signIn(res.value);
+                                navigate(from, { replace: true });
+                              } else setChosen(null);
+                            }}
+                            className={cn(
+                              "h-auto justify-start gap-3.5 bg-card px-4 py-3 text-left font-normal whitespace-normal",
+                              "transition-[border-color,background-color] hover:border-brand hover:bg-brand-soft/40 disabled:cursor-wait disabled:opacity-100",
+                            )}
+                          >
+                            <Avatar size="lg">
+                              <AvatarFallback className="font-semibold text-foreground">
+                                {initials(p.displayName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="flex min-w-0 flex-1 flex-col gap-1">
+                              <span className="flex flex-wrap items-center gap-1.5">
+                                <span className="font-semibold">{p.displayName}</span>
+                                {p.roles.map((r) => (
+                                  <Badge key={r} variant={r === "visitor" || r === "member" ? "secondary" : "outline"}>
+                                    {ROLE_LABEL[r] ?? r}
+                                  </Badge>
+                                ))}
+                              </span>
+                              <span className="text-sm leading-snug text-muted-foreground">{p.description}</span>
                             </span>
-                            <span className="text-sm leading-snug text-muted-foreground">{p.description}</span>
-                          </span>
-                          {login.pending && chosen === p.id ? (
-                            <Spinner aria-hidden="true" className="text-brand" />
-                          ) : (
-                            <ChevronRight
-                              aria-hidden="true"
-                              className="text-muted-foreground transition-colors group-hover/button:text-brand"
-                            />
-                          )}
-                        </Button>
-                      </Item>
-                    </li>
-                  ))}
-                </ul>
+                            {login.pending && chosen === p.id ? (
+                              <Spinner aria-hidden="true" className="text-brand" />
+                            ) : (
+                              <ChevronRight
+                                aria-hidden="true"
+                                className="text-muted-foreground transition-colors group-hover/button:text-brand"
+                              />
+                            )}
+                          </Button>
+                        </Item>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
             </Async>
           )}

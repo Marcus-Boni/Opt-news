@@ -7,7 +7,7 @@
 | Q-01 | Repositório Azure DevOps existente ou novo? Qual projeto? | Bloqueante ao deploy | Líder técnico | Não criar remotamente |
 | Q-02 | Quais fontes e direitos de ingestão/publicação foram aprovados? | Coleta real **local** autorizada pelo responsável em 2026-11-02, com lista proposta de 16 feeds públicos em `tools/real-sources.ts`, só resumo + link. Falta a aprovação jurídica antes de abrir para outras pessoas | Produto + jurídico | Fixtures em CI; feeds reais só no banco local `optnews_ia` |
 | Q-03 | Que provedor de IA e orçamento mensal podem ser usados? | **Provedor decidido (ADR-0013):** Foundry `gpt-6-luna`. Pendentes: teto mensal e papel de dados no recurso | Tecnologia + financeiro | `MODEL_PROVIDER=simulated` até o papel ser concedido |
-| Q-04 | Qual tenant Entra, usuários/grupos, app registration e papéis? | Bloqueante ao SSO real | Admin M365 | Mock auth só local/testes |
+| Q-04 | Qual tenant Entra, usuários/grupos, app registration e papéis? | **Resolvida no técnico (ADR-0017):** tenant Optsolv, app "Opt News" de tenant único, conta criada no primeiro login. Falta consentimento de admin (opcional) | Admin M365 | Mock auth só local/testes |
 | Q-05 | Hospedagem (App Service/Container Apps/VM), regiões e limites? | Bloqueante à produção | Infra | Docker local e topologia conceitual |
 | Q-06 | O portal ficará exclusivamente interno? | Alta | Produto/Segurança | Autenticado e privado |
 | Q-07 | Quem pode ser curador, organizador e admin? | Alta | Produto/RH/Tecnologia | Negar privilégios administrativos |

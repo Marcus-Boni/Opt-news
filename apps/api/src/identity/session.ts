@@ -2,6 +2,7 @@
 // while the member is active, so disabling a member revokes access on the next request.
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { Role } from "@optnews/contracts";
+import type { FastifyReply } from "fastify";
 import type { Db } from "../db/index.ts";
 import type { Actor } from "./policy.ts";
 
@@ -16,6 +17,16 @@ export async function openSession(db: Db, memberId: string): Promise<{ token: st
   await db`INSERT INTO identity.sessions (token_hash, member_id, csrf_token, expires_at)
            VALUES (${hash(token)}, ${memberId}, ${csrfToken}, now() + make_interval(hours => ${SESSION_HOURS}))`;
   return { token, csrfToken };
+}
+
+export function setSessionCookie(reply: FastifyReply, token: string, secure: boolean): void {
+  reply.setCookie(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure,
+    path: "/",
+    maxAge: SESSION_HOURS * 3600,
+  });
 }
 
 export async function revokeSession(db: Db, token: string): Promise<void> {

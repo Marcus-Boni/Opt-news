@@ -138,6 +138,35 @@ O seed é sintético (personas, taxonomia e fontes de `tools/fake-feeds`), igual
 
 **Nunca** aponte `TEST_DATABASE_URL` para o servidor publicado: os testes apagam e recriam o esquema.
 
+## Login com conta Microsoft (Entra ID)
+
+Decisão em [ADR-0017](docs/12-adrs.md). Com `AUTH_MODE=entra`, a tela `/entrar` mostra "Entrar com a conta Microsoft". Só contas do tenant da Optsolv entram (convidados são recusados), e o perfil nasce no primeiro login com o papel `member`.
+
+**App registration "Opt News"** (tenant único). Os ids ficam no `.env` e nas variáveis da hospedagem, nunca no repositório.
+
+- Redirects: `http://localhost:5173/...` (Vite), `http://localhost:8080/...` (API servindo o web) e o endereço público, todos terminando em `/api/v1/auth/entra/callback`.
+- Escopos `openid profile`; claim opcional `acct` no id_token (0 = membro, 1 = convidado).
+- Segredo do cliente com validade de 6 meses. Renovar antes de vencer:
+
+```bash
+az ad app credential reset --id <client id> --append --display-name opt-news-api --end-date <AAAA-MM-DD>
+```
+
+Para cadastrar o endereço público quando ele existir, inclua **todos** os redirects (o comando substitui a lista):
+
+```bash
+az ad app update --id <client id> --web-redirect-uris http://localhost:5173/api/v1/auth/entra/callback http://localhost:8080/api/v1/auth/entra/callback https://<endereço público>/api/v1/auth/entra/callback
+```
+
+**Papéis:** todo mundo entra como `member`. Até existir uma tela de papéis, um admin concede outro papel direto no banco (fica auditado só pelo histórico do banco):
+
+```sql
+INSERT INTO identity.role_assignments (member_id, role)
+SELECT id, 'admin' FROM identity.members WHERE display_name = '<Nome Sobrenome>' AND tenant_id = '<tenant>';
+```
+
+Para testar sem conflito com outro servidor na 3001/5173: `API_PORT=8080 SERVE_WEB=true WEB_ORIGIN=http://localhost:8080 npm run dev:api`, depois de `npm run build`.
+
 ## Mapa do código
 
 | Caminho | O que é |
