@@ -232,6 +232,7 @@ O login simulado é recusado com `NODE_ENV=production`. A lista completa e os fl
 | `AUTH_MODE` | `dev` | `dev` = login simulado (recusado em produção). `entra` = conta Microsoft da Optsolv ([ADR-0017](docs/12-adrs.md)) |
 | `WEB_ORIGIN` | `http://localhost:5173` | Endereço do web; forma o redirect do Entra. `https` em produção |
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | — | App registration "Opt News". Obrigatórios com `AUTH_MODE=entra` |
+| `CRON_SECRET` | — | Segredo da curadoria agendada na Vercel ([publicação](README-dev.md#publicação-na-vercel)) |
 | `MODEL_PROVIDER` | `simulated` | `foundry` usa o modelo real e exige endpoint e deployment |
 | `MODEL_DAILY_CALL_LIMIT` | `500` | Teto diário de chamadas ao modelo |
 | `ARTICLE_READING` | `false` | Deixa o modelo ler o artigo, sem guardar. Desligado até aprovação de direitos |

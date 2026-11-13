@@ -12,6 +12,7 @@ import { notFound } from "./http/problem.ts";
 import { route } from "./http/route.ts";
 import { authorize, capabilities } from "./identity/policy.ts";
 import { registerEntra } from "./identity/entra.ts";
+import { registerCron } from "./intelligence/scheduled.ts";
 import { openSession, revokeSession, SESSION_COOKIE, setSessionCookie } from "./identity/session.ts";
 import { createInsight, getInsight, listInsights } from "./knowledge/insights.ts";
 import { createProposal, decide, listProposals, vote } from "./meetups/proposals.ts";
@@ -45,6 +46,7 @@ export interface RouteDeps {
 export function registerRoutes(app: FastifyInstance, { sql, config, lookup, entraFetch }: RouteDeps): void {
   const secure = config.NODE_ENV === "production";
   if (config.AUTH_MODE === "entra") registerEntra(app, { sql, config, fetchFn: entraFetch });
+  registerCron(app, config, sql);
 
   route(app, sql, endpoints.devPersonas, async () => {
     if (config.AUTH_MODE !== "dev") throw notFound();

@@ -45,7 +45,7 @@ async function sendWeb(url: string, reply: FastifyReply) {
 }
 
 // The web is a same-origin SPA: scripts, styles, fonts and API calls come only from this origin (no CDNs).
-const CSP = [
+export const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
@@ -73,7 +73,13 @@ export async function buildApp(deps: RouteDeps & { logger?: boolean }): Promise<
     bodyLimit: 64 * 1024,
     // shortcut: trusts proxies on private addresses (the platform ingress); pin the ingress addresses when hosting is
     // decided (Q-05). Trusting every hop, or a bare hop count, would let a client pick its own address via X-Forwarded-For.
-    trustProxy: deps.config.NODE_ENV === "production" ? "loopback, linklocal, uniquelocal" : false,
+    // On Vercel the edge replaces X-Forwarded-For with the real client address, so the first hop is trustworthy.
+    trustProxy:
+      deps.config.PLATFORM === "vercel"
+        ? true
+        : deps.config.NODE_ENV === "production"
+          ? "loopback, linklocal, uniquelocal"
+          : false,
   });
 
   await app.register(cookie);

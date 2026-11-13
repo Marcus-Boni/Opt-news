@@ -15,3 +15,6 @@ playwright-report/
 
 # Base institucional da Optsolv com seções de visibilidade interna: fica fora do repositório público
 docs/marca/sobre-optsolv.json
+# Vercel: projeto ligado e variáveis puxadas pela CLI
+.vercel
+.env.local

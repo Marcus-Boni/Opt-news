@@ -1,0 +1,11 @@
+# Nunca enviar segredos nem artefatos locais à Vercel (o build gera .vercel/output no próprio servidor de build).
+.env
+.env.*
+!.env.example
+node_modules
+.vercel
+.claude
+.agents
+.impeccable
+.playwright-mcp
+docs/evidencias

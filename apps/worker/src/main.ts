@@ -4,48 +4,14 @@
 //   node apps/worker/src/main.ts --once   → one run (all active sources), then exit
 import { loadConfig } from "@optnews/api/config";
 import { connect } from "@optnews/api/db/index";
-import { dayKey, generateDailyBriefing } from "@optnews/api/intelligence/briefing";
-import { guardedFetch } from "@optnews/api/intelligence/fetch";
-import { articleText } from "@optnews/api/intelligence/page";
-import { foundryProvider } from "@optnews/api/intelligence/foundry";
-import { heuristicProvider } from "@optnews/api/intelligence/model";
-import { type IngestDeps, runIngest } from "@optnews/api/intelligence/pipeline";
+import { ingestDeps, runScheduled } from "@optnews/api/intelligence/scheduled";
 import { PgBoss } from "pg-boss";
 
 const config = loadConfig();
 const sql = connect(config.DATABASE_URL, 4);
 const cron = process.env.INGEST_CRON ?? "*/15 * * * *";
-// Pages are larger than feeds; the same guard (SSRF, redirects, deadline) applies.
-const fetchPage = async (url: string) => {
-  const res = await guardedFetch(url, {
-    privateHosts: config.INGEST_PRIVATE_HOSTS,
-    accept: "html",
-    maxBytes: 4 * 1024 * 1024,
-  });
-  return res.notModified ? "" : res.body;
-};
-const deps: IngestDeps = {
-  sql,
-  fetchFeed: (url, validators) => guardedFetch(url, { privateHosts: config.INGEST_PRIVATE_HOSTS, ...validators }),
-  model: {
-    provider:
-      config.MODEL_PROVIDER === "foundry"
-        ? foundryProvider({ endpoint: config.FOUNDRY_ENDPOINT ?? "", deployment: config.FOUNDRY_DEPLOYMENT ?? "" })
-        : heuristicProvider,
-    dailyLimit: config.MODEL_DAILY_CALL_LIMIT,
-  },
-  language: config.CONTENT_LANGUAGE,
-  fetchPage,
-  readArticle: config.ARTICLE_READING ? async (url) => articleText(await fetchPage(url)) : undefined,
-};
-
-async function run(force: boolean) {
-  const started = Date.now();
-  const report = await runIngest(deps, { force });
-  // Today's briefing follows the day as it fills up; an unchanged list reuses its receipt, so it costs nothing.
-  const briefing = await generateDailyBriefing({ sql, ...deps.model }, dayKey(new Date()), { force: true });
-  console.log(JSON.stringify({ msg: "content.ingest done", ms: Date.now() - started, ...report, briefing }));
-}
+const deps = ingestDeps(config, sql);
+const run = (force: boolean) => runScheduled(deps, force);
 
 if (process.argv.includes("--once")) {
   try {

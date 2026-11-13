@@ -22,6 +22,7 @@
     "typecheck": "tsc -p packages/contracts && tsc -p apps/api && tsc -p apps/worker && tsc -p tools && tsc -p apps/web",
     "test": "node --env-file-if-exists=.env --test --test-concurrency=1 \"apps/*/test/*.test.ts\"",
     "build": "npm run build -w @optnews/web",
+    "build:vercel": "npm run build && node tools/vercel-build.ts",
     "openapi": "node apps/api/src/http/openapi.ts > docs/openapi-v1.json",
     "smoke": "node tools/smoke.ts",
     "dev:fake-feeds": "node tools/fake-feeds/server.ts",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@types/node": "26.6.3",
+    "rolldown": "1.2.16",
     "typescript": "7.0.2"
   }
 }

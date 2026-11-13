@@ -34,6 +34,13 @@ const Env = z.object({
   FAKE_FEEDS_BASE_URL: z.url().default("http://127.0.0.1:4020"),
   SERVE_WEB: z.stringbool().default(false),
   /**
+   * Where the API runs. `vercel`: behind Vercel's edge, which overwrites X-Forwarded-For with the client address
+   * (ADR-0018), so the forwarded address is trusted. Set by the build in the function config, not by hand.
+   */
+  PLATFORM: z.enum(["self", "vercel"]).default("self"),
+  /** Bearer secret the scheduler sends to /api/cron/ingest (Vercel Cron). Without it the endpoint does not exist. */
+  CRON_SECRET: z.string().min(32).optional(),
+  /**
    * Let the model read the article page (never stored or shown) for scoring and writing. Off until the rights
    * policy (Q-02) allows third-party text to reach the AI provider.
    */
@@ -64,6 +71,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     (!config.ENTRA_TENANT_ID || !config.ENTRA_CLIENT_ID || !config.ENTRA_CLIENT_SECRET)
   ) {
     throw new Error("AUTH_MODE=entra exige ENTRA_TENANT_ID, ENTRA_CLIENT_ID e ENTRA_CLIENT_SECRET");
+  }
+  if (config.PLATFORM === "vercel" && !config.CRON_SECRET) {
+    throw new Error("PLATFORM=vercel exige CRON_SECRET (≥ 32 caracteres) para a curadoria agendada");
   }
   if (config.NODE_ENV === "production" && !config.WEB_ORIGIN.startsWith("https://")) {
     throw new Error("WEB_ORIGIN precisa ser https em produção");

@@ -202,3 +202,36 @@
 **Pendências:** sem consentimento de admin do tenant, cada pessoa consente `openid profile` no primeiro login, se a política do tenant permitir. Segredo vence em 6 meses: renovar ou trocar por credencial federada da hospedagem. Uma tela de papéis substitui a concessão manual por SQL (README-dev).
 
 **Rollback:** `AUTH_MODE=dev` fora de produção. Os membros criados permanecem, com autoria intacta; para cortar o acesso, `status = 'disabled'`.
+
+## ADR-0018 — Publicação na Vercel (Build Output API, função única e cron)
+
+**Status:** Aceita (2026-11-13) como hospedagem inicial. Q-05 continua aberta para a hospedagem definitiva (Azure).
+
+**Contexto:** a API é um servidor Fastify, e o worker é um processo que fica rodando, com pg-boss. A Vercel roda funções sob demanda e não documenta como compila TypeScript que importa outros arquivos com extensão `.ts`, que é o padrão do repositório; a comunidade relata falhas nesse caso. O banco é o Flexible Server da ADR-0016.
+
+**Decisão:**
+- **Build Output API v3.** `npm run build:vercel` gera `.vercel/output` (`tools/vercel-build.ts`):
+  - o web compilado vai como arquivos estáticos;
+  - a API vira **uma** função Node 24 (`api.func`), empacotada pelo rolldown que o Vite já usa, num arquivo único autocontido;
+  - a Vercel só serve o que construímos, sem depender da compilação dela.
+- **Função única** (`apps/api/src/vercel.ts`). Ela recebe `/api/*`, `/healthz` e `/readyz` com a URL original e passa ao Fastify (`app.server.emit("request")`, o padrão da documentação do Fastify para a Vercel). Fica na região `gru1` (São Paulo), perto do banco, com `maxDuration` de 300 s. `NODE_ENV=production` e `PLATFORM=vercel` vêm da config da função, não de variável manual.
+- **Banco em ambiente serverless:** pool de 5 conexões por instância, e conexões ociosas fecham em 20 s. Instâncias pausadas não ficam segurando conexões contra o limite de 40 do papel.
+- **Curadoria agendada:** a Vercel Cron chama `GET /api/cron/ingest` com `Authorization: Bearer <CRON_SECRET>`. A comparação é em tempo constante, e sem o segredo a rota responde como inexistente. Um advisory lock do Postgres impede duas execuções simultâneas, porque a Vercel pode entregar a chamada duas vezes. O código da execução (`intelligence/scheduled.ts`) é o mesmo do worker. O agendamento padrão é diário, às 09:00 UTC, o limite do plano Hobby; no Pro, `INGEST_SCHEDULE="*/15 * * * *"` no build.
+- **Cabeçalhos:**
+  - os estáticos recebem a mesma CSP e os mesmos cabeçalhos de segurança da API, mais HSTS;
+  - `assets/` com hash recebe cache imutável e `index.html` recebe `no-cache`.
+- **IP do cliente:** com `PLATFORM=vercel`, o Fastify confia no `X-Forwarded-For`, que a borda da Vercel sobrescreve com o IP real. É ele que conta no limite de requisições.
+- **Migrações não rodam no deploy.** `npm run db:migrate` com o `DATABASE_URL` de produção é um passo explícito, feito antes do deploy. As migrações são aditivas, então a versão anterior continua compatível.
+
+**Riscos e limites:**
+- A saída da Vercel usa IPs dinâmicos. O firewall do banco só alcança a Vercel com a regra aberta que existe hoje (ADR-0016). Fechar essa regra exige IPs estáticos da Vercel (Pro, pago) ou mudar de hospedagem (Q-05).
+- O plano Hobby limita o cron a uma vez por dia.
+- As fontes sintéticas apontam para `127.0.0.1` e são bloqueadas em produção. Conteúdo real depende de Q-02 (`npm run sources:real`).
+- Deploys de preview não recebem variáveis de produção e falham na inicialização, de propósito.
+
+**Alternativas descartadas:**
+- Fastify "zero-config" da Vercel: exige que a raiz do projeto seja a API, o que tiraria o web do projeto.
+- Arquivos em `api/` compilados pela Vercel: a compilação de imports `.ts` não é documentada.
+- Vercel Services: em beta, e sem cron documentado.
+
+**Rollback:** promover o deploy anterior no painel da Vercel ("Instant Rollback"). O banco não muda no deploy.

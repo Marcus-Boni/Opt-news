@@ -11,6 +11,9 @@ const TIMESTAMPTZ = 1184;
 export function connect(url: string, max = 10): Sql {
   return postgres(url, {
     max,
+    // Serverless instances freeze between requests: idle connections must close on their own, or frozen
+    // instances pile up against the role's connection limit.
+    idle_timeout: 20,
     onnotice: () => {},
     transform: postgres.camel,
     types: {
