@@ -349,6 +349,11 @@ describe("guarded fetch (SSRF)", () => {
         res.writeHead(200, { "content-type": "application/xml", "content-encoding": "gzip" });
         return res.end(gzipSync("<rss><title>Compactado</title></rss>"));
       }
+      if (req.url === "/gzip-stall") {
+        // Half a compressed body, then silence: the deadline must still end the read.
+        res.writeHead(200, { "content-type": "application/xml", "content-encoding": "gzip" });
+        return res.write(gzipSync("<rss>".repeat(2000)).subarray(0, 64));
+      }
       if (req.url === "/gzip-bomb") {
         res.writeHead(200, { "content-type": "application/xml", "content-encoding": "gzip" });
         return res.end(gzipSync("x".repeat(50_000)));
@@ -394,6 +399,7 @@ describe("guarded fetch (SSRF)", () => {
     const opts = { privateHosts: ["127.0.0.1"] };
     assert.match(await guardedFetchText(`${base}/gzip`, opts), /Compactado/);
     await assert.rejects(guardedFetchText(`${base}/gzip-bomb`, { ...opts, maxBytes: 1000 }), /maior que/);
+    await assert.rejects(guardedFetchText(`${base}/gzip-stall`, { ...opts, timeoutMs: 300 }));
   });
 
   test("size limit and non-web schemes", async () => {

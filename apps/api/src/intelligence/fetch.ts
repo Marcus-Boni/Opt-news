@@ -5,7 +5,7 @@ import { lookup as dnsLookup, type LookupAddress } from "node:dns";
 import http from "node:http";
 import https from "node:https";
 import { isIP } from "node:net";
-import type { Readable } from "node:stream";
+import { pipeline, type Readable } from "node:stream";
 import { createBrotliDecompress, createGunzip, createInflate } from "node:zlib";
 import { isBlockedAddress } from "../content/url-guard.ts";
 
@@ -117,7 +117,8 @@ export async function guardedFetch(raw: string, opts: FetchOptions = {}): Promis
       res.resume();
       throw new Error(`codificação não suportada: ${encoding}`);
     }
-    const body: Readable = inflate ? res.pipe(inflate()) : res;
+    // pipeline, not pipe: a timeout or reset on the response must also end the decompressor, or the read hangs.
+    const body: Readable = inflate ? pipeline(res, inflate(), () => {}) : res;
     let size = 0;
     const chunks: Buffer[] = [];
     for await (const chunk of body) {
