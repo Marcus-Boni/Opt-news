@@ -2,6 +2,19 @@
   "version": "0.0.1",
   "configurations": [
     { "name": "web-motion", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "@optnews/web", "--", "--port", "5174"], "port": 5174 },
-    { "name": "api", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev:api"], "port": 3001 }
+    { "name": "api", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev:api"], "port": 3001 },
+    {
+      "name": "api-local",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set DATABASE_URL=postgres://optnews:optnews@127.0.0.1:5433/optnews&& npm run dev:api"],
+      "port": 3001
+    },
+    {
+      "name": "app-8080",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set API_PORT=8080&& set SERVE_WEB=true&& set WEB_ORIGIN=http://localhost:8080&& npm run dev:api"],
+      "port": 8080,
+      "autoPort": false
+    }
   ]
 }
