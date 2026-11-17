@@ -69,9 +69,13 @@ export function registerCron(app: FastifyInstance, config: Config, sql: Sql): vo
 export async function runScheduled(deps: IngestDeps, force: boolean, deadline?: number) {
   const started = Date.now();
   const report = await runIngest(deps, { force, deadline });
-  // Today's briefing follows the day as it fills up; an unchanged list reuses its receipt, so it costs nothing.
-  const briefing = await generateDailyBriefing({ sql: deps.sql, ...deps.model }, dayKey(new Date()), { force: true });
-  const summary = { msg: "content.ingest done", ms: Date.now() - started, ...report, briefing };
+  // Today's briefing follows the day as it fills up. Yesterday's is refreshed too: stories found after midnight are
+  // dated the day before. An unchanged list reuses its receipt, so it costs nothing.
+  const briefings = [];
+  for (const day of [dayKey(new Date(started - 86_400_000)), dayKey(new Date(started))]) {
+    briefings.push(await generateDailyBriefing({ sql: deps.sql, ...deps.model }, day, { force: true }));
+  }
+  const summary = { msg: "content.ingest done", ms: Date.now() - started, ...report, briefings };
   console.log(JSON.stringify(summary));
   return summary;
 }

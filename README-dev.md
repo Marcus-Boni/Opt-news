@@ -180,7 +180,7 @@ Decisão em [ADR-0018](docs/12-adrs.md). O projeto da Vercel aponta para a raiz 
 | `WEB_ORIGIN` | `https://<domínio do projeto>` |
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` | app registration "Opt News" (ADR-0017) |
 | `CRON_SECRET` | aleatório, ≥ 32 caracteres: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `INGEST_SCHEDULE` (opcional) | `*/15 * * * *` no plano Pro; sem ela, o cron roda uma vez por dia |
+| `INGEST_SCHEDULE` (opcional) | `*/15 * * * *` no plano Pro; sem ela, o build declara 24 crons diários (de hora em hora, o máximo do Hobby) |
 | `MODEL_PROVIDER`, `FOUNDRY_ENDPOINT`, `FOUNDRY_DEPLOYMENT` | `foundry` e o deployment aprovado (ADR-0013) |
 | `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` | identidade "Opt News - Curadoria": só o papel *Cognitive Services OpenAI User* no recurso do Foundry |
 
@@ -190,12 +190,20 @@ Decisão em [ADR-0018](docs/12-adrs.md). O projeto da Vercel aponta para a raiz 
 
 1. `npm run lint && npm run typecheck && npm test`.
 2. Migrações no banco de produção, antes do deploy (são aditivas): `npm run db:migrate`.
-3. Deploy: um push na branch de produção, se o projeto estiver ligado ao Git; ou, pela CLI, `npx vercel build --prod` e depois `npx vercel deploy --prebuilt --prod`.
+3. Deploy pela CLI: `npm run build:vercel` e depois `npx vercel deploy --prebuilt --prod`. Não use `npx vercel build`: ele roda `npm ci`, que apaga o `node_modules` local.
 4. Smoke: `node tools/smoke.ts https://<domínio>`. O passo de login simulado falha em produção, de propósito.
 
 **Ambiente novo:** `npm run db:migrate`, depois `npm run db:seed:prod` (só a taxonomia, sem personas nem fontes sintéticas). Entre com a sua conta, conceda `admin` (SQL da seção do Entra) e rode `npm run sources:real`. A primeira coleta pode rodar daqui, sem limite de tempo: `MODEL_PROVIDER=foundry INGEST_PRIVATE_HOSTS= npm run ingest:once`.
 
 **Primeira vez:** cadastre `https://<domínio>/api/v1/auth/entra/callback` nos redirects do app (comando na seção do Entra) e confira o login com uma conta da Optsolv.
+
+**A curadoria está rodando?** No Hobby, a Vercel guarda log de função por só 1 h e não repete um cron que falhou. Por isso, o estado de verdade fica no banco:
+
+- a tela de fontes (moderador) mostra a última tentativa, o último sucesso e os itens pendentes de cada fonte;
+- `content.raw_items` com `status = 'discovered'` é a fila que ainda não foi avaliada;
+- `content.model_receipts` mostra as chamadas de modelo por hora, e `content.briefings` mostra os resumos por dia.
+
+Para rodar uma vez agora, sem esperar a hora: `npx vercel crons run /api/cron/ingest`. Para zerar uma fila grande sem o limite de 240 s: `MODEL_PROVIDER=foundry INGEST_PRIVATE_HOSTS= npm run ingest:once`, com o `.env` de produção.
 
 **Para conferir o build sem a Vercel:** rode `npm run build:vercel` e importe `.vercel/output/functions/api.func/index.mjs` com as variáveis acima. O arquivo é autocontido.
 

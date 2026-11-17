@@ -11,8 +11,13 @@ const out = new URL(".vercel/output/", root);
 const fn = new URL("functions/api.func/", out);
 const json = (file: URL, value: unknown) => writeFile(file, `${JSON.stringify(value, null, 2)}\n`);
 
-/** Daily at 09:00 UTC (06:00 in São Paulo): the most a Hobby plan allows. On Pro, "*\/15 * * * *" matches the worker. */
-const INGEST_SCHEDULE = process.env.INGEST_SCHEDULE ?? "0 9 * * *";
+/**
+ * Hobby only takes once-a-day crons (fired anywhere within their hour) but up to 100 per project, so one per hour of
+ * the day makes an hourly run; an overlap is skipped by the advisory lock. On Pro, INGEST_SCHEDULE="*\/15 * * * *".
+ */
+const INGEST_SCHEDULES = process.env.INGEST_SCHEDULE
+  ? [process.env.INGEST_SCHEDULE]
+  : Array.from({ length: 24 }, (_, hour) => `0 ${hour} * * *`);
 
 // Same headers the API sends (apps/api/src/app.ts), for the static files Vercel serves without the API.
 const SECURITY_HEADERS = {
@@ -58,7 +63,7 @@ await json(new URL("config.json", out), {
     { src: "^/assets/.*$", status: 404 },
     { src: "^/.*$", dest: "/index.html", headers: { "cache-control": "no-cache" } },
   ],
-  crons: [{ path: "/api/cron/ingest", schedule: INGEST_SCHEDULE }],
+  crons: INGEST_SCHEDULES.map((schedule) => ({ path: "/api/cron/ingest", schedule })),
 });
 
-console.log(`.vercel/output pronto (cron ${INGEST_SCHEDULE})`);
+console.log(`.vercel/output pronto (cron: ${INGEST_SCHEDULES.join(", ")})`);

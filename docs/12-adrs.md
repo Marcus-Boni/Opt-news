@@ -216,7 +216,7 @@
   - a Vercel só serve o que construímos, sem depender da compilação dela.
 - **Função única** (`apps/api/src/vercel.ts`). Ela recebe `/api/*`, `/healthz` e `/readyz` com a URL original e passa ao Fastify (`app.server.emit("request")`, o padrão da documentação do Fastify para a Vercel). Fica na região `gru1` (São Paulo), perto do banco, com `maxDuration` de 300 s. `NODE_ENV=production` e `PLATFORM=vercel` vêm da config da função, não de variável manual.
 - **Banco em ambiente serverless:** pool de 5 conexões por instância, e conexões ociosas fecham em 20 s. Instâncias pausadas não ficam segurando conexões contra o limite de 40 do papel.
-- **Curadoria agendada:** a Vercel Cron chama `GET /api/cron/ingest` com `Authorization: Bearer <CRON_SECRET>`. A comparação é em tempo constante, e sem o segredo a rota responde como inexistente. Um advisory lock do Postgres impede duas execuções simultâneas, porque a Vercel pode entregar a chamada duas vezes. O código da execução (`intelligence/scheduled.ts`) é o mesmo do worker. O agendamento padrão é diário, às 09:00 UTC, o limite do plano Hobby; no Pro, `INGEST_SCHEDULE="*/15 * * * *"` no build.
+- **Curadoria agendada:** a Vercel Cron chama `GET /api/cron/ingest` com `Authorization: Bearer <CRON_SECRET>`. A comparação é em tempo constante, e sem o segredo a rota responde como inexistente. Um advisory lock do Postgres impede duas execuções simultâneas, porque a Vercel pode entregar a chamada duas vezes. O código da execução (`intelligence/scheduled.ts`) é o mesmo do worker. O agendamento padrão é de hora em hora: o Hobby só aceita cron diário, mas até 100 por projeto, então o build declara 24 crons diários, um por hora (ver adendo de 2026-11-16); no Pro, `INGEST_SCHEDULE="*/15 * * * *"` no build.
 - **Cabeçalhos:**
   - os estáticos recebem a mesma CSP e os mesmos cabeçalhos de segurança da API, mais HSTS;
   - `assets/` com hash recebe cache imutável e `index.html` recebe `no-cache`.
@@ -225,7 +225,7 @@
 
 **Riscos e limites:**
 - A saída da Vercel usa IPs dinâmicos. O firewall do banco só alcança a Vercel com a regra aberta que existe hoje (ADR-0016). Fechar essa regra exige IPs estáticos da Vercel (Pro, pago) ou mudar de hospedagem (Q-05).
-- O plano Hobby limita o cron a uma vez por dia.
+- O plano Hobby limita cada cron a uma vez por dia, disparado em qualquer minuto da hora marcada, e a Vercel não repete uma execução que falhou.
 - As fontes sintéticas apontam para `127.0.0.1` e são bloqueadas em produção. Conteúdo real depende de Q-02 (`npm run sources:real`).
 - Deploys de preview não recebem variáveis de produção e falham na inicialização, de propósito.
 
@@ -241,3 +241,15 @@
 - O modelo roda com uma identidade própria, "Opt News - Curadoria", separada do login. Ela só tem *Cognitive Services OpenAI User* no recurso do Foundry e entra por variáveis `AZURE_*`, lidas pelo `DefaultAzureCredential`.
 - Cada execução hospedada tem orçamento de 240 s (`runIngest({ deadline })`): depois disso, nada novo começa, e o que sobrou fica pendente para a próxima. O worker local continua sem limite.
 - **Limite conhecido:** no Hobby, uma execução diária processa cerca de 20 itens. A cobertura completa exige execuções mais frequentes (Pro ou um disparador externo).
+
+**Adendo (2026-11-16): curadoria de hora em hora no Hobby.**
+- **Problema visto em produção:** com uma execução por dia (06:2x em São Paulo), as notícias só mudavam uma vez por dia. Cada execução avaliava cerca de 17 itens em 240 s, e o resto esperava 24 h. No dia 16, 32 itens ficaram em `discovered`. O resumo diário era gerado às 06h para o dia que mal tinha começado, sem notícias, e nunca voltava ao dia anterior: só existia o de 13/11.
+- **Decisão:**
+  - o build declara 24 crons diários para `/api/cron/ingest`, um por hora (`0 H * * *`). A documentação da Vercel aceita vários crons no mesmo caminho;
+  - a imprecisão de até 59 min pode encostar duas execuções, e o advisory lock pula a segunda;
+  - toda execução atualiza o resumo de hoje e o de ontem. Uma notícia achada depois da meia-noite pode ter data do dia anterior. Lista igual reaproveita o recibo, sem custo.
+- **Custo:** as chamadas de modelo continuam proporcionais aos itens novos, não ao número de execuções. Cada execução custa uma busca condicional por fonte (ETag/Last-Modified) e de 1 a 5 min de função, dentro da cota do Hobby.
+- **Alternativas:**
+  - Vercel Pro: cron a cada 15 min, 800 s de função, logs retidos. É o caminho se o uso comercial exigir sair do Hobby;
+  - disparador externo (Azure Logic App ou Container Apps Job): exige recurso Azure novo, ficou para Q-05.
+- **Rollback:** `INGEST_SCHEDULE="0 9 * * *"` no build volta ao cron único.
