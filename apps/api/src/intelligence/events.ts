@@ -2,7 +2,7 @@
 // events/recall.ts + group.ts (MIT, see NOTICE): recall candidates of the last two weeks by text overlap, let the model
 // judge each relation, and attach only on a confident SAME_OCCURRENCE/SAME_STORY. Every judgement is kept.
 import { type CallContext, callModel } from "./model.ts";
-import { GROUP_MIN_CONFIDENCE, PROMPT_VERSION, RECALL_DAYS } from "./prompts.ts";
+import { GROUP_MIN_CONFIDENCE, PROMPT_VERSION, RECALL_DAYS, untrusted } from "./prompts.ts";
 
 interface Candidate {
   id: string;
@@ -32,14 +32,15 @@ export async function groupStory(ctx: Omit<CallContext, "promptVersion">, storyI
     ORDER BY ts_rank(c.search, q.t::tsquery) DESC, c.sort_at DESC LIMIT 5`;
   if (candidates.length === 0) return null;
 
+  // Headlines and summaries were written by the model from source text: still fenced as untrusted.
   const user = [
     "Notícia nova:",
-    `Título: ${story.headline}`,
-    `Resumo: ${story.summary ?? "(sem resumo)"}`,
-    `Data: ${story.sortAt}`,
+    untrusted(
+      [`Título: ${story.headline}`, `Resumo: ${story.summary ?? "(sem resumo)"}`, `Data: ${story.sortAt}`].join("\n"),
+    ),
     "",
     "Candidatas:",
-    ...candidates.map((c, i) => `C${i + 1} | ${line(c)}`),
+    untrusted(candidates.map((c, i) => `C${i + 1} | ${line(c)}`).join("\n")),
   ].join("\n");
   const { decisions } = await callModel({ ...ctx, promptVersion: PROMPT_VERSION }, story.id, "group", user);
 

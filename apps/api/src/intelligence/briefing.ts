@@ -3,7 +3,7 @@
 // anything the items do not name is discarded — the briefing is saved without one.
 import { representative } from "../content/stories.ts";
 import { type CallContext, callModel } from "./model.ts";
-import { PROMPT_VERSION } from "./prompts.ts";
+import { PROMPT_VERSION, untrusted } from "./prompts.ts";
 
 const MAX_ITEMS = 10;
 // Brazil has had no daylight saving time since 2019, so São Paulo is a fixed UTC−3.
@@ -63,9 +63,12 @@ export async function generateDailyBriefing(
     .map((label) =>
       [
         `[${label}]`,
-        ...items
-          .filter((i) => (i.label ?? "Outros") === label)
-          .map((i) => `- ${i.headline} | ${(i.summary ?? "").slice(0, 140)}`),
+        untrusted(
+          items
+            .filter((i) => (i.label ?? "Outros") === label)
+            .map((i) => `- ${i.headline} | ${(i.summary ?? "").slice(0, 140)}`)
+            .join("\n"),
+        ),
       ].join("\n"),
     )
     .join("\n");

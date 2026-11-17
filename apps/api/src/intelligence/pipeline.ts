@@ -17,7 +17,15 @@ import {
   ReceiptBusy,
 } from "./model.ts";
 import { type IntakeReport, intakeSubmissions, settleSubmissions } from "./submissions.ts";
-import { DISAGREEMENT, editorialScore, MAX_AGE_HOURS, material, PROMPT_VERSION, thresholdsFor } from "./prompts.ts";
+import {
+  DISAGREEMENT,
+  editorialScore,
+  MAX_AGE_HOURS,
+  material,
+  PROMPT_VERSION,
+  thresholdsFor,
+  untrusted,
+} from "./prompts.ts";
 
 export const PROVIDER = "optnews";
 const ARTICLE_LABEL = "Texto do artigo (só para análise; não copie frases, escreva com suas palavras):";
@@ -196,7 +204,7 @@ export async function evaluateItem(deps: IngestDeps, item: Pending, topics: Read
     }
     // The prefilter only needs the headline; reading the article is paid once the item may matter.
     const article = deps.readArticle ? await deps.readArticle(item.originalUrl).catch(() => null) : null;
-    const full = article ? [user, ARTICLE_LABEL, article].join("\n") : user;
+    const full = article ? [user, ARTICLE_LABEL, untrusted(article)].join("\n") : user;
     const a = (await callModel(ctx, item.id, "score_a", full)).attentionScore;
     const b = (await callModel(ctx, item.id, "score_b", full)).attentionScore;
     if (!forced && a + b < 2 * gate(deps)[item.tier]) {
