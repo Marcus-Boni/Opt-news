@@ -40,6 +40,7 @@ A entidade `Topic` suportará sinônimos e aliases, permitindo filtrar por empre
 - Não atribuir falas a pessoas não identificadas no material; não inferir causalidade sem evidência.
 - Exibir resumo em pt-BR com título fiel, contexto de impacto e limitações, com referências.
 - Sempre permitir atuação humana: destacar, ocultar, corrigir, fundir e sinalizar conteúdo.
+- Briefing diário: até 10 itens, um por acontecimento e no máximo 3 por fonte (os de maior nota); o restante continua no feed.
 
 ## Feedback e calibração
 

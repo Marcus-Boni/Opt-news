@@ -50,6 +50,9 @@ export async function listedEntries(
       return [];
     }
   });
+  // A listing always shows recent articles: none under the prefix means the layout or the prefix changed, and the
+  // source must read as failing, not as having nothing new.
+  if (links.length === 0) throw new Error("a página da listagem não tem links de artigo com o prefixo configurado");
   const known = new Set(
     (
       await sql<{ canonicalUrl: string }[]>`

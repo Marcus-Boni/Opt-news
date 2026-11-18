@@ -240,3 +240,61 @@ Resultado na reavaliação, que reaproveitou os recibos e precisou de só 6 cham
   - A nota exibida agora é convertida pelo corte do nível (ADR-0013). As 28 notícias já publicadas na base local foram recalculadas a partir das notas brutas; a do Claude foi de 53,5 para 74,7 ("moderada").
   - Limite: no nível T1_5, notas brutas acima de cerca de 72 batem no teto de 100, e duas notícias empatam em 100.
 - **Agent-Reach** (MIT, kit de CLIs para agentes) não entra como dependência (ADR-0015). Os canais úteis a um pipeline, como YouTube, GitHub releases e Reddit, já têm RSS ou Atom e podem entrar como fontes `rss` comuns.
+
+## 8. Revisão do upstream e do last30days-skill (2026-11-17)
+
+Portabilidade manual e revisada (ADR-0003). Repositórios lidos sem executar nada, em pasta temporária isolada.
+
+**AIHOT `6e0cfaf` → `7b446b1`** (2026-11-18 02:11 +0800). Foram 129 commits, a maioria com a mensagem "同步引擎" ("sincronizar motor"), e não houve tag nem release. O diff tem 290 arquivos (+11.359/−3.593); 34% dele são testes e 24 migrações só removem colunas e funcionalidades que saíram.
+
+| Mudança no upstream | Situação no Opt News |
+|---|---|
+| `finish_reason = content_filter` com HTTP 200 tratado como recusa (`providers/llm.ts`, `receipts.ts`) | Já coberto: `intelligence/foundry.ts:138` |
+| Egress: uma resposta DNS interna encerra a consulta mesmo que a outra família falhe (`700f7c7`) | Já coberto: `content/url-guard.ts` recusa se **qualquer** endereço for privado |
+| Chamada paga com resultado desconhecido liberada após 30 min | Já coberto: `UNKNOWN_RELEASE_MS` em `intelligence/model.ts` |
+| Pausa por orçamento registrada como `skipped`, não falha (`1596c52`) | Já coberto: `BudgetExceeded` vira `deferred` em `pipeline.ts` |
+| "Uma notícia, um card": antes de abrir card novo, compara com os cards vistos (`events/cards.ts`). Duas chamadas, com o par na ordem inversa na segunda; precisão 0,93 e recall 0,88 em um mês real | **Medido, não portar agora** (§8.1): em 7 dias, nenhum fato ficou em dois eventos e 25 de 26 anexos estão certos. Medir de novo com `npm run grouping:check` quando o volume crescer |
+| Ordem fixa de locks ao fundir eventos (fato → notícias → evento) | Não se aplica ainda: o Opt News não funde eventos. Adotar a mesma ordem quando a fusão existir |
+| `scripts/eval-extract.ts`: salvar páginas reais e comparar a extração antes/depois | **Backlog:** útil quando `feeds.ts`/`listing.ts` mudarem de forma relevante. Amostras ficam fora do git |
+| `AGENTS.md`: ao desligar uma função, apagar no mesmo commit o código, os testes, a doc e o estado; locks, retentativas e fallbacks só com evidência; testes cobrem o comportamento, não a forma | Prática adotada nesta revisão |
+| DingTalk, Baidu push, SEO para buscadores chineses, saída do login Feishu, `jobs/runs.ts` (PID), tradução integral, capas | Fora do escopo. Nosso lock de execução é `pg_try_advisory_xact_lock` e cai junto com a conexão |
+
+**last30days-skill `a854f3b` (v4.3.2, MIT).** É uma skill de pesquisa em redes sociais e web, com motor Python. Dela entram só ideias; nenhum código foi copiado.
+
+- **Feito:**
+  - Conteúdo de fonte entre `<conteudo_nao_confiavel>` nos prompts, com neutralização da tag (`prompts.ts` `untrusted()`). Equivale a `rerank.py` `_fenced_untrusted_content`.
+  - Guarda de rede nos testes (`tools/test-network-guard.ts`), equivalente a `tests/network_guard.py`.
+  - "Sem resultados" diferente de "fonte quebrada": listagem sem links de artigo vira erro da fonte (ADR-0015).
+  - Diversidade por fonte no briefing (no máximo 3 por fonte, `docs/14`).
+- **Backlog:**
+  - Avaliação offline com piso de baseline: grounding das citações e determinismo, sobre fixtures sintéticas.
+  - Rótulos "fonte única" e "evidência fraca".
+  - Contar como cobertura extra a segunda fonte de uma mesma URL (atalho em `pipeline.ts`).
+- **Não copiar:**
+  - Coleta de Reddit/X/TikTok/Instagram por APIs não oficiais e cookies do navegador (termos de uso e credenciais).
+  - Leitura de páginas via Jina (manda as URLs a terceiros).
+  - Guardar texto bruto e transcrições.
+  - Pesos de engajamento social.
+  - Síntese sem schema de saída.
+
+### 8.1 Medição do agrupamento em produção (2026-11-17)
+
+Leitura autorizada pelo responsável, feita só em transação `READ ONLY` com o papel `optnews_app`, sem chamadas a modelo. Para repetir: `npm run grouping:check` (`tools/grouping-check.ts`).
+
+- **Base:** 113 notícias publicadas de 10/11 a 17/11, de 16 fontes. São 41 notícias em 15 eventos (9 com 2 coberturas, 3 com 3, 2 com 4 e 1 com 6).
+- **Decisões:**
+  - 517 julgamentos sobre 109 notícias. Outras 4 notícias não tiveram nenhuma candidata.
+  - 26 anexos: 17 `SAME_OCCURRENCE` (confiança mínima de 0,83) e 9 `SAME_STORY` (mínima de 0,81).
+  - 478 julgamentos `UNRELATED`.
+  - Custo: 109 chamadas `group` desde 13/11, uma por notícia publicada.
+- **Fusões erradas (precisão):** a leitura manual dos 26 anexos achou 1 questionável. "Padrões de arquitetura aceleram a inicialização de sessões no AgentCore" foi anexado a "AWS apresenta nova geração do runtime AgentCore" como `SAME_STORY` 0,91, mas é um guia sobre o produto e não o lançamento. Isso dá cerca de 4%, dentro do que o prompt já prevê. Uma segunda leitura pegaria no máximo esse caso.
+- **Duplicatas visíveis (recall):**
+  - Nenhum par julgado como o mesmo fato ficou em eventos diferentes.
+  - Dos 13 julgamentos positivos que não anexaram, 12 terminaram no mesmo evento por outro caminho. O que sobrou foi um artigo de opinião (MIT Technology Review) que ficou sozinho, como deve.
+  - Pares de títulos com Jaccard ≥ 0,18, até 3 dias, fora de um mesmo evento: todos do blog da AWS, sobre produtos diferentes, e julgados corretamente como `UNRELATED` (0,87 a 0,99).
+- **Recomendação:** não portar a segunda leitura do `cards.ts` agora. Ela custaria uma chamada a mais por anexo (~26 por semana) sem ganho medido. Medir de novo quando as fontes ou o volume crescerem, ou depois de 30 dias de coleta.
+- **Gatilho para portar:** pelo menos um fato em dois eventos por semana, ou fusões erradas acima de 10% na leitura dos anexos com confiança abaixo de 0,9.
+- **Limites da medição:**
+  - Uma semana de dados, julgada por uma pessoa (o agente), sem rótulo de curador.
+  - A proximidade é medida por palavras do título: uma duplicata reescrita com outras palavras e fora das 5 candidatas do FTS não apareceria.
+

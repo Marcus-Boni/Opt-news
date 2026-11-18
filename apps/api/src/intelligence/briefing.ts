@@ -6,6 +6,8 @@ import { type CallContext, callModel } from "./model.ts";
 import { PROMPT_VERSION, untrusted } from "./prompts.ts";
 
 const MAX_ITEMS = 10;
+/** Source diversity (docs/14): a prolific source cannot fill the day; its other stories stay in the feed. */
+const MAX_PER_SOURCE = 3;
 // Brazil has had no daylight saving time since 2019, so São Paulo is a fixed UTC−3.
 const SP_OFFSET_MS = 3 * 3_600_000;
 
@@ -49,11 +51,15 @@ export async function generateDailyBriefing(
   if (existing && !options.force) return null;
   const start = new Date(Date.parse(`${key}T00:00:00Z`) + SP_OFFSET_MS).toISOString();
   const items = await sql<Item[]>`
-    SELECT s.id, s.headline, s.summary, s.topics[1] AS topic, t.label
-    FROM content.stories s LEFT JOIN content.topics t ON t.slug = s.topics[1]
-    WHERE s.status = 'published' AND s.sort_at >= ${start}::timestamptz AND s.sort_at < ${start}::timestamptz + interval '1 day'
-      AND ${representative(sql)}
-    ORDER BY s.editorial_score DESC NULLS LAST, s.sort_at DESC, s.id LIMIT ${MAX_ITEMS}`;
+    SELECT id, headline, summary, topic, label FROM (
+      SELECT s.id, s.headline, s.summary, s.topics[1] AS topic, t.label, s.editorial_score, s.sort_at,
+        row_number() OVER (PARTITION BY s.source_id ORDER BY s.editorial_score DESC NULLS LAST, s.sort_at DESC, s.id) AS rank
+      FROM content.stories s LEFT JOIN content.topics t ON t.slug = s.topics[1]
+      WHERE s.status = 'published' AND s.sort_at >= ${start}::timestamptz AND s.sort_at < ${start}::timestamptz + interval '1 day'
+        AND ${representative(sql)}
+    ) ranked
+    WHERE rank <= ${MAX_PER_SOURCE}
+    ORDER BY editorial_score DESC NULLS LAST, sort_at DESC, id LIMIT ${MAX_ITEMS}`;
   // A quiet day publishes no empty briefing.
   if (items.length === 0) return null;
 

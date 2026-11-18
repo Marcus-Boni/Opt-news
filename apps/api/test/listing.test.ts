@@ -115,6 +115,16 @@ describe("web_list collection", () => {
     await runIngest(deps, { force: true });
     assert.deepEqual(read, ["https://lab.example.org/news/a10", "https://lab.example.org/news/a11"]);
   });
+
+  test("a listing with no article links reads as failing, not as nothing new", async () => {
+    const { deps } = site(`<a href="/careers">Vagas</a><div id="app"></div>`, {});
+    const report = await runIngest(deps, { force: true });
+    assert.match(report.collected.find((c) => c.sourceId === "lab-news")?.error ?? "", /não tem links de artigo/);
+    const [source] = await sql<
+      { lastError: string | null }[]
+    >`SELECT last_error FROM content.sources WHERE id = 'lab-news'`;
+    assert.match(source?.lastError ?? "", /prefixo configurado/);
+  });
 });
 
 describe("listing sources in the admin", () => {

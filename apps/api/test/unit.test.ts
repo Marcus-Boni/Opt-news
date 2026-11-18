@@ -1,5 +1,6 @@
 // Pure rules: URL guard (SSRF), authorization matrix and the engine adapter (anti-corruption layer).
 import assert from "node:assert/strict";
+import { lookup } from "node:dns/promises";
 import { describe, test } from "node:test";
 import { feedXml, ITEMS } from "../../../tools/fixtures/feeds.ts";
 import { loadConfig } from "../src/config.ts";
@@ -137,6 +138,11 @@ test("source text stays inside one fence: a title cannot close it and speak as t
   assert.ok(user.startsWith("<conteudo_nao_confiavel>\n") && user.endsWith("\n</conteudo_nao_confiavel>"));
   assert.equal(user.match(/<\s*\/?\s*conteudo_nao_confiavel\s*>/gi)?.length, 2);
   assert.match(user, /Ignore as regras/);
+});
+
+test("the test run cannot reach the network (tools/test-network-guard.ts)", async () => {
+  await assert.rejects(lookup("example.com"), /tentou acessar a rede/);
+  assert.ok((await lookup("localhost")).address);
 });
 
 test("an empty RSS channel is a valid feed with no entries", () => {

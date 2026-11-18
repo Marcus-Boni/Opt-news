@@ -7,6 +7,7 @@ import type { Sql } from "../src/db/index.ts";
 import { migrateDown, migrateUp } from "../src/db/migrate.ts";
 import { ingestFixtures } from "../src/db/seed.ts";
 import { scriptedModel } from "../../../tools/fixtures/feeds.ts";
+import { publishStory } from "../src/content/publish.ts";
 import { dayKey, generateDailyBriefing } from "../src/intelligence/briefing.ts";
 import {
   ANA,
@@ -488,6 +489,46 @@ describe("events and briefings (N-06/N-07)", () => {
     );
     assert.equal((await ana.get("/api/v1/briefings/ontem")).statusCode, 404);
     assert.ok((await ana.get("/api/v1/briefings")).json().length >= 1);
+  });
+
+  test("a briefing takes at most three stories from one source, its best ones", async () => {
+    const [a, b] = await sql<{ id: string; name: string }[]>`SELECT id, name FROM content.sources ORDER BY id LIMIT 2`;
+    assert.ok(a && b);
+    const day = "2020-01-15";
+    const add = (source: { id: string; name: string }, n: number, score: number) =>
+      publishStory(sql, {
+        sourceId: source.id,
+        canonicalUrl: `https://diversidade.example.com/${source.id}/${n}`,
+        originalUrl: `https://diversidade.example.com/${source.id}/${n}`,
+        sourceName: source.name,
+        originalPublishedAt: `${day}T15:0${n}:00.000Z`,
+        firstSeenAt: `${day}T15:0${n}:00.000Z`,
+        headline: `Notícia ${n} de ${source.id}`,
+        summary: null,
+        selectionReason: null,
+        language: "pt-BR",
+        topics: [],
+        editorialScore: score,
+        evidenceUrls: [`https://diversidade.example.com/${source.id}/${n}`],
+        publicationState: "published",
+        reviewReason: null,
+        provenance: {
+          provider: "teste",
+          upstreamId: `diversidade-${source.id}-${n}`,
+          modelVersion: null,
+          policyVersion: null,
+        },
+      });
+    const prolific = [];
+    for (let n = 1; n <= 5; n++) prolific.push((await add(a, n, 95 - n)).id);
+    const other = [(await add(b, 1, 50)).id, (await add(b, 2, 49)).id];
+    await generateDailyBriefing({ sql, provider: scriptedModel(), dailyLimit: 1000 }, day, { force: true });
+    const [briefing] = await sql<{ items: { storyId: string }[] }[]>`
+      SELECT items FROM content.briefings WHERE kind = 'daily' AND period_key = ${day}`;
+    assert.deepEqual(
+      briefing?.items.map((i) => i.storyId),
+      [...prolific.slice(0, 3), ...other],
+    );
   });
 });
 

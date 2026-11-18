@@ -16,7 +16,7 @@
 |---|---|---|
 | Formatação/lint | Sim | Saída pipeline |
 | TypeScript strict typecheck | Sim | Saída pipeline |
-| Tests unit/integration | Sim | Relatório e fixtures offline |
+| Tests unit/integration | Sim | Relatório e fixtures offline; `npm test` carrega `tools/test-network-guard.ts`, que falha qualquer teste que resolva nome ou conecte fora do loopback e do banco de teste |
 | Contract/API schema validation | Sim em alteração de API | Diff OpenAPI + contract tests |
 | Build web + API + worker | Sim | Artefatos reproduzíveis |
 | Dependency/license/secret scan | Sim | Relatório de risco |

@@ -18,7 +18,7 @@
 | SSRF | DNS/IP público após redirecionamento; egress control; size/time/content type limits | Casos contra endereços privados e redirecionamentos |
 | Sanitização | Markdown seguro, HTML restrito, CSP e URLs permitidas | Testes XSS e revisão visual |
 | Segredos | Key Vault/ambiente seguro; não logar tokens | Secret scanning CI |
-| Modelos | Entrada de fonte tratada como dados, não instruções; output validado | Testes adversariais |
+| Modelos | Entrada de fonte tratada como dados, não instruções: todo texto vindo de fonte (ou escrito pelo modelo a partir dela) vai entre `<conteudo_nao_confiavel>` e cópias da tag são neutralizadas (`intelligence/prompts.ts`); output validado por schema estrito | Testes adversariais (`unit.test.ts`: título que tenta fechar a cerca) |
 | Licença de conteúdo | Direitos por fonte e `site_fulltext=false` como default | Auditoria de fontes e notices |
 | Logs/auditoria | Requisições, alterações editoriais, moderação sem PII excessiva | Consultas testadas |
 | Dados internos | Segmentação por escopo, indexação privada e ACL por resultado | Testes busca/notificação |

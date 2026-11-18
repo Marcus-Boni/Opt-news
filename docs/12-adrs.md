@@ -154,6 +154,7 @@
 - No máximo 10 páginas novas por execução e fonte: a primeira coleta se completa em algumas execuções. A leitura não para em artigos antigos, porque listagens abrem com destaques de qualquer data (anthropic.com/news começa por três destaques de outubro). Artigos antigos (mais de 72 h) são guardados como arquivados e não são lidos de novo.
 - Páginas sem data ou sem título (categorias, páginas de entrada) são descartadas e contam como inválidas. Páginas que falham são tentadas de novo na próxima execução.
 - A listagem não guarda ETag: mesmo sem mudanças, ela pode ter links que a execução anterior não leu por causa do limite de 10.
+- Uma listagem sem nenhum link com o prefixo configurado é erro da fonte (layout mudou ou prefixo errado), visível no admin. Não é tratada como "nada novo", porque uma listagem sempre mostra artigos recentes.
 - Tudo passa pelo mesmo fetch protegido (SSRF, tamanho, tempo) e pelo mesmo pipeline de pré-filtro, notas e corte.
 
 **Alternativas descartadas:**
