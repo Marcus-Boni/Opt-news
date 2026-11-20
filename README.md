@@ -362,7 +362,7 @@ O **vertical slice 01** está implementado e testado localmente: curadoria autom
 
 ## Licença e créditos
 
-Código proprietário. © 2026 Optsolv. Todos os direitos reservados. Nenhuma licença de código aberto é concedida.
+Código proprietário. Todos os direitos reservados. Nenhuma licença de código aberto é concedida.
 
 Partes do pipeline de curadoria em `apps/api/src/intelligence/` derivam do [AIHOT](https://github.com/KKKKhazix/AIHOT), sob licença MIT. A atribuição completa e o commit de referência estão em [NOTICE](NOTICE). O nome e o logo do AIHOT não são usados.
 
